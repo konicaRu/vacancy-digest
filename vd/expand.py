@@ -29,7 +29,7 @@ def role_anchors(item: Item) -> list[tuple[str, str]]:
     """Ссылки, текст которых похож на должность (без хештегов, ботов и подписей канала)."""
     out, seen = [], set()
     for href, text in item.anchors:
-        t = (text or "").strip()
+        t = (text or "").replace("️", "").strip()  # невидимые селекторы эмодзи в начале ссылки
         if not t or t.startswith("#") or t.startswith("@"):
             continue
         # хештеги канала (t.me/s/...?q=) и ссылки на ботов (?start=) — не вакансии
@@ -56,10 +56,7 @@ def expand_bundles(
     taken: set[tuple[str, str]] = set()
     out: list[Item] = []
 
-    for it in items:
-        if not is_bundle(it):
-            out.append(it)
-            continue
+    def expand(it: Item) -> None:
         info["bundles"] += 1
         for href, title in role_anchors(it):
             info["links"] += 1
@@ -82,6 +79,10 @@ def expand_bundles(
                 if child is None or not (child.text or "").strip():
                     child = Item(source=f"tg:{ch}", kind="telegram", external_id=pid,
                                  url=f"https://t.me/{ch}/{pid}", text=title, hint_title=title)
+                elif is_bundle(child):
+                    # подборка внутри подборки («Подборка вакансий в Авито» из недельной) — разворачиваем и её
+                    expand(child)
+                    continue
                 child.via = it.source
                 out.append(child)
                 info["new"] += 1
@@ -97,4 +98,10 @@ def expand_bundles(
                 out.append(Item(source=it.source, kind="digest_link", external_id=url, url=url,
                                 text=text, hint_title=title, published_at=it.published_at, via=it.source))
                 info["new"] += 1
+
+    for it in items:
+        if is_bundle(it):
+            expand(it)
+        else:
+            out.append(it)
     return out, info

@@ -1,0 +1,85 @@
+"""Тесты на живых страницах, сохранённых при первом пробном прогоне (19.10.2026)."""
+import unittest
+from pathlib import Path
+
+from vd.classify import classify_all, keyword_classify
+from vd.expand import expand_bundles
+from vd.models import Verdict
+from vd.sources import telegram
+
+SAMPLES = Path(__file__).parent / "samples"
+CH = "careerstation_analyst"
+PROFILE = {"target_roles": ["product_analyst", "data_analyst"],
+           "data_analyst_required_skills": ["sql", "python", "excel"],
+           "exclude_grades": ["intern", "junior"], "exclude_title_words": []}
+
+
+def sample(name: str) -> str:
+    return (SAMPLES / name).read_text(encoding="utf-8")
+
+
+class LiveTelegramTests(unittest.TestCase):
+    def test_heading_split_into_bold_tags_stays_one_line(self):
+        # <b> Senior Data</b> <b>Аналитик в Банк 131 </b> — одна строка заголовка, а не две
+        post = telegram.fetch_single(CH, "233", lambda url: sample("tg_embed_careerstation_analyst_233.html"))
+        self.assertIn("Senior Data Аналитик в Банк 131", post.text.splitlines()[0])
+        self.assertEqual(keyword_classify(post).title, "Senior Data Аналитик в Банк 131")
+
+    def test_nested_bundle_from_weekly_digest_is_expanded(self):
+        # недельная подборка 248 ссылается на пост 239, который сам — подборка двух вакансий Авито
+        page = telegram.parse_page(sample("tg_careerstation_analyst_2026-10-19.html"), CH)
+        weekly = next(i for i in page if i.external_id == "248")
+
+        def fetch_post(ch, pid):
+            if (ch, pid) == (CH, "239"):
+                return telegram.fetch_single(ch, pid, lambda url: sample("tg_embed_careerstation_analyst_239.html"))
+            return None
+
+        out, info = expand_bundles([weekly], lambda s, e: False, fetch_post)
+        by_id = {i.external_id: i for i in out}
+        self.assertNotIn("239", by_id)  # вложенная подборка заменена своими вакансиями
+        avito = [i for i in out if i.kind == "digest_link" and "docs.google.com" in i.url]
+        self.assertEqual(sorted(i.hint_title for i in avito),
+                         ["Аналитик в команду Авито Работы, Анти-абьюз",
+                          "Аналитик в команду монетизации Авито Работы"])
+        self.assertTrue(all(i.via == f"tg:{CH}" for i in avito))
+        self.assertEqual(info["bundles"], 2)
+
+
+class FakeLLM:
+    """Отвечает как Qwen на живом прогоне 19.10: «remote=no», хотя про формат в посте ни слова."""
+
+    def __init__(self, remote="no", contact="[LinkedIn]"):
+        self.remote, self.contact = remote, contact
+
+    def classify(self, item):
+        return Verdict(item=item, is_vacancy=True, title="Senior Data Аналитик", company="Hypercell Games",
+                       role="data_analyst", grade="senior", remote_from_russia=self.remote,
+                       contact=self.contact, reason="Не подходит: опыт в мобильных играх", by_llm=True)
+
+
+class LLMGuardTests(unittest.TestCase):
+    def hypercell(self):
+        return telegram.fetch_single(CH, "247", lambda url: sample("tg_embed_careerstation_analyst_247.html"))
+
+    def test_llm_no_without_format_words_becomes_unknown(self):
+        verdicts, _ = classify_all([self.hypercell()], PROFILE, FakeLLM(remote="no"))
+        self.assertEqual(verdicts[0].remote_from_russia, "unknown")
+        self.assertEqual(verdicts[0].bucket, "unknown_format")
+
+    def test_llm_no_kept_when_text_mentions_office(self):
+        item = self.hypercell()
+        item.text += "\nФормат: гибрид, офис в Москве"
+        verdicts, _ = classify_all([item], PROFILE, FakeLLM(remote="no"))
+        self.assertEqual(verdicts[0].bucket, "drop")
+
+    def test_contact_must_look_like_handle_email_or_link(self):
+        cases = {"[LinkedIn]": None, "@": None, "[ссылка]": None, "@julietes": "@julietes",
+                 "hr@company.ru": "hr@company.ru", "https://t.me/julietes": "https://t.me/julietes"}
+        for raw, expected in cases.items():
+            verdicts, _ = classify_all([self.hypercell()], PROFILE, FakeLLM(contact=raw))
+            self.assertEqual(verdicts[0].contact, expected, raw)
+
+
+if __name__ == "__main__":
+    unittest.main()

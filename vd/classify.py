@@ -213,6 +213,20 @@ def dedup(verdicts: list[Verdict], recent_ledger: list[dict]) -> None:
 
 
 # ---------------------------------------------------------------- всё вместе
+CONTACT_OK = re.compile(r"^(?:@[A-Za-z0-9_]{4,}|[\w.+\-]+@[\w\-]+\.[\w.\-]+|https?://\S+)$")
+
+
+def guard_llm(v: Verdict) -> Verdict:
+    """Проверка ответа модели кодом.
+    • «нельзя удалённо», а в тексте ни слова о формате — модель путает «не подходит» с «не удалённо» → unknown;
+    • контакт — только @ник, почта или ссылка (модель кладёт туда «[LinkedIn]», «@»)."""
+    if v.remote_from_russia == "no" and remote_of(v.item.text or "") == "unknown":
+        v.remote_from_russia = "unknown"
+    if v.contact and not CONTACT_OK.match(v.contact):
+        v.contact = None
+    return v
+
+
 def classify_all(items: list[Item], profile: dict, llm) -> tuple[list[Verdict], dict]:
     """llm — LMStudioClient или None. Если модель падает по ходу — дальше работаем по ключевым словам."""
     verdicts: list[Verdict] = []
@@ -232,6 +246,8 @@ def classify_all(items: list[Item], profile: dict, llm) -> tuple[list[Verdict], 
             except Exception as e:
                 info["llm_errors"] += 1
                 log.warning("Не разобран %s: %s", item.url, e)
+            else:
+                v = guard_llm(v)
         if v is None:
             v = keyword_classify(item)
         verdicts.append(decide(v, profile))

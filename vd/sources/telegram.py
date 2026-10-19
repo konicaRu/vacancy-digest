@@ -18,6 +18,14 @@ log = logging.getLogger(__name__)
 BASE = "https://t.me/s/{channel}"
 
 
+def _text(el) -> str:
+    """Текст поста: строки только по <br>, а не по каждому тегу (<b>Senior Data</b> <b>Аналитик</b> — одна строка)."""
+    for br in el.find_all("br"):
+        br.replace_with("\n")
+    lines = (ln.strip() for ln in el.get_text().splitlines())
+    return "\n".join(ln for ln in lines if ln)
+
+
 def parse_page(html: str, channel: str) -> list[Item]:
     soup = BeautifulSoup(html, "html.parser")
     items: list[Item] = []
@@ -30,7 +38,7 @@ def parse_page(html: str, channel: str) -> list[Item]:
         # основной текст поста (а не цитата из ответа)
         text_el = (msg.select_one(".tgme_widget_message_bubble > .tgme_widget_message_text")
                    or msg.select_one(".tgme_widget_message_text"))
-        text = text_el.get_text("\n", strip=True) if text_el else ""
+        text = _text(text_el) if text_el else ""
         anchors = [(a["href"], a.get_text(" ", strip=True)) for a in text_el.select("a[href]")] if text_el else []
         links = [h for h, _ in anchors]
         t = msg.select_one("a.tgme_widget_message_date time[datetime]") or msg.select_one("time[datetime]")
@@ -68,7 +76,7 @@ def fetch_single(channel: str, post_id: str, fetch: Callable[[str], str]) -> Opt
     if not text_el:
         return None
     return Item(source=f"tg:{channel}", kind="telegram", external_id=str(post_id),
-                url=f"https://t.me/{channel}/{post_id}", text=text_el.get_text("\n", strip=True),
+                url=f"https://t.me/{channel}/{post_id}", text=_text(text_el),
                 anchors=[(a["href"], a.get_text(" ", strip=True)) for a in text_el.select("a[href]")])
 
 

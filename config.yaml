@@ -65,7 +65,7 @@ mail:
 llm:
   enabled: true
   base_url: "http://localhost:1234/v1"
-  model: "qwen2.5-14b-instruct"   # идентификатор модели из LM Studio (вкладка Developer)
+  model: "qwen2.5-14b-instruct-1m"   # идентификатор модели из LM Studio (вкладка Developer)
   autostart_server: true          # если сервер не отвечает — запустить «lms server start»
   timeout_sec: 180
   max_chars_per_item: 3500        # длинные посты обрезаем
