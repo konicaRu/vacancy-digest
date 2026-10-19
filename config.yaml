@@ -1,0 +1,78 @@
+# ============================================================
+#  Утренний дайджест вакансий — настройки
+#  Агент перечитывает этот файл при каждом запуске и сам его не меняет.
+#  Пароли и логины сюда НЕ пишем — они в secrets.env
+# ============================================================
+
+# --- Кого ищем -------------------------------------------------
+profile:
+  # Роли, которые попадают в дайджест (коды из списка ниже)
+  target_roles:
+    - product_analyst      # продуктовый аналитик
+    - data_analyst         # аналитик данных / data analyst
+    # - bi_analyst         # BI-аналитик — раскомментируй, если нужен
+  # Для «аналитика данных» в тексте должен быть хотя бы один из навыков
+  data_analyst_required_skills: ["sql", "python", "excel"]
+  # Грейды, которые отсекаем
+  exclude_grades: ["intern", "junior"]
+  # Слова в должности, после которых вакансию сразу выкидываем
+  exclude_title_words: ["стажер", "стажёр", "intern", "trainee", "1с-аналитик", "аналитик 1с"]
+  # Кратко о себе — уходит в промпт LLM
+  about: >
+    Продуктовый аналитик, ~5 лет опыта (финтех, B2B-площадка, банк).
+    Стек: SQL, Python, ClickHouse, PostgreSQL, Power BI, Grafana. Живу в России (Череповец),
+    рассматриваю только удалённую работу, которую можно выполнять из России.
+
+# --- Источники ---------------------------------------------------
+sources:
+  telegram:
+    lookback_days_first_run: 3   # при самом первом запуске — посты за N дней
+    max_pages_per_run: 5         # сколько страниц по ~20 постов можно пролистать назад
+    expand_digests: true         # разворачивать посты-подборки в отдельные вакансии
+    max_digest_fetches: 30       # сколько постов из подборок можно открыть за запуск
+    channels:
+      - {name: nodatanojobs,          enabled: true}
+      - {name: careerstation_analyst, enabled: true}
+      - {name: codeworkshopru,        enabled: true}
+      # Мало аналитиков в выборке ~20 постов, но держать почти бесплатно.
+      # Через месяц смотрим статистику в письмах и решаем.
+      - {name: HR_CATExpert,          enabled: true}
+      - {name: talentmove_channel,    enabled: true}
+
+  sites:
+    - name: jabka
+      enabled: true
+      lookback_days_first_run: 3
+      urls:
+        - "https://jabka.work/?search=%D0%90%D0%BD%D0%B0%D0%BB%D0%B8%D1%82%D0%B8%D0%BA&workMode=REMOTE"
+        # Попробовать вместо широкого «Аналитик» — раздел «Продукт → Аналитика»:
+        # - "https://jabka.work/product-management?cluster=product-analytics&workMode=REMOTE"
+
+  linkedin_mail:
+    # Включить после недели проверки, что уведомления LinkedIn приходят на почту
+    enabled: false
+    lookback_days_first_run: 2
+    from_filter: "linkedin.com"
+
+# --- Почта -------------------------------------------------------
+mail:
+  provider: gmail          # gmail | yandex  (логин и пароль приложения — в secrets.env)
+  to: ""                   # пусто = отправлять на тот же ящик, что EMAIL_USER
+  subject_prefix: "Вакансии"
+  send_when_empty: true    # присылать письмо «новых нет», чтобы было видно, что агент жив
+
+# --- Локальная LLM (LM Studio) ----------------------------------
+llm:
+  enabled: true
+  base_url: "http://localhost:1234/v1"
+  model: "qwen2.5-14b-instruct"   # идентификатор модели из LM Studio (вкладка Developer)
+  autostart_server: true          # если сервер не отвечает — запустить «lms server start»
+  timeout_sec: 180
+  max_chars_per_item: 3500        # длинные посты обрезаем
+  prompt_suffix: ""               # для Qwen3 можно поставить "/no_think"
+
+# --- Прочее ------------------------------------------------------
+run:
+  once_per_day: true        # второй запуск в тот же день ничего не шлёт (кроме --force)
+  dedup_days: 30            # вакансию, уже отправленную за N дней, повторно не шлём
+  http_timeout_sec: 25

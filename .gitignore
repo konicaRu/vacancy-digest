@@ -1,0 +1,21 @@
+# секреты — никогда в git
+secrets.env
+*.env
+!secrets.env.example
+
+# состояние, логи, готовые письма
+data/
+logs/
+out/
+
+# Python
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# редакторы и ОС
+.vscode/
+.idea/
+Thumbs.db
+desktop.ini
