@@ -114,7 +114,7 @@ def _group_html(src: str, rows: list[Verdict], href, group_href: str) -> str:
 
 
 def build(verdicts: list[Verdict], read_stats: dict, failed: dict[str, str],
-          llm_info: dict, run_date: date | None = None,
+          llm_info: dict, run_date: date | None = None, issue: str = "",
           bundle_info: dict | None = None, tag: str | None = None,
           mark_link=None, marked: list[dict] | None = None) -> tuple[str, str, str]:
     """Возвращает (тема, html, текст). Вакансиям проставляет сквозные номера (v.num).
@@ -137,7 +137,8 @@ def build(verdicts: list[Verdict], read_stats: dict, failed: dict[str, str],
         bits.append(f"{len(main)} подходят")
     if unknown:
         bits.append(f"{len(unknown)} уточнить")
-    subject = f"{run_date:%d.%m}: " + (", ".join(bits) if bits else "новых нет")
+    when = f"{run_date:%d.%m}" + (f" {issue}" if issue else "")  # «20.10 утро» / «20.10 вечер»
+    subject = f"{when}: " + (", ".join(bits) if bits else "новых нет")
     if failed:
         subject += f" (не прочитано источников: {len(failed)})"
     href = (lambda v: mark_link(f"{tag}-{v.num}", " · ".join(p for p in (v.title, v.company) if p))
@@ -202,7 +203,7 @@ def build(verdicts: list[Verdict], read_stats: dict, failed: dict[str, str],
                         + (f', не открылось {bi["fetch_failed"]}' if bi.get("fetch_failed") else "") + '</div>')
     html = f"""<html><body style="margin:0;padding:0;background:#ffffff;">
 <div style="max-width:640px;margin:0 auto;padding:16px;font-family:-apple-system,Segoe UI,Roboto,Arial,sans-serif;color:#1a1a1a;">
-<div style="font-size:20px;font-weight:700;">Вакансии на {run_date:%d.%m.%Y}</div>
+<div style="font-size:20px;font-weight:700;">Вакансии на {run_date:%d.%m.%Y}{(", " + issue) if issue else ""}</div>
 {warn}{marked_html}{empty}{legend}
 {_section("От знакомых", "Посты людей из LinkedIn — можно попросить рекомендацию", network, "#8a5cf6", href)}
 {groups_html}

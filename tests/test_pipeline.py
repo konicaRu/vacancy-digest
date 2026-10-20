@@ -1,4 +1,5 @@
 import json
+from datetime import datetime
 import shutil
 import tempfile
 import threading
@@ -134,7 +135,7 @@ class PipelineTests(unittest.TestCase):
             p.stop()
         shutil.rmtree(self.tmp, ignore_errors=True)
 
-    def run_main(self, *argv, results=None, send=None):
+    def run_main(self, *argv, results=None, send=None, at=None):
         args = main.argparse.Namespace(dry_run="--dry-run" in argv, force="--force" in argv,
                                        no_llm=True, stats=False)
         def offline_fetch(url):
@@ -142,7 +143,7 @@ class PipelineTests(unittest.TestCase):
                 return self.marks_csv
             raise ConnectionError("нет сети в тестах")
 
-        with mock.patch.object(main, "collect_all", return_value=results or fake_results()), \
+        with mock.patch.object(main, "_now", return_value=at or datetime.now()),              mock.patch.object(main, "collect_all", return_value=results or fake_results()), \
              mock.patch.object(main, "make_fetcher", return_value=offline_fetch), \
              mock.patch.object(mailer, "send", side_effect=send or (lambda *a, **k: "<id@x>")) as m:
             code = main.run(args)
@@ -190,7 +191,8 @@ class PipelineTests(unittest.TestCase):
         self.assertNotIn("Подборка актуальных", html)
 
     def test_send_commits_state_and_second_run_skips(self):
-        code, m = self.run_main()
+        at = datetime(2026, 10, 20, 9, 30)
+        code, m = self.run_main(at=at)
         self.assertEqual(code, 0)
         m.assert_called_once()
         subject = m.call_args.args[1]
@@ -198,14 +200,30 @@ class PipelineTests(unittest.TestCase):
         store = Store(self.tmp / "data" / "state.sqlite")
         self.assertEqual(store.get_bookmark("tg:nodatanojobs"), "105")
         self.assertTrue(store.is_seen("tg:nodatanojobs", "100"))
-        self.assertTrue(store.sent_today())
-        # второй запуск в тот же день — без письма
-        code2, m2 = self.run_main()
+        self.assertTrue(store.sent_in_slot(at))
+        # второй запуск в тот же выпуск — без письма
+        code2, m2 = self.run_main(at=at.replace(hour=11))
         self.assertEqual(code2, 0)
         m2.assert_not_called()
         # --force: всё уже было отправлено → только «новых нет»
-        code3, m3 = self.run_main("--force")
+        code3, m3 = self.run_main("--force", at=at.replace(hour=12))
         self.assertIn("новых нет", m3.call_args.args[1])
+
+    def test_morning_and_evening_issues(self):
+        day = datetime(2026, 10, 20)
+        sent = lambda h, m=0, d=day: self.run_main(at=d.replace(hour=h, minute=m))[1]
+        first = sent(9, 30)
+        self.assertIn("20.10 утро", first.call_args.args[1])
+        sent(12).assert_not_called()                     # утро уже было
+        evening = sent(17, 5)                            # вечерний выпуск — только новое после утра
+        self.assertIn("20.10 вечер", evening.call_args.args[1])
+        self.assertIn("новых нет", evening.call_args.args[1])
+        sent(18).assert_not_called()                     # вечер уже был
+        self.assertIn("21.10 утро", sent(9, 10, datetime(2026, 10, 21)).call_args.args[1])
+        # коды вакансий — по выпуску: утреннее письмо 20.10 → vd-20261020-am-N
+        store = Store(self.tmp / "data" / "state.sqlite")
+        codes = [r[0] for r in store.conn.execute("SELECT code FROM ledger")]
+        self.assertTrue(codes and all(c.startswith("vd-20261020-am-") for c in codes))
 
     def test_failed_send_keeps_state(self):
         def boom(*a, **k):
@@ -215,7 +233,7 @@ class PipelineTests(unittest.TestCase):
         store = Store(self.tmp / "data" / "state.sqlite")
         self.assertIsNone(store.get_bookmark("tg:nodatanojobs"))
         self.assertFalse(store.is_seen("tg:nodatanojobs", "100"))
-        self.assertFalse(store.sent_today())
+        self.assertFalse(store.sent_in_slot(datetime.now()))
 
     def test_failed_source_flagged_and_bookmark_kept(self):
         code, m = self.run_main(results=fake_results(fail_jabka=True))

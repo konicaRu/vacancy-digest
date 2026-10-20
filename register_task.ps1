@@ -1,6 +1,7 @@
 ﻿# Регистрирует задачу в Планировщике Windows:
-#   запуск через 3 минуты после входа в систему, только при наличии сети.
-#   Повторный вход в тот же день письма не шлёт (это проверяет сам скрипт).
+#   утренний выпуск — через 3 минуты после входа в систему, вечерний — ежедневно в 17:00 (время компьютера, МСК).
+#   Каждый выпуск не чаще раза: повторный вход письма не шлёт (это проверяет сам скрипт).
+#   Компьютер выключен в 17:00 — задача выполнится при включении (StartWhenAvailable).
 # Запуск: правый клик → «Выполнить с помощью PowerShell»
 #   или: powershell -ExecutionPolicy Bypass -File register_task.ps1
 
@@ -10,8 +11,9 @@ $bat  = Join-Path $root "run_digest.bat"
 $taskName = "VacancyDigest"
 
 $action   = New-ScheduledTaskAction -Execute $bat -WorkingDirectory $root
-$trigger  = New-ScheduledTaskTrigger -AtLogOn -User "$env:USERDOMAIN\$env:USERNAME"
-$trigger.Delay = "PT3M"
+$logon = New-ScheduledTaskTrigger -AtLogOn -User "$env:USERDOMAIN\$env:USERNAME"
+$logon.Delay = "PT3M"
+$evening = New-ScheduledTaskTrigger -Daily -At "17:00"
 $settings = New-ScheduledTaskSettingsSet `
     -StartWhenAvailable `
     -RunOnlyIfNetworkAvailable `
@@ -19,8 +21,8 @@ $settings = New-ScheduledTaskSettingsSet `
     -DontStopIfGoingOnBatteries `
     -ExecutionTimeLimit (New-TimeSpan -Hours 1)
 
-Register-ScheduledTask -TaskName $taskName -Action $action -Trigger $trigger -Settings $settings `
-    -Description "Утренний дайджест вакансий: Telegram, jabka.work, LinkedIn -> письмо" -Force | Out-Null
+Register-ScheduledTask -TaskName $taskName -Action $action -Trigger @($logon, $evening) -Settings $settings `
+    -Description "Дайджест вакансий (утро и вечер): Telegram, jabka.work -> письмо" -Force | Out-Null
 
-Write-Host "Задача '$taskName' зарегистрирована: запуск через 3 минуты после входа в Windows."
+Write-Host "Задача '$taskName' зарегистрирована: через 3 минуты после входа в Windows и ежедневно в 17:00."
 Write-Host "Проверить вручную: Start-ScheduledTask -TaskName $taskName"

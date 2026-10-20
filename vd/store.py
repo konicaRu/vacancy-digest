@@ -93,17 +93,20 @@ class Store:
                 out.append({"code": code, "title": title, "company": company, "status": want})
         return sorted(out, key=lambda r: (r["status"], r["code"]))
 
-    def sent_today(self) -> bool:
-        row = self.conn.execute(
-            "SELECT 1 FROM runs WHERE run_date=? AND status IN ('sent', 'empty')", (date.today().isoformat(),)
-        ).fetchone()
-        return row is not None
+    def sent_in_slot(self, now: datetime, evening_hour: int = 17) -> bool:
+        """Уже был выпуск в этот слот: «утро» — до evening_hour, «вечер» — после (по времени старта запуска)."""
+        evening = now.hour >= evening_hour
+        rows = self.conn.execute(
+            "SELECT started_at FROM runs WHERE run_date=? AND status IN ('sent', 'empty')",
+            (now.date().isoformat(),)).fetchall()
+        return any((datetime.fromisoformat(r[0]).hour >= evening_hour) == evening for r in rows)
 
     # ---------- журнал запусков ----------
-    def start_run(self) -> int:
+    def start_run(self, now: Optional[datetime] = None) -> int:
+        now = now or datetime.now()
         cur = self.conn.execute(
             "INSERT INTO runs (run_date, started_at, status) VALUES (?, ?, 'running')",
-            (date.today().isoformat(), datetime.now().isoformat(timespec="seconds")),
+            (now.date().isoformat(), now.isoformat(timespec="seconds")),
         )
         self.conn.commit()
         return cur.lastrowid

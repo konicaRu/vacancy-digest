@@ -102,17 +102,29 @@ def run(args) -> int:
         store.close()
 
 
+ISSUE_RU = {"am": "утро", "pm": "вечер"}
+
+
+def _now() -> datetime:
+    return datetime.now()
+
+
 def _run(args, cfg: dict, store: Store) -> int:
     if args.stats:
         for src, bucket, n in store.source_stats(30):
             print(f"{digest.source_name(src):35} {bucket:15} {n}")
         return 0
 
-    if cfg.get("run", {}).get("once_per_day", True) and store.sent_today() and not (args.force or args.dry_run):
-        log.info("Сегодня дайджест уже отправлен — выхожу (для повторной отправки: --force)")
+    # два выпуска в день: «утро» — до evening_hour, «вечер» — после; каждый не чаще раза
+    now = _now()
+    evening_hour = cfg.get("run", {}).get("evening_hour", 17)
+    slot = "pm" if now.hour >= evening_hour else "am"
+    if cfg.get("run", {}).get("once_per_slot", True) and store.sent_in_slot(now, evening_hour)             and not (args.force or args.dry_run):
+        log.info("%s выпуск уже отправлен — выхожу (для повторной отправки: --force)",
+                 {"am": "Утренний", "pm": "Вечерний"}[slot])
         return 0
 
-    run_id = store.start_run()
+    run_id = store.start_run(now)
     started = time.time()
     fetch = make_fetcher(cfg)
     results = collect_all(cfg, store, fetch)
@@ -159,14 +171,14 @@ def _run(args, cfg: dict, store: Store) -> int:
         except Exception as e:
             failed["marks"] = f"{type(e).__name__}: {e}"
             log.warning("Отметки откликов не прочитаны: %s", e)
-    now = datetime.now()
-    tag = f"vd-{now:%Y%m%d}-{'am' if now.hour < 17 else 'pm'}"
+    tag = f"vd-{now:%Y%m%d}-{slot}"
     subject, html, text = digest.build(
-        verdicts, dict(read_stats), failed, llm_info, bundle_info=bundle_info, tag=tag, marked=marked,
+        verdicts, dict(read_stats), failed, llm_info, run_date=now.date(), issue=ISSUE_RU[slot],
+        bundle_info=bundle_info, tag=tag, marked=marked,
         mark_link=(lambda code, label: mark_link(marks_cfg, code, label)) if marks_cfg.get("enabled") else None)
     out_dir = ROOT / "out"
     out_dir.mkdir(exist_ok=True)
-    out_file = out_dir / f"digest_{date.today():%Y-%m-%d}.html"
+    out_file = out_dir / f"digest_{now:%Y-%m-%d}-{slot}.html"
     out_file.write_text(html, encoding="utf-8")
 
     picked = [v for v in verdicts if v.bucket != "drop"]
