@@ -9,7 +9,7 @@ from unittest import mock
 
 import main
 from tests.fixtures import JABKA_HTML, NOW, POST_TEXTS, tg_page, tg_post
-from vd import mailer
+from vd import digest, mailer
 from vd.llm import LMStudioClient
 from vd.models import Item, SourceResult
 from vd.sources import jabka, telegram
@@ -36,6 +36,18 @@ def fake_results(fail_jabka=False):
     else:
         res.append(SourceResult(source="site:jabka", items=jabka.parse_page(JABKA_HTML), new_bookmark="x"))
     return res
+
+
+class LLMBannerTests(unittest.TestCase):
+    BANNER = "Локальная модель была недоступна"
+
+    def test_no_banner_when_llm_switched_off_on_purpose(self):
+        _, html, _ = digest.build([], {}, {}, {"llm_used": False, "llm_failed": False, "llm_off": True})
+        self.assertNotIn(self.BANNER, html)
+
+    def test_banner_when_llm_wanted_but_unavailable(self):
+        _, html, _ = digest.build([], {}, {}, {"llm_used": False, "llm_failed": False, "llm_off": False})
+        self.assertIn(self.BANNER, html)
 
 
 class PipelineTests(unittest.TestCase):

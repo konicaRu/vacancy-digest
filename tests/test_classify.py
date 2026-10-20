@@ -13,6 +13,20 @@ PROFILE = {
 }
 
 
+_EXC = ["преподаватель", "автор курса", "руководитель", "тимлид", "hr", "бизнес", "системный", "system",
+        "1с", "1c", "web", "маркетплейс", "wildberries", "битрикс", "писатель", "junior", "младший", "intern",
+        "trainee", "кредитный", "таможенный", "инвестиционный", "маркетолог", "ученик", "фот", "стажер",
+        "стажёр", "практикант", "бухгалтер", "ассистент", "финансовый", "dwh", "экономист"]
+TITLE_QUERIES = [
+    {"include": ["аналитический", "аналитик", "analyst", "дата аналитик", "дата-аналитик", "аналитик данных",
+                 "data analyst", "data-аналитик"],
+     "exclude": _EXC + ["асутп"]},
+    {"include": ["продуктовый аналитик", "аналитик продукта", "продакт-аналитик", "продакт аналитик",
+                 "product analyst", "product analytics"],
+     "exclude": _EXC + ["дизайнер", "soc"]},
+]
+
+
 def tg_item(key, channel="nodatanojobs", pid=1):
     html = tg_page(channel, [tg_post(channel, pid, POST_TEXTS[key], NOW)])
     return telegram.parse_page(html, channel)[0]
@@ -55,7 +69,32 @@ class DecideTests(unittest.TestCase):
         self.assertEqual((v.bucket, v.drop_reason), ("drop", "нельзя удалённо из РФ"))
         self.assertEqual(self.bucket("junior").drop_reason, "грейд: junior")
         self.assertEqual(self.bucket("sa").drop_reason, "роль: system_analyst")
-        self.assertEqual(self.bucket("da_noskills").drop_reason, "аналитик данных без SQL/Python/Excel")
+        # требование SQL/Python/Excel снято 20.10: критерий — запрос по названию и формат
+        self.assertNotEqual(self.bucket("da_noskills").bucket, "drop")
+
+    def test_title_queries_replace_role_patterns(self):
+        # названия — с живого прогона 20.10 (careerstation_analyst, jabka.work)
+        profile = dict(PROFILE, title_queries=TITLE_QUERIES)
+        cases = {
+            "Аналитик в команду монетизации Авито Работы": "",
+            "BI-Аналитик в Лабораторию Касперского": "",
+            "Senior Data-аналитик": "",
+            "Продуктовый аналитик для разработки AI-решений": "",
+            "Data Analyst — аналитика данных и ETL для бизнеса": "",  # «бизнес» после тире не считается
+            "Product Lead — аналитика и ML для предсказания LTV": "должность не подходит под запрос",
+            "Data and Analytics Lead": "должность не подходит под запрос",
+            "Системный аналитик": "стоп-слово в должности: системный",
+            "Бизнес-аналитик в Aventus IT": "стоп-слово в должности: бизнес",
+            "Junior Data Аналитик": "стоп-слово в должности: junior",
+        }
+        for title, reason in cases.items():
+            with self.subTest(title=title):
+                item = Item(source="site:jabka", kind="site", external_id=title, url="u",
+                            text=f"{title}\nУдалённо из России", hint_title=title)
+                v = decide(keyword_classify(item), profile)
+                self.assertEqual(v.drop_reason, reason)
+                if not reason:
+                    self.assertEqual(v.bucket, "main")
 
     def test_company_from_title(self):
         v = keyword_classify(tg_item("vv_product"))

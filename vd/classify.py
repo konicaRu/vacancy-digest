@@ -131,11 +131,34 @@ def keyword_classify(item: Item) -> Verdict:
 
 
 # ---------------------------------------------------------------- корзины
+TITLE_TAIL = re.compile(r"\s[—–-]\s")
+
+
+def _has_word(text: str, term: str) -> bool:
+    """Слово с начала, как морфология hh: «аналитик» ловит «аналитика», «BI-Аналитик»."""
+    return re.search(r"(?<!\w)" + re.escape(term.lower()), text) is not None
+
+
+def title_match(title: str, queries: list[dict]) -> str:
+    """Запросы в духе hh.ru NAME:(include…) AND NOT NAME:(exclude…), проверяется должность до « — »
+    (на jabka после тире идёт описание). Пусто — подходит, иначе причина отсева."""
+    role = TITLE_TAIL.split(title, maxsplit=1)[0].lower()
+    stop = ""
+    for q in queries:
+        if not any(_has_word(role, t) for t in q.get("include", [])):
+            continue
+        bad = next((t for t in q.get("exclude", []) if _has_word(role, t)), None)
+        if bad is None:
+            return ""
+        stop = stop or bad
+    return f"стоп-слово в должности: {stop}" if stop else "должность не подходит под запрос"
+
+
 def decide(v: Verdict, profile: dict) -> Verdict:
     targets = set(profile.get("target_roles", ["product_analyst", "data_analyst"]))
     exclude_grades = set(profile.get("exclude_grades", ["intern", "junior"]))
     exclude_words = [w.lower() for w in profile.get("exclude_title_words", [])]
-    skills = [s.lower() for s in profile.get("data_analyst_required_skills", [])]
+    queries = profile.get("title_queries")
 
     def drop(reason: str) -> Verdict:
         v.bucket, v.drop_reason = "drop", reason
@@ -152,17 +175,16 @@ def decide(v: Verdict, profile: dict) -> Verdict:
             return drop("нельзя удалённо из РФ")
         v.bucket = "network"
         return v
-    if v.role not in targets:
+    if queries:
+        reason = title_match(v.title or "", queries)
+        if reason:
+            return drop(reason)
+    elif v.role not in targets:
         return drop(f"роль: {v.role}")
     if v.grade in exclude_grades:
         return drop(f"грейд: {v.grade}")
     if v.remote_from_russia == "no":
         return drop("нельзя удалённо из РФ")
-    # в подборке у ссылки только название — навыки там не проверить, не отсекаем
-    if v.role == "data_analyst" and skills and v.item.kind != "digest_link" and not v.item.via:
-        low = (v.item.text or "").lower()
-        if not any(s in low for s in skills):
-            return drop("аналитик данных без SQL/Python/Excel")
     v.bucket = "main" if v.remote_from_russia == "yes" else "unknown_format"
     return v
 

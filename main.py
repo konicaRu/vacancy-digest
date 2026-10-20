@@ -144,6 +144,7 @@ def _run(args, cfg: dict, store: Store) -> int:
         else:
             log.warning("LM Studio недоступна — отбор по ключевым словам")
     verdicts, llm_info = classify_all(to_classify, profile, llm)
+    llm_info["llm_off"] = not llm_requested  # выключена намеренно (конфиг или --no-llm) — без жёлтой плашки
     if not to_classify:
         llm_info["llm_used"] = True  # разбирать было нечего — предупреждение про модель не нужно
     dedup(verdicts, store.recent_ledger(cfg.get("run", {}).get("dedup_days", 30)))

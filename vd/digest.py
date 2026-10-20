@@ -112,7 +112,7 @@ def build(verdicts: list[Verdict], read_stats: dict, failed: dict[str, str],
         warn += ('<div style="background:#fdecec;color:#8a1f1f;padding:8px 12px;margin:12px 0;font-size:13px;">'
                  'Не удалось прочитать: ' + escape(", ".join(source_name(s) for s in failed)) +
                  '. Их закладки не сдвинуты — следующий запуск заберёт пропущенное.</div>')
-    if llm_info.get("llm_failed") or not llm_info.get("llm_used"):
+    if llm_info.get("llm_failed") or not (llm_info.get("llm_used") or llm_info.get("llm_off")):
         warn += ('<div style="background:#fff6e0;color:#7a5a00;padding:8px 12px;margin:12px 0;font-size:13px;">'
                  'Локальная модель была недоступна — отбор по ключевым словам, точность ниже обычной.</div>')
 
