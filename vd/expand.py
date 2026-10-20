@@ -42,7 +42,12 @@ def role_anchors(item: Item) -> list[tuple[str, str]]:
 
 
 def is_bundle(item: Item) -> bool:
-    return item.kind == "telegram" and len(role_anchors(item)) >= 2
+    return item.kind == "telegram" and (len(role_anchors(item)) >= 2 or len(item.blocks) >= 2)
+
+
+def _block_title(text: str) -> str:
+    first = next((ln for ln in text.splitlines() if ln.strip()), "")
+    return re.sub(r"^[\W_]+", "", first.replace("️", "")).strip()
 
 
 def expand_bundles(
@@ -58,6 +63,21 @@ def expand_bundles(
 
     def expand(it: Item) -> None:
         info["bundles"] += 1
+        # цитата = вакансия: свой текст (и формат работы) у каждой, ссылка «Откликнуться»
+        for block_text, href in it.blocks:
+            title = _block_title(block_text)
+            if not ROLE_WORDS.search(title):
+                continue
+            info["links"] += 1
+            url = href.split("#")[0]
+            key = (it.source, url)
+            if key in taken or is_seen(*key):
+                info["known"] += 1
+                continue
+            taken.add(key)
+            out.append(Item(source=it.source, kind="digest_link", external_id=url, url=url, text=block_text,
+                            hint_title=title, published_at=it.published_at, via=it.source))
+            info["new"] += 1
         for href, title in role_anchors(it):
             info["links"] += 1
             m = TME_POST.match(href)

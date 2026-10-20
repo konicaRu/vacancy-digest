@@ -11,7 +11,7 @@ import main
 from tests.fixtures import JABKA_HTML, NOW, POST_TEXTS, tg_page, tg_post
 from vd import digest, mailer
 from vd.llm import LMStudioClient
-from vd.models import Item, SourceResult
+from vd.models import Item, SourceResult, Verdict
 from vd.sources import jabka, telegram
 from vd.store import Store
 
@@ -48,6 +48,18 @@ class LLMBannerTests(unittest.TestCase):
     def test_banner_when_llm_wanted_but_unavailable(self):
         _, html, _ = digest.build([], {}, {}, {"llm_used": False, "llm_failed": False, "llm_off": False})
         self.assertIn(self.BANNER, html)
+
+
+class SourceStatsTests(unittest.TestCase):
+    def test_empty_source_and_nothing_found_are_said_in_words(self):
+        found = Item(source="tg:c", kind="telegram", external_id="1", url="u", text="t")
+        verdicts = [Verdict(item=found, is_vacancy=True, title="Продуктовый аналитик", bucket="main")]
+        read = {"tg:a": 0, "tg:b": 5, "tg:c": 3}
+        _, html, text = digest.build(verdicts, read, {}, {"llm_off": True})
+        self.assertIn("новых постов нет", html)        # tg:a — канал молчал
+        self.assertIn("подходящих не найдено", html)   # tg:b — посты были, вакансий нет
+        for line in ("TG · a: новых постов нет", "TG · b: новых 5, подходящих не найдено", "TG · c: новых 3, в письме 1"):
+            self.assertIn(line, text)
 
 
 class PipelineTests(unittest.TestCase):

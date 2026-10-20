@@ -134,9 +134,11 @@ def keyword_classify(item: Item) -> Verdict:
 TITLE_TAIL = re.compile(r"\s[—–-]\s")
 
 
-def _has_word(text: str, term: str) -> bool:
-    """Слово с начала, как морфология hh: «аналитик» ловит «аналитика», «BI-Аналитик»."""
-    return re.search(r"(?<!\w)" + re.escape(term.lower()), text) is not None
+def _has_word(text: str, term: str, whole: bool = False) -> bool:
+    """По началу слова («системный» ловит «системного»); whole — только целое слово
+    («аналитик» не ловит «…для аналитики»). Дефис разделяет слова: «BI-Аналитик», «Data-аналитик»."""
+    tail = r"(?!\w)" if whole else ""
+    return re.search(r"(?<!\w)" + re.escape(term.lower()) + tail, text) is not None
 
 
 def title_match(title: str, queries: list[dict]) -> str:
@@ -145,7 +147,7 @@ def title_match(title: str, queries: list[dict]) -> str:
     role = TITLE_TAIL.split(title, maxsplit=1)[0].lower()
     stop = ""
     for q in queries:
-        if not any(_has_word(role, t) for t in q.get("include", [])):
+        if not any(_has_word(role, t, whole=True) for t in q.get("include", [])):
             continue
         bad = next((t for t in q.get("exclude", []) if _has_word(role, t)), None)
         if bad is None:

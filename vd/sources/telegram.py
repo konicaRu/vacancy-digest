@@ -41,6 +41,9 @@ def parse_page(html: str, channel: str) -> list[Item]:
         text = _text(text_el) if text_el else ""
         anchors = [(a["href"], a.get_text(" ", strip=True)) for a in text_el.select("a[href]")] if text_el else []
         links = [h for h, _ in anchors]
+        # подборки вида «цитата = вакансия: название, описание, формат, «Откликнуться»» (mtsbankcareer)
+        blocks = [(_text(bq), bq.select_one("a[href]")["href"])
+                  for bq in (text_el.select("blockquote") if text_el else []) if bq.select_one("a[href]")]
         t = msg.select_one("a.tgme_widget_message_date time[datetime]") or msg.select_one("time[datetime]")
         published = None
         if t is not None:
@@ -57,6 +60,7 @@ def parse_page(html: str, channel: str) -> list[Item]:
             published_at=published,
             links=links,
             anchors=anchors,
+            blocks=blocks,
         ))
     return items
 

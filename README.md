@@ -27,7 +27,7 @@ LinkedIn, отбирает вакансии **продуктового анал�
 
 | Источник | Как читаем | В конфиге |
 |---|---|---|
-| nodatanojobs, careerstation_analyst, codeworkshopru, HR_CATExpert, talentmove_channel | веб-превью `t.me/s/<канал>`, без аккаунта | `sources.telegram.channels` |
+| nodatanojobs, careerstation_analyst, codeworkshopru, HR_CATExpert, talentmove_channel, mtsbankcareer | веб-превью `t.me/s/<канал>`, без аккаунта | `sources.telegram.channels` |
 | jabka.work | ссылка поиска с фильтрами «Аналитик» + удалёнка | `sources.sites` |
 | LinkedIn | только письма-уведомления в почте (подписки на вакансии, посты знакомых) | `sources.linkedin_mail` (выключен) |
 

@@ -102,10 +102,15 @@ def build(verdicts: list[Verdict], read_stats: dict, failed: dict[str, str],
         if src in failed:
             stat_rows += (f'<tr><td style="padding:2px 12px 2px 0;">{escape(source_name(src))}</td>'
                           f'<td colspan="2" style="color:#b03030;">не прочитан: {escape(failed[src])}</td></tr>')
-        else:
+        elif not read_stats.get(src):
             stat_rows += (f'<tr><td style="padding:2px 12px 2px 0;">{escape(source_name(src))}</td>'
-                          f'<td style="padding:2px 12px;text-align:right;">{read_stats.get(src, 0)}</td>'
-                          f'<td style="padding:2px 12px;text-align:right;">{in_digest.get(src, 0)}</td></tr>')
+                          f'<td colspan="2" style="padding:2px 12px;color:#888;">новых постов нет</td></tr>')
+        else:
+            found = in_digest.get(src, 0)
+            cell = str(found) if found else '<span style="color:#888;">подходящих не найдено</span>'
+            stat_rows += (f'<tr><td style="padding:2px 12px 2px 0;">{escape(source_name(src))}</td>'
+                          f'<td style="padding:2px 12px;text-align:right;">{read_stats[src]}</td>'
+                          f'<td style="padding:2px 12px;">{cell}</td></tr>')
 
     warn = ""
     if failed:
@@ -157,5 +162,16 @@ def build(verdicts: list[Verdict], read_stats: dict, failed: dict[str, str],
             lines.append("")
     if not (main or unknown or network):
         lines.append("Новых подходящих вакансий нет.")
+    lines += ["", "== Источники =="]
+    for src in sorted(set(read_stats) | set(failed)):
+        if src in failed:
+            status = f"не прочитан: {failed[src]}"
+        elif not read_stats.get(src):
+            status = "новых постов нет"
+        elif in_digest.get(src):
+            status = f"новых {read_stats[src]}, в письме {in_digest[src]}"
+        else:
+            status = f"новых {read_stats[src]}, подходящих не найдено"
+        lines.append(f"{source_name(src)}: {status}")
     text = "\n".join(lines)
     return subject, html, text

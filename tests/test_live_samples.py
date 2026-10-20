@@ -2,7 +2,8 @@
 import unittest
 from pathlib import Path
 
-from vd.classify import classify_all, keyword_classify
+from tests.test_classify import TITLE_QUERIES
+from vd.classify import classify_all, decide, keyword_classify
 from vd.expand import expand_bundles
 from vd.models import Verdict
 from vd.sources import telegram
@@ -44,6 +45,40 @@ class LiveTelegramTests(unittest.TestCase):
                           "Аналитик в команду монетизации Авито Работы"])
         self.assertTrue(all(i.via == f"tg:{CH}" for i in avito))
         self.assertEqual(info["bundles"], 2)
+
+
+class MtsBankBundleTests(unittest.TestCase):
+    """t.me/mtsbankcareer: два формата подборок (живая страница 20.10.2026)."""
+
+    def setUp(self):
+        page = telegram.parse_page(sample("tg_mtsbankcareer_2026-10-20.html"), "mtsbankcareer")
+        self.posts = {i.external_id: i for i in page}
+
+    def expand(self, pid):
+        return expand_bundles([self.posts[pid]], lambda s, e: False, lambda ch, p: None)
+
+    def test_quote_bundle_split_into_vacancies_with_own_text(self):
+        # пост 2531: каждая вакансия — цитата «название / описание / Москва | Офис или гибрид / Откликнуться»
+        out, info = self.expand("2531")
+        self.assertEqual(info["bundles"], 1)
+        self.assertNotIn("2531", [i.external_id for i in out])  # сам пост в письмо не идёт
+        titles = {i.hint_title: i for i in out}
+        self.assertIn("Старший продуктовый аналитик", titles)
+        self.assertIn("Ведущий бизнес-аналитик", titles)
+        self.assertNotIn("Старший бренд-менеджер", titles)  # не аналитик — не разворачиваем
+        pa = titles["Старший продуктовый аналитик"]
+        self.assertEqual(pa.url.split("?")[0], "https://job.mtsbank.ru/vacancies/5351")
+        self.assertIn("Офис или гибрид", pa.text)
+        self.assertNotIn("бренд", pa.text.lower())  # текст — только своей цитаты
+        # формат проверяется по самой вакансии: офис → отсев с верной причиной
+        v = decide(keyword_classify(pa), dict(PROFILE, title_queries=TITLE_QUERIES))
+        self.assertEqual(v.drop_reason, "нельзя удалённо из РФ")
+
+    def test_link_bundle_from_screenshot(self):
+        # пост 2521 «Мяу, вакансии»: названия — сами ссылки на сайт
+        out, info = self.expand("2521")
+        self.assertEqual(info["bundles"], 1)
+        self.assertEqual(sorted(i.hint_title for i in out), ["Бизнес-аналитик", "Системный аналитик"])
 
 
 class FakeLLM:

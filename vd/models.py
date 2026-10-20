@@ -21,6 +21,7 @@ class Item:
     hint_title: Optional[str] = None
     links: list[str] = field(default_factory=list)
     anchors: list[tuple[str, str]] = field(default_factory=list)   # (ссылка, текст ссылки)
+    blocks: list[tuple[str, str]] = field(default_factory=list)    # цитаты со ссылкой: (текст цитаты, ссылка)
     via: Optional[str] = None       # пришло из подборки этого источника (для статистики и подписи)
 
 

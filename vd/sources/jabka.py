@@ -55,21 +55,38 @@ def collect(
     is_seen: Callable[[str, str], bool],
     first_run: bool,
     lookback_days: int = 3,
+    max_pages: int = 10,
 ) -> SourceResult:
+    """Листает выдачу (&page=2, 3, …), пока на странице есть свежие непросмотренные карточки:
+    на 1-й странице только ~20 карточек за последние сутки, а ~19 удалённых «Аналитиков» выходит в день."""
     source = "site:jabka"
     cutoff = datetime.combine(date.today() - timedelta(days=lookback_days), datetime.min.time())
     collected: dict[str, Item] = {}
     try:
         for url in urls:
-            page_items = parse_page(fetch(url))
-            if not page_items:
-                raise SourceError(f"в выдаче {url} не найдено ни одной вакансии — проверь ссылку или вёрстку сайта")
-            for it in page_items:
-                if is_seen(source, it.external_id):
-                    continue
-                if first_run and it.published_at and it.published_at < cutoff:
-                    continue
-                collected[it.external_id] = it
+            prev_ids: set[str] = set()
+            for n in range(1, max_pages + 1):
+                page_url = url if n == 1 else f"{url}{'&' if '?' in url else '?'}page={n}"
+                page_items = parse_page(fetch(page_url))
+                if not page_items:
+                    if n == 1:
+                        raise SourceError(f"в выдаче {url} не найдено ни одной вакансии — проверь ссылку или вёрстку сайта")
+                    break
+                ids = {it.external_id for it in page_items}
+                if ids == prev_ids:  # сайт не понял номер страницы и отдал ту же
+                    break
+                prev_ids = ids
+                fresh = False
+                for it in page_items:
+                    if is_seen(source, it.external_id):
+                        continue
+                    old = it.published_at is not None and it.published_at < cutoff
+                    if old and first_run:
+                        continue
+                    fresh = fresh or not old
+                    collected[it.external_id] = it
+                if not fresh:  # дальше только старое или уже виденное (закреплённые старые карточки не мешают)
+                    break
     except SourceError as e:
         return SourceResult(source=source, error=str(e))
     except Exception as e:
