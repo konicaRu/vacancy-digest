@@ -79,6 +79,15 @@ mail:
   subject_prefix: "Вакансии"
   send_when_empty: true    # присылать письмо «новых нет», чтобы было видно, что агент жив
 
+# --- Отметки «Откликнулся» (Google Форма) -------------------------
+# Под каждой вакансией — ссылка: один клик записывает её код в таблицу ответов формы.
+# Каждый запуск читает таблицу (открыта по ссылке на просмотр) и больше не присылает эти вакансии.
+marks:
+  enabled: true
+  form_url: "https://docs.google.com/forms/d/e/1FAIpQLSdJXUL_hnpacyizfb6LJg2kcS0FYcO2R91_IxvSw1buF2RXbQ/formResponse"
+  form_field: "entry.536851866"
+  sheet_csv_url: "https://docs.google.com/spreadsheets/d/1HTjh3T_puwcSS91bsVyPKHC3CwnrRiLAhiAJN0YTadM/export?format=csv"
+
 # --- Локальная LLM (LM Studio) ----------------------------------
 llm:
   enabled: false   # 20.10: пока без модели — LM Studio не поднимается без окна; включим, когда наладим автозапуск

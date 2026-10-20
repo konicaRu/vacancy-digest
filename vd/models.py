@@ -39,6 +39,7 @@ class Verdict:
     contact: Optional[str] = None
     reason: str = ""
     by_llm: bool = False
+    num: int = 0                          # номер в письме (для отметки «Отозвался»)
     bucket: str = "drop"                  # main | unknown_format | network | drop
     drop_reason: str = ""
     also_in: list[str] = field(default_factory=list)

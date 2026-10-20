@@ -13,7 +13,7 @@ import logging
 import sys
 import time
 from collections import Counter
-from datetime import date
+from datetime import date, datetime
 from logging.handlers import RotatingFileHandler
 from pathlib import Path
 
@@ -21,6 +21,7 @@ from vd import digest, mailer
 from vd.classify import classify_all, dedup, dedup_key
 from vd.config import ConfigError, load_config
 from vd.expand import expand_bundles
+from vd.marks import fetch_marks, mark_link
 from vd.llm import LMStudioClient
 from vd.sources import jabka, linkedin_mail, make_session, telegram
 from vd.store import Store
@@ -149,7 +150,20 @@ def _run(args, cfg: dict, store: Store) -> int:
         llm_info["llm_used"] = True  # разбирать было нечего — предупреждение про модель не нужно
     dedup(verdicts, store.recent_ledger(cfg.get("run", {}).get("dedup_days", 30)))
 
-    subject, html, text = digest.build(verdicts, dict(read_stats), failed, llm_info, bundle_info=bundle_info)
+    # отметки «Откликнулся» / «Разобрал группу» из Google Формы: показываем в письме, статус — только после отправки
+    marks_cfg = cfg.get("marks", {})
+    marked: list[dict] = []
+    if marks_cfg.get("enabled"):
+        try:
+            marked = store.pending_marks(fetch_marks(marks_cfg, fetch))
+        except Exception as e:
+            failed["marks"] = f"{type(e).__name__}: {e}"
+            log.warning("Отметки откликов не прочитаны: %s", e)
+    now = datetime.now()
+    tag = f"vd-{now:%Y%m%d}-{'am' if now.hour < 17 else 'pm'}"
+    subject, html, text = digest.build(
+        verdicts, dict(read_stats), failed, llm_info, bundle_info=bundle_info, tag=tag, marked=marked,
+        mark_link=(lambda code, label: mark_link(marks_cfg, code, label)) if marks_cfg.get("enabled") else None)
     out_dir = ROOT / "out"
     out_dir.mkdir(exist_ok=True)
     out_file = out_dir / f"digest_{date.today():%Y-%m-%d}.html"
@@ -173,10 +187,12 @@ def _run(args, cfg: dict, store: Store) -> int:
     bookmarks = {r.source: r.new_bookmark for r in results if not r.error and r.new_bookmark}
     seen = list({(it.source, it.external_id) for it in items + to_classify})
     ledger_rows = [{"dedup_key": dedup_key(v), "title": v.title, "company": v.company,
-                    "url": v.item.url, "source": v.item.source, "bucket": v.bucket} for v in picked]
+                    "url": v.item.url, "source": v.item.source, "bucket": v.bucket,
+                    "code": f"{tag}-{v.num}"} for v in picked]
+    marks = {m["code"]: m["status"] for m in marked}
 
     if not picked and not failed and not cfg["mail"].get("send_when_empty", True):
-        store.commit_after_send(bookmarks, seen, ledger_rows)
+        store.commit_after_send(bookmarks, seen, ledger_rows, marks)
         store.finish_run(run_id, "empty", stats)
         log.info("Новых нет, письмо не отправляю (send_when_empty: false)")
         return 0
@@ -189,7 +205,7 @@ def _run(args, cfg: dict, store: Store) -> int:
         log.error("Письмо НЕ отправлено: %s", e)
         return 1
 
-    store.commit_after_send(bookmarks, seen, ledger_rows)
+    store.commit_after_send(bookmarks, seen, ledger_rows, marks)
     stats["message_id"] = msg_id
     store.finish_run(run_id, "sent", stats)
     log.info("Письмо отправлено на %s (%s)", cfg["mail"]["to"], subject)

@@ -31,7 +31,8 @@ CREATE TABLE IF NOT EXISTS ledger (
     source      TEXT,
     bucket      TEXT,
     reported_at TEXT NOT NULL,
-    status      TEXT DEFAULT 'new'      -- new / applied / rejected / interview — на будущее
+    status      TEXT DEFAULT 'new',     -- new / applied (отметка «Откликнулся») / rejected / interview
+    code        TEXT                    -- код в письме vd-ГГГГММДД-am|pm-N, по нему приходит отметка
 );
 CREATE TABLE IF NOT EXISTS runs (
     id          INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -50,6 +51,10 @@ class Store:
         path.parent.mkdir(parents=True, exist_ok=True)
         self.conn = sqlite3.connect(str(path))
         self.conn.executescript(SCHEMA)
+        # базы, созданные до отметок откликов (20.10.2026), — без колонки code
+        cols = {r[1] for r in self.conn.execute("PRAGMA table_info(ledger)")}
+        if "code" not in cols:
+            self.conn.execute("ALTER TABLE ledger ADD COLUMN code TEXT")
         self.conn.commit()
 
     def close(self) -> None:
@@ -68,10 +73,25 @@ class Store:
 
     def recent_ledger(self, days: int) -> list[dict]:
         since = (datetime.now() - timedelta(days=days)).isoformat(timespec="seconds")
+        # на что откликнулся или что разобрал — не присылаем больше никогда
         rows = self.conn.execute(
-            "SELECT dedup_key, title, company, url, source FROM ledger WHERE reported_at >= ?", (since,)
-        ).fetchall()
+            "SELECT dedup_key, title, company, url, source FROM ledger "
+            "WHERE reported_at >= ? OR status IN ('applied', 'reviewed')", (since,)).fetchall()
         return [dict(zip(("dedup_key", "title", "company", "url", "source"), r)) for r in rows]
+
+    def pending_marks(self, marks: dict[str, str]) -> list[dict]:
+        """Отмеченные в таблице вакансии ({код: applied|reviewed}), статус которых ещё не записан."""
+        if not marks:
+            return []
+        qs = ",".join("?" * len(marks))
+        rows = self.conn.execute(
+            f"SELECT code, title, company, status FROM ledger WHERE code IN ({qs})", tuple(marks)).fetchall()
+        out = []
+        for code, title, company, status in rows:
+            want = marks[code]
+            if status == "new" or (status == "reviewed" and want == "applied"):  # отклик важнее «разобрано»
+                out.append({"code": code, "title": title, "company": company, "status": want})
+        return sorted(out, key=lambda r: (r["status"], r["code"]))
 
     def sent_today(self) -> bool:
         row = self.conn.execute(
@@ -102,6 +122,7 @@ class Store:
         bookmarks: dict[str, str],
         seen: Iterable[tuple[str, str]],
         ledger_rows: Iterable[dict],
+        marks: Optional[dict[str, str]] = None,
     ) -> None:
         now = datetime.now().isoformat(timespec="seconds")
         with self.conn:  # одна транзакция
@@ -117,10 +138,13 @@ class Store:
             )
             for r in ledger_rows:
                 self.conn.execute(
-                    "INSERT OR IGNORE INTO ledger (dedup_key, title, company, url, source, bucket, reported_at) "
-                    "VALUES (?, ?, ?, ?, ?, ?, ?)",
-                    (r["dedup_key"], r["title"], r.get("company"), r["url"], r["source"], r["bucket"], now),
+                    "INSERT OR IGNORE INTO ledger (dedup_key, title, company, url, source, bucket, reported_at, code) "
+                    "VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+                    (r["dedup_key"], r["title"], r.get("company"), r["url"], r["source"], r["bucket"], now,
+                     r.get("code")),
                 )
+            self.conn.executemany("UPDATE ledger SET status=? WHERE code=? AND status IN ('new', 'reviewed')",
+                                  [(s, c) for c, s in (marks or {}).items()])
 
     def source_stats(self, days: int = 30) -> list[tuple]:
         """Сколько вакансий каждый источник принёс в дайджест за N дней (для решения, какие каналы держать)."""

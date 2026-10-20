@@ -5,6 +5,7 @@ import threading
 import unittest
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from pathlib import Path
+from urllib.parse import quote
 from unittest import mock
 
 import main
@@ -62,11 +63,68 @@ class SourceStatsTests(unittest.TestCase):
             self.assertIn(line, text)
 
 
+class ApplyLinkTests(unittest.TestCase):
+    def test_vacancies_numbered_and_reply_link_prefilled(self):
+        def v(title, bucket, i):
+            item = Item(source="site:jabka", kind="site", external_id=str(i), url=f"https://jabka.work/jobs/{i}", text=title)
+            return Verdict(item=item, is_vacancy=True, title=title, bucket=bucket)
+        verdicts = [v("Аналитик А", "unknown_format", 1), v("Аналитик Б", "main", 2), v("Аналитик В", "main", 3)]
+        marked = [{"code": "vd-20261019-pm-4", "title": "Аналитик Авито", "company": "Авито", "status": "applied"},
+                  {"code": "vd-20261019-pm-5", "title": "Аналитик X", "company": None, "status": "reviewed"}]
+        subject, html, text = digest.build(verdicts, {"site:jabka": 3}, {}, {"llm_off": True},
+                                           tag="vd-20261020-am", mark_link=lambda c, label: f"https://form?id={c}",
+                                           marked=marked)
+        # сквозная нумерация: сначала «Подходят», потом «Формат не указан»
+        self.assertEqual([(x.title, x.num) for x in verdicts], [("Аналитик А", 3), ("Аналитик Б", 1), ("Аналитик В", 2)])
+        self.assertIn("1. Аналитик Б", text)
+        self.assertIn("3. Аналитик А", text)
+        self.assertIn('href="https://form?id=vd-20261020-am-1"', html)  # «Откликнулся» под вакансией №1
+        self.assertIn("Откликнулся", html)
+        self.assertIn("Отмечено откликов: 1", html)
+        self.assertIn("Аналитик Авито", html)
+        self.assertIn("разобрано: 1", html)
+
+    def test_grouped_by_source_with_review_group_link(self):
+        def v(title, bucket, source, via=None):
+            item = Item(source=source, kind="site", external_id=title, url=f"https://x/{title}", text=title, via=via)
+            return Verdict(item=item, is_vacancy=True, title=title, bucket=bucket)
+        verdicts = [v("J-уточнить", "unknown_format", "site:jabka"), v("J-подходит", "main", "site:jabka"),
+                    v("C-1", "main", "tg:careerstation_analyst"),
+                    v("C-2 из подборки", "main", "tg:careerstation_pm", via="tg:careerstation_analyst")]
+        calls = []
+
+        def link(code, label):
+            calls.append((code, label))
+            return f"https://form?id={code}"
+        _, html, text = digest.build(verdicts, {}, {}, {"llm_off": True}, tag="vd-20261020-am", mark_link=link)
+        # группы: сначала источник, где больше подходящих; вакансия из подборки — в группе канала-подборки
+        self.assertEqual([(x.title, x.num) for x in verdicts],
+                         [("J-уточнить", 4), ("J-подходит", 3), ("C-1", 1), ("C-2 из подборки", 2)])
+        self.assertLess(html.index("TG · careerstation_analyst"), html.index("jabka.work"))
+        self.assertIn("== TG · careerstation_analyst (2) ==", text)
+        self.assertIn("== jabka.work (2) ==", text)
+        # под группой — «Разобрал группу»: одна строка в таблице со всеми номерами и названиями
+        self.assertIn(("vd-20261020-am-1,2", "Разобрано · TG · careerstation_analyst: 1. C-1; 2. C-2 из подборки"), calls)
+        self.assertIn("Разобрал группу (2)", html)
+
+    def test_huge_group_label_is_shortened(self):
+        long = "Очень длинное название вакансии продуктового аналитика " * 2
+        verdicts = [Verdict(item=Item(source="site:jabka", kind="site", external_id=str(i), url="u", text="t"),
+                            is_vacancy=True, title=f"{long}{i}", bucket="main") for i in range(60)]
+        labels = []
+        digest.build(verdicts, {}, {}, {"llm_off": True}, tag="vd-20261020-am",
+                     mark_link=lambda c, label: labels.append(label) or "u")
+        group = [lab for lab in labels if lab.startswith("Разобрано")][0]
+        self.assertLess(len(quote(group)), 6000)  # ссылка не разрастается
+        self.assertIn("и ещё", group)
+
+
 class PipelineTests(unittest.TestCase):
     def setUp(self):
         self.tmp = Path(tempfile.mkdtemp())
         shutil.copy(PROJECT / "config.yaml", self.tmp / "config.yaml")
         (self.tmp / "secrets.env").write_text("EMAIL_USER=me@example.com\nEMAIL_APP_PASSWORD=abcd efgh\n", encoding="utf-8")
+        self.marks_csv = "Отметка времени,id\n"
         self.patches = [mock.patch.object(main, "ROOT", self.tmp)]
         for p in self.patches:
             p.start()
@@ -80,6 +138,8 @@ class PipelineTests(unittest.TestCase):
         args = main.argparse.Namespace(dry_run="--dry-run" in argv, force="--force" in argv,
                                        no_llm=True, stats=False)
         def offline_fetch(url):
+            if "docs.google.com/spreadsheets" in url and self.marks_csv is not None:
+                return self.marks_csv
             raise ConnectionError("нет сети в тестах")
 
         with mock.patch.object(main, "collect_all", return_value=results or fake_results()), \
@@ -87,6 +147,35 @@ class PipelineTests(unittest.TestCase):
              mock.patch.object(mailer, "send", side_effect=send or (lambda *a, **k: "<id@x>")) as m:
             code = main.run(args)
         return code, m
+
+    def test_applied_link_mark_and_confirmation(self):
+        code, m = self.run_main()
+        html = m.call_args.args[2]
+        store = Store(self.tmp / "data" / "state.sqlite")
+        row = store.conn.execute("SELECT code, title FROM ledger WHERE code LIKE '%-1'").fetchone()
+        mark_code, title = row
+        self.assertRegex(mark_code, r"^vd-\d{8}-(am|pm)-1$")
+        # под вакансией — ссылка на форму с её кодом
+        self.assertIn(f"formResponse?entry.536851866={mark_code}%20%C2%B7%20", html)  # код · название
+        self.assertIn("Откликнулся", html)
+        # я нажал ссылку → код появился в таблице → пробный прогон показывает, но не меняет
+        self.marks_csv = f"Отметка времени,id\n20.10.2026 16:00:00,{mark_code}\n"
+        _, m2 = self.run_main("--force", "--dry-run")
+        self.assertEqual(store.conn.execute("SELECT status FROM ledger WHERE code=?", (mark_code,)).fetchone()[0], "new")
+        # настоящий прогон: подтверждение в письме и статус applied
+        _, m3 = self.run_main("--force")
+        self.assertIn("Отмечено откликов: 1", m3.call_args.args[2])
+        self.assertIn(title, m3.call_args.args[2])
+        self.assertEqual(store.conn.execute("SELECT status FROM ledger WHERE code=?", (mark_code,)).fetchone()[0], "applied")
+        # следующий выпуск уже не повторяет подтверждение
+        _, m4 = self.run_main("--force")
+        self.assertNotIn("Отмечено откликов", m4.call_args.args[2])
+
+    def test_marks_sheet_unavailable_is_flagged_not_fatal(self):
+        self.marks_csv = None  # таблица не открылась
+        code, m = self.run_main()
+        self.assertEqual(code, 0)
+        self.assertIn("Отметки откликов", m.call_args.args[2])
 
     def test_dry_run_changes_nothing(self):
         code, m = self.run_main("--dry-run")
@@ -96,7 +185,7 @@ class PipelineTests(unittest.TestCase):
         self.assertIsNone(store.get_bookmark("tg:nodatanojobs"))
         html = next((self.tmp / "out").glob("digest_*.html")).read_text(encoding="utf-8")
         self.assertIn("VK Видео", html)
-        self.assertIn("Формат не указан", html)
+        self.assertIn("формат не указан", html)    # вакансия без формата — в письме (оранжевая карточка)
         self.assertNotIn("MAXLINE", html)          # junior отсеян
         self.assertNotIn("Подборка актуальных", html)
 
