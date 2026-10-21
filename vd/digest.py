@@ -28,6 +28,8 @@ def source_name(source: str) -> str:
         return "LinkedIn"
     if source == "marks":
         return "Отметки откликов (Google Таблица)"
+    if source == "calendar":
+        return "Производственный календарь"
     return source
 
 

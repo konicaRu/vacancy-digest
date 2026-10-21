@@ -19,7 +19,7 @@ from html import escape
 from logging.handlers import RotatingFileHandler
 from pathlib import Path
 
-from vd import digest, mailer
+from vd import digest, mailer, workcal
 from vd.classify import classify_all, dedup, dedup_key
 from vd.config import ConfigError, load_config
 from vd.expand import expand_bundles
@@ -75,7 +75,8 @@ def collect_all(cfg: dict, store: Store, fetch) -> list:
             continue
         if site["name"] == "jabka":
             first_run = store.get_bookmark("site:jabka") is None
-            res = jabka.collect(site["urls"], fetch, store.is_seen, first_run, site.get("lookback_days_first_run", 3))
+            res = jabka.collect(site["urls"], fetch, store.is_seen, first_run, site.get("lookback_days_first_run", 3),
+                               site.get("max_pages", 10))
         else:
             log.warning("Сайт %s пока не поддерживается", site["name"])
             continue
@@ -144,11 +145,22 @@ def _run(args, cfg: dict, store: Store) -> int:
                  {"am": "Утренний", "pm": "Вечерний"}[slot])
         return 0
 
+    # письма — только в рабочие дни производственного календаря РФ (с переносами); вручную — в любой день
+    fetch = make_fetcher(cfg)
+    calendar_warning = None
+    if cfg.get("run", {}).get("workdays_only", True):
+        workday, calendar_warning = workcal.is_workday(
+            now.date(), ROOT / "data", fetch, cfg.get("run", {}).get("calendar_url", workcal.URL))
+        if not workday and not (args.force or args.dry_run):
+            log.info("Нерабочий день %s — письма нет; всё новое придёт в первый рабочий день", f"{now:%d.%m}")
+            return 0
+
     run_id = store.start_run(now)
     started = time.time()
-    fetch = make_fetcher(cfg)
     results = collect_all(cfg, store, fetch)
     failed = {r.source: r.error for r in results if r.error}
+    if calendar_warning:
+        failed["calendar"] = calendar_warning
     warnings = {r.source: r.warning for r in results if r.warning}
 
     items = [it for r in results for it in r.items if not store.is_seen(it.source, it.external_id)]

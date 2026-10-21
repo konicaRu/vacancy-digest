@@ -11,6 +11,7 @@ from unittest import mock
 
 import main
 from tests.fixtures import JABKA_HTML, NOW, POST_TEXTS, tg_page, tg_post
+from tests.test_workcal import year_2026
 from vd import digest, mailer
 from vd.llm import LMStudioClient
 from vd.models import Item, SourceResult, Verdict
@@ -126,6 +127,7 @@ class PipelineTests(unittest.TestCase):
         shutil.copy(PROJECT / "config.yaml", self.tmp / "config.yaml")
         (self.tmp / "secrets.env").write_text("EMAIL_USER=me@example.com\nEMAIL_APP_PASSWORD=abcd efgh\n", encoding="utf-8")
         self.marks_csv = "Отметка времени,id\n"
+        self.calendar = "0" * 365  # по умолчанию все дни рабочие — тесты не зависят от дня недели
         self.patches = [mock.patch.object(main, "ROOT", self.tmp)]
         for p in self.patches:
             p.start()
@@ -141,6 +143,8 @@ class PipelineTests(unittest.TestCase):
         def offline_fetch(url):
             if "docs.google.com/spreadsheets" in url and self.marks_csv is not None:
                 return self.marks_csv
+            if "isdayoff.ru" in url and self.calendar is not None:
+                return self.calendar
             raise ConnectionError("нет сети в тестах")
 
         with mock.patch.object(main, "_now", return_value=at or datetime.now()),              mock.patch.object(main, "collect_all", return_value=results or fake_results()), \
@@ -254,6 +258,24 @@ class PipelineTests(unittest.TestCase):
         res[0].warning = "больше 5 страниц новых постов — часть старых пропущена"
         _, m = self.run_main(results=res)
         self.assertIn("часть старых пропущена", m.call_args.args[2])
+
+    def test_no_letter_on_days_off(self):
+        self.calendar = year_2026()
+        sat, mon = datetime(2026, 10, 24, 10, 0), datetime(2026, 10, 26, 10, 0)
+        _, m = self.run_main(at=sat)
+        m.assert_not_called()
+        store = Store(self.tmp / "data" / "state.sqlite")
+        self.assertEqual(store.conn.execute("SELECT COUNT(*) FROM runs").fetchone()[0], 0)  # ничего не записали
+        self.assertIsNone(store.get_bookmark("tg:nodatanojobs"))
+        _, m_force = self.run_main("--force", at=sat.replace(hour=11))  # вручную — можно и в выходной
+        m_force.assert_called_once()
+        _, m_mon = self.run_main(at=mon)  # понедельник: обычный выпуск
+        m_mon.assert_called_once()
+
+    def test_calendar_unavailable_flagged(self):
+        self.calendar = None  # isdayoff.ru недоступен → пн–пт + красная плашка
+        _, m = self.run_main(at=datetime(2026, 10, 21, 10, 0))
+        self.assertIn("Производственный календарь", m.call_args.args[2])
 
     def test_failed_send_keeps_state(self):
         def boom(*a, **k):

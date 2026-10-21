@@ -61,6 +61,7 @@ sources:
     - name: jabka
       enabled: true
       lookback_days_first_run: 5
+      max_pages: 20           # ~20 карточек в сутки: 20 страниц хватит и после новогодних каникул
       urls:
         - "https://jabka.work/?search=%D0%90%D0%BD%D0%B0%D0%BB%D0%B8%D1%82%D0%B8%D0%BA&workMode=REMOTE"
         # Попробовать вместо широкого «Аналитик» — раздел «Продукт → Аналитика»:
@@ -102,5 +103,6 @@ llm:
 run:
   once_per_slot: true       # два выпуска в день — утро и вечер; каждый не чаще раза (кроме --force)
   evening_hour: 17          # с этого часа (МСК, время компьютера) — вечерний выпуск
+  workdays_only: true       # письма только в рабочие дни производственного календаря РФ (isdayoff.ru, кэш в data/)
   dedup_days: 30            # вакансию, уже отправленную за N дней, повторно не шлём
   http_timeout_sec: 25
