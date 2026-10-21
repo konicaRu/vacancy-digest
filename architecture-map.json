@@ -1,0 +1,115 @@
+{
+  "meta": {
+    "name": "vacancy-digest — карта архитектуры для агента",
+    "snapshot_date": "2026-10-21",
+    "code_revision": "430ea2e (+ правки 21.10 в этом же коммите)",
+    "staleness_policy": "Снимок, не живой источник правды. Автоматически не обновляется. При расхождении с кодом верить коду, карту поправить. Обновлять по «гит сейв», только когда менялись структура, схема БД, расписание или автоматика — и только после вопроса пользователю «структура изменилась — обновить карту?».",
+    "human_view": "architecture-map.html",
+    "flow_diagram": "architecture-flow.html (Archify, исходник — .archify/<папка>/candidate.json, не в git)"
+  },
+  "project": {
+    "purpose": "Дважды в день (после входа в Windows и в 17:00) собрать вакансии продуктового аналитика и аналитика данных, которые можно делать удалённо из России, и прислать одно письмо. Отклики отмечаются из письма одним кликом.",
+    "owner_profile": "Продуктовый аналитик, Череповец, ищет только удалёнку из РФ; hh.ru — вручную, не в агенте",
+    "done_criterion_v1": "7 дней подряд: оба выпуска приходят сами, ни один источник не «не прочитан» два выпуска подряд, отметки подхватываются, в каналах нет подходящих вакансий, которых не было в письме. Отсчёт с 21.10.2026.",
+    "repo": "https://github.com/konicaRu/vacancy-digest",
+    "status": "v1 работает по расписанию; модель LM Studio выключена; LinkedIn выключен",
+    "language": "русский (ответы, документы, письмо)"
+  },
+  "stack": {
+    "runtime": "Python 3.11, Windows 10, локально (не облако: российские сайты режут облачные IP)",
+    "dependencies": ["requests", "beautifulsoup4", "PyYAML", "python-dotenv"],
+    "storage": "SQLite data/state.sqlite",
+    "mail": "SMTP Яндекс (smtp.yandex.ru:465), пароль приложения",
+    "marks": "Google Форма (GET formResponse) + Google Таблица ответов (CSV export)",
+    "scheduler": "Планировщик Windows, задача VacancyDigest",
+    "llm": "LM Studio + Qwen 2.5-14B Instruct 1M — код есть, выключено (llm.enabled: false)",
+    "tooling": ["unittest (54 теста)", "pyright (пока 38 ошибок типов — шум BeautifulSoup)", "Archify для схемы потока"]
+  },
+  "structure": {
+    "main.py": "оркестрация запуска: выпуск утро/вечер → сбор → подборки → отбор → дедуп → отметки → письмо → SMTP → коммит состояния; флаги --dry-run --force --no-llm --stats",
+    "vd/config.py": "читает config.yaml и secrets.env каждый запуск; без конфига — остановка",
+    "vd/models.py": "Item (сырой элемент: text, anchors, blocks, via), Verdict (разбор + bucket, num), SourceResult",
+    "vd/sources/telegram.py": "t.me/s/<канал>, пагинация ?before=, один пост ?embed=1; текст строками по <br> (_text); цитаты со ссылкой → Item.blocks",
+    "vd/sources/jabka.py": "выдача jabka.work, листает &page=N пока есть свежие непросмотренные карточки",
+    "vd/sources/linkedin_mail.py": "письма LinkedIn по IMAP (выключено)",
+    "vd/expand.py": "подборки → отдельные вакансии: ссылки-названия, вложенные подборки, подборки-цитаты",
+    "vd/classify.py": "предфильтр, keyword_classify, title_match (запросы по названию), decide (корзины), guard_llm, dedup",
+    "vd/llm.py": "клиент LM Studio (OpenAI-совместимый, JSON-схема)",
+    "vd/marks.py": "ссылки на форму, разбор CSV таблицы → {код: applied|reviewed}",
+    "vd/digest.py": "HTML + текст письма: группы по источникам, номера, «✓ Откликнулся», «☑ Разобрал группу», таблица источников, плашки",
+    "vd/mailer.py": "SMTP; «отправлено» только если сервер принял адресата",
+    "vd/store.py": "SQLite: закладки, seen, ledger, runs; commit_after_send — одна транзакция после отправки",
+    "tests/": "unittest; tests/samples/ — живые страницы Telegram",
+    "config.yaml": "источники, profile.title_queries, mail, marks, llm, run (once_per_slot, evening_hour)",
+    "run_digest.bat / setup.bat / register_task.ps1": "запуск (лог → logs/scheduler.log), установка .venv, регистрация задачи"
+  },
+  "database": {
+    "file": "data/state.sqlite (в .gitignore)",
+    "tables": {
+      "bookmarks": "source PK, value, updated_at — Telegram: id последнего поста; jabka: время чтения",
+      "seen": "(source, external_id) PK, first_seen — что уже разобрано",
+      "ledger": "dedup_key PK, title, company, url, source, bucket, reported_at, status (new|applied|reviewed), code (vd-ГГГГММДД-am|pm-N)",
+      "runs": "id, run_date, started_at, finished_at, status (running|sent|empty|failed|dry-run), stats_json, error"
+    },
+    "write_rule": "bookmarks + seen + ledger + статусы отметок — одной транзакцией commit_after_send, только после того как SMTP принял письмо",
+    "migrations": "Store.__init__: ALTER TABLE ledger ADD COLUMN code, если колонки нет"
+  },
+  "automation": {
+    "task": "VacancyDigest (register_task.ps1)",
+    "triggers": ["при входе в Windows + 3 мин", "ежедневно 17:00 (время компьютера = МСК)"],
+    "settings": "StartWhenAvailable, RunOnlyIfNetworkAvailable, лимит 1 час",
+    "slots": "выпуск = утро (am) до run.evening_hour=17, вечер (pm) после; каждый не чаще раза в день (Store.sent_in_slot по started_at)"
+  },
+  "scripts": {
+    "run": "run_digest.bat",
+    "dry_run": "run_digest.bat --dry-run --force",
+    "send_again": "run_digest.bat --force",
+    "stats": ".venv\\Scripts\\python main.py --stats",
+    "tests": ".venv/Scripts/python -X utf8 -m unittest discover -s tests -t .",
+    "register_task": "powershell -ExecutionPolicy Bypass -File register_task.ps1",
+    "typecheck": "pyright --pythonpath .venv/Scripts/python.exe main.py vd tests"
+  },
+  "frontend": {
+    "kind": "HTML-письмо (Яндекс Почта)",
+    "subject": "«20.10 утро: 27 подходят, 9 уточнить»",
+    "layout": "плашки (красная — не прочитано, жёлтая — модель недоступна, зелёная — отмечено), группы по источникам, зелёные/оранжевые карточки, номера, ссылки отметок, таблица источников, сводка отсева",
+    "preview": "out/digest_<дата>-am|pm.html"
+  },
+  "gotchas": [
+    "--dry-run ничего не запоминает: каждый пробный прогон видит одно и то же. --force отправляет и СДВИГАЕТ закладки — не использовать «для проверки», пока отбор не готов.",
+    "Удалить data/state.sqlite = начать с нуля: первый запуск берёт lookback_days_first_run (5) дней.",
+    "jabka: 1-я страница ≈ сутки вакансий; без листания теряются. На 1-й странице бывают старые закреплённые карточки — остановка по «нет свежих непросмотренных», а не по первой старой.",
+    "Telegram: get_text(\"\\n\") рвёт заголовки между <b>-тегами («Senior Data» вместо «Senior Data Аналитик в Банк 131») — только _text (строки по <br>).",
+    "Подборки бывают вложенными (подборка → пост-подборка) и цитатами со ссылкой «Откликнуться» (mtsbankcareer) — формат работы проверяется по тексту самой цитаты.",
+    "title_queries: include — целым словом («аналитик» не ловит «для аналитики»), exclude — по началу слова; проверяется только должность до « — ».",
+    "Новые Google Формы — черновики: пока не нажата «Опубликовать», formResponse отвечает «Документ не опубликован».",
+    "Коды отметок vd-test-* игнорируются (тестовые письма). У письма 20.10 15:17 кодов нет — его вакансии отметить нельзя.",
+    "Письмо статично: отметку в нём не видно; :visited Яндекс не применяет (проверено). Список откликов — таблица ответов формы.",
+    "Яндекс сам ссылки в письмах не открывает (проверено vd-test2-noclick) — иначе GET-отметки срабатывали бы ложно.",
+    "Триггер 17:00, зарегистрированный после 17:00, сработает только завтра (StartWhenAvailable не догоняет время до регистрации).",
+    "LM Studio: `lms` не поднимает сервис без открытого окна («Timed out waiting for LM Studio daemon») — поэтому модель выключена. Модель путает «не подходит» с «нельзя удалённо» — guard_llm.",
+    "Отмеченные (applied/reviewed) не возвращаются никогда; остальные — дедуп 30 дней.",
+    "Коммит и push — только после «да» пользователя; тесты перед коммитом."
+  ],
+  "secrets": {
+    "file": "secrets.env (в .gitignore): EMAIL_USER, EMAIL_APP_PASSWORD",
+    "rule": "не выводить, не коммитить; проверять заполненность без печати значений",
+    "public_in_config": "ссылки на Google Форму и CSV таблицы в config.yaml — не секрет, но любой со ссылкой видит коды/названия откликов"
+  },
+  "docs": {
+    "memory.md": "решения и почему, статус, открытые вопросы, следующие шаги, журнал",
+    "ARCHITECTURE.md": "устройство + Changelog",
+    "README.md": "установка, команды, что в письме",
+    "CLAUDE.md": "инструкция агенту: «гит сейв / гит лоад», принципы работы",
+    "architecture-flow.html": "схема одного запуска (Archify)",
+    "architecture-map.html / .json": "эта карта"
+  },
+  "roadmap": [
+    "Неделя наблюдения по критерию v1 (с 21.10)",
+    "Открытые вопросы: релокация в «удалённо из РФ» (GRC), стоп-слова (SOC, Marketing…), повтор источника в карточках, повтор запроса при таймауте",
+    "Модель: научить поднимать LM Studio без окна → включить, симметричный guard_llm",
+    "LinkedIn через почту → включить после недели сверки",
+    "Через месяц: --stats → решение по каналам",
+    "v2: черновики сопроводительных (Claude API); v3: Telegram-бот с кнопками откликов"
+  ]
+}

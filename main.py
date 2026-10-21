@@ -119,7 +119,7 @@ def _run(args, cfg: dict, store: Store) -> int:
     now = _now()
     evening_hour = cfg.get("run", {}).get("evening_hour", 17)
     slot = "pm" if now.hour >= evening_hour else "am"
-    if cfg.get("run", {}).get("once_per_slot", True) and store.sent_in_slot(now, evening_hour)             and not (args.force or args.dry_run):
+    if cfg.get("run", {}).get("once_per_slot", True) and store.sent_in_slot(now, evening_hour) and not (args.force or args.dry_run):
         log.info("%s выпуск уже отправлен — выхожу (для повторной отправки: --force)",
                  {"am": "Утренний", "pm": "Вечерний"}[slot])
         return 0
