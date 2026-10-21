@@ -121,6 +121,27 @@ class DedupTests(unittest.TestCase):
         dedup([a], ledger)
         self.assertEqual(a.drop_reason, "уже присылал раньше")
 
+    def test_same_generic_title_without_company_is_not_a_duplicate(self):
+        # 33 из 39 строк журнала 21.10 — без компании: «|senior data analyst» не должен глушить чужие вакансии
+        def jabka_v(url):
+            item = Item(source="site:jabka", kind="site", external_id=url, url=url,
+                        text="Senior Data Analyst | Россия | удаленка", hint_title="Senior Data Analyst")
+            return decide(keyword_classify(item), dict(PROFILE, title_queries=TITLE_QUERIES))
+        ledger = [{"dedup_key": "|senior data analyst", "title": "Senior Data Analyst", "company": None,
+                   "url": "https://jabka.work/jobs/a"}]
+        other, same = jabka_v("https://jabka.work/jobs/b"), jabka_v("https://jabka.work/jobs/a")
+        dedup([other, same], ledger)
+        self.assertNotEqual(other.bucket, "drop")
+        self.assertEqual(same.drop_reason, "уже присылал раньше")
+
+    def test_jabka_company_after_separated_at_sign(self):
+        # живая карточка jabka 21.10: «@» и компания — разные части текста
+        text = ("164K ₽ | 3K$ | Системный аналитик для автоматизации HR-процессов | @ | Mirapolis | · | HRTech | "
+                "Москва | · | удаленка | · | 1ч | Системный Анализ")
+        item = Item(source="site:jabka", kind="site", external_id="x", url="u", text=text,
+                    hint_title="Системный аналитик для автоматизации HR-процессов")
+        self.assertEqual(keyword_classify(item).company, "Mirapolis")
+
 
 class LLMFallbackTests(unittest.TestCase):
     def test_llm_failure_switches_to_keywords(self):

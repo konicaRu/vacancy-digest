@@ -51,3 +51,4 @@ class SourceResult:
     items: list[Item] = field(default_factory=list)
     new_bookmark: Optional[str] = None
     error: Optional[str] = None
+    warning: Optional[str] = None  # прочитан, но не целиком (упёрлись в лимит страниц) — в письмо жёлтой плашкой

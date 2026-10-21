@@ -12,8 +12,10 @@ import argparse
 import logging
 import sys
 import time
+import traceback
 from collections import Counter
-from datetime import date, datetime
+from datetime import datetime
+from html import escape
 from logging.handlers import RotatingFileHandler
 from pathlib import Path
 
@@ -98,8 +100,26 @@ def run(args) -> int:
     store = Store(ROOT / "data" / "state.sqlite")
     try:
         return _run(args, cfg, store)
+    except Exception as e:
+        # упавший запуск ≠ «вакансий нет»: закрываем запуск и шлём короткое письмо о сбое
+        log.exception("Запуск упал")
+        store.fail_running(f"{type(e).__name__}: {e}")
+        if not args.dry_run:
+            _alert_crash(cfg)
+        return 3
     finally:
         store.close()
+
+
+def _alert_crash(cfg: dict) -> None:
+    tb = traceback.format_exc()
+    subject = f"{datetime.now():%d.%m} СБОЙ агента — письма с вакансиями не будет"
+    text = f"Запуск упал, состояние не изменено — следующий запуск соберёт всё заново.\n\n{tb}\nПодробности: logs/run.log"
+    html = f"<html><body><p>{escape(text.splitlines()[0])}</p><pre>{escape(tb)}</pre></body></html>"
+    try:
+        mailer.send(cfg["mail"], subject, html, text)
+    except Exception as e:
+        log.error("Письмо о сбое тоже не ушло: %s", e)
 
 
 ISSUE_RU = {"am": "утро", "pm": "вечер"}
@@ -129,6 +149,7 @@ def _run(args, cfg: dict, store: Store) -> int:
     fetch = make_fetcher(cfg)
     results = collect_all(cfg, store, fetch)
     failed = {r.source: r.error for r in results if r.error}
+    warnings = {r.source: r.warning for r in results if r.warning}
 
     items = [it for r in results for it in r.items if not store.is_seen(it.source, it.external_id)]
     read_stats = Counter({r.source: 0 for r in results if not r.error})
@@ -171,10 +192,11 @@ def _run(args, cfg: dict, store: Store) -> int:
         except Exception as e:
             failed["marks"] = f"{type(e).__name__}: {e}"
             log.warning("Отметки откликов не прочитаны: %s", e)
-    tag = f"vd-{now:%Y%m%d}-{slot}"
+    resend = store.sends_in_slot(now, evening_hour)  # --force в уже отправленный выпуск → свои коды (am2, am3…)
+    tag = f"vd-{now:%Y%m%d}-{slot}{resend + 1 if resend else ''}"
     subject, html, text = digest.build(
         verdicts, dict(read_stats), failed, llm_info, run_date=now.date(), issue=ISSUE_RU[slot],
-        bundle_info=bundle_info, tag=tag, marked=marked,
+        bundle_info=bundle_info, tag=tag, marked=marked, warnings=warnings,
         mark_link=(lambda code, label: mark_link(marks_cfg, code, label)) if marks_cfg.get("enabled") else None)
     out_dir = ROOT / "out"
     out_dir.mkdir(exist_ok=True)

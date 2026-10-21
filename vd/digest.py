@@ -116,7 +116,8 @@ def _group_html(src: str, rows: list[Verdict], href, group_href: str) -> str:
 def build(verdicts: list[Verdict], read_stats: dict, failed: dict[str, str],
           llm_info: dict, run_date: date | None = None, issue: str = "",
           bundle_info: dict | None = None, tag: str | None = None,
-          mark_link=None, marked: list[dict] | None = None) -> tuple[str, str, str]:
+          mark_link=None, marked: list[dict] | None = None,
+          warnings: dict[str, str] | None = None) -> tuple[str, str, str]:
     """Возвращает (тема, html, текст). Вакансиям проставляет сквозные номера (v.num).
     tag — метка выпуска («vd-20261020-am»); код вакансии — f"{tag}-{num}". mark_link(код) → ссылка
     «Откликнулся» под вакансией; marked — вакансии, отмеченные с прошлого письма (подтверждение вверху)."""
@@ -186,6 +187,9 @@ def build(verdicts: list[Verdict], read_stats: dict, failed: dict[str, str],
         warn += ('<div style="background:#fdecec;color:#8a1f1f;padding:8px 12px;margin:12px 0;font-size:13px;">'
                  'Не удалось прочитать: ' + escape(", ".join(source_name(s) for s in failed)) +
                  '. Их закладки не сдвинуты — следующий запуск заберёт пропущенное.</div>')
+    for src, w in (warnings or {}).items():
+        warn += ('<div style="background:#fff6e0;color:#7a5a00;padding:8px 12px;margin:12px 0;font-size:13px;">'
+                 f'{escape(source_name(src))}: {escape(w)}.</div>')
     if llm_info.get("llm_failed") or not (llm_info.get("llm_used") or llm_info.get("llm_off")):
         warn += ('<div style="background:#fff6e0;color:#7a5a00;padding:8px 12px;margin:12px 0;font-size:13px;">'
                  'Локальная модель была недоступна — отбор по ключевым словам, точность ниже обычной.</div>')
@@ -219,6 +223,7 @@ def build(verdicts: list[Verdict], read_stats: dict, failed: dict[str, str],
     lines = [f"Вакансии на {run_date:%d.%m.%Y}", ""]
     if failed:
         lines += ["Не удалось прочитать: " + ", ".join(source_name(s) for s in failed), ""]
+    lines += [f"{source_name(s)}: {w}." for s, w in (warnings or {}).items()]
     if marked_line:
         lines += [marked_line, ""]
     text_groups = ([("От знакомых", network, "")] if network else []) + \

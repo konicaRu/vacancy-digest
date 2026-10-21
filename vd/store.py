@@ -95,11 +95,7 @@ class Store:
 
     def sent_in_slot(self, now: datetime, evening_hour: int = 17) -> bool:
         """Уже был выпуск в этот слот: «утро» — до evening_hour, «вечер» — после (по времени старта запуска)."""
-        evening = now.hour >= evening_hour
-        rows = self.conn.execute(
-            "SELECT started_at FROM runs WHERE run_date=? AND status IN ('sent', 'empty')",
-            (now.date().isoformat(),)).fetchall()
-        return any((datetime.fromisoformat(r[0]).hour >= evening_hour) == evening for r in rows)
+        return self.sends_in_slot(now, evening_hour) > 0
 
     # ---------- журнал запусков ----------
     def start_run(self, now: Optional[datetime] = None) -> int:
@@ -117,6 +113,12 @@ class Store:
             (datetime.now().isoformat(timespec="seconds"), status,
              json.dumps(stats, ensure_ascii=False), error, run_id),
         )
+        self.conn.commit()
+
+    def fail_running(self, error: str) -> None:
+        """Запуск упал посреди работы — не оставлять его вечно «running»."""
+        self.conn.execute("UPDATE runs SET status='failed', finished_at=?, error=? WHERE status='running'",
+                          (datetime.now().isoformat(timespec="seconds"), error))
         self.conn.commit()
 
     # ---------- запись после отправки ----------
@@ -140,9 +142,11 @@ class Store:
                 [(s, e, now) for s, e in seen],
             )
             for r in ledger_rows:
+                # прислали повторно (после dedup_days) — новый код и дата, статус отметки сохраняется
                 self.conn.execute(
-                    "INSERT OR IGNORE INTO ledger (dedup_key, title, company, url, source, bucket, reported_at, code) "
-                    "VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+                    "INSERT INTO ledger (dedup_key, title, company, url, source, bucket, reported_at, code) "
+                    "VALUES (?, ?, ?, ?, ?, ?, ?, ?) ON CONFLICT(dedup_key) DO UPDATE SET url=excluded.url, "
+                    "bucket=excluded.bucket, reported_at=excluded.reported_at, code=excluded.code",
                     (r["dedup_key"], r["title"], r.get("company"), r["url"], r["source"], r["bucket"], now,
                      r.get("code")),
                 )
@@ -150,9 +154,20 @@ class Store:
                                   [(s, c) for c, s in (marks or {}).items()])
 
     def source_stats(self, days: int = 30) -> list[tuple]:
-        """Сколько вакансий каждый источник принёс в дайджест за N дней (для решения, какие каналы держать)."""
+        """Сколько вакансий каждый источник принёс в дайджест за N дней и сколько из них отмечено
+        (для решения, какие каналы держать)."""
         since = (datetime.now() - timedelta(days=days)).isoformat(timespec="seconds")
         return self.conn.execute(
             "SELECT source, bucket, COUNT(*) FROM ledger WHERE reported_at >= ? GROUP BY source, bucket "
-            "ORDER BY source", (since,)
+            "UNION ALL SELECT source, CASE status WHEN 'applied' THEN 'откликнулся' ELSE 'разобрано' END, COUNT(*) "
+            "FROM ledger WHERE reported_at >= ? AND status IN ('applied', 'reviewed') GROUP BY source, status "
+            "ORDER BY 1", (since, since)
         ).fetchall()
+
+    def sends_in_slot(self, now: datetime, evening_hour: int = 17) -> int:
+        """Сколько писем уже ушло в этот выпуск (повторные — через --force)."""
+        evening = now.hour >= evening_hour
+        rows = self.conn.execute(
+            "SELECT started_at FROM runs WHERE run_date=? AND status IN ('sent', 'empty')",
+            (now.date().isoformat(),)).fetchall()
+        return sum((datetime.fromisoformat(r[0]).hour >= evening_hour) == evening for r in rows)

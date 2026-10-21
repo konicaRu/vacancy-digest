@@ -98,6 +98,7 @@ def collect(
     found: dict[int, Item] = {}
     max_seen: Optional[int] = None
     before: Optional[int] = None
+    warning: Optional[str] = None
 
     try:
         for page in range(max_pages):
@@ -124,8 +125,8 @@ def collect(
                 break
             before = oldest_id
         else:
-            log.warning("%s: достигнут предел %s страниц, часть старых постов могла остаться непрочитанной",
-                        channel, max_pages)
+            warning = f"больше {max_pages} страниц новых постов — часть старых пропущена (закладка перепрыгнула)"
+            log.warning("%s: %s", channel, warning)
     except SourceError as e:
         return SourceResult(source=source, error=str(e))
     except Exception as e:  # сеть, таймаут, 4xx/5xx
@@ -133,4 +134,4 @@ def collect(
 
     new_bookmark = str(max(max_seen, last_id or 0)) if max_seen else bookmark
     items = [found[k] for k in sorted(found)]
-    return SourceResult(source=source, items=items, new_bookmark=new_bookmark)
+    return SourceResult(source=source, items=items, new_bookmark=new_bookmark, warning=warning)

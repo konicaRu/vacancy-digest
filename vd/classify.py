@@ -103,7 +103,8 @@ def keyword_classify(item: Item) -> Verdict:
     if role == "other":
         role = _role_of(text[:300])
     company = None
-    m = re.search(r"@([^|·\n]{2,40})", text) if item.kind == "site" else None
+    # jabka: «@Компания» или «@ | Компания» (живая карточка — @ и название разными частями)
+    m = re.search(r"@\s*(?:\|\s*)?([^|·\n]{2,40})", text) if item.kind == "site" else None
     if m:
         company = m.group(1).strip()
     else:
@@ -219,12 +220,15 @@ def _similar(t1: str, c1: str, t2: str, c2: str) -> bool:
 
 def dedup(verdicts: list[Verdict], recent_ledger: list[dict]) -> None:
     """Помечает дубли (внутри запуска и уже отправленные ранее) корзиной drop."""
-    ledger_norm = [(norm(r.get("title")), norm(r.get("company")), r.get("dedup_key")) for r in recent_ledger]
+    ledger_norm = [(norm(r.get("title")), norm(r.get("company")), r.get("dedup_key"), r.get("url"))
+                   for r in recent_ledger]
     kept: list[Verdict] = []
     order = {"network": 0, "main": 1, "unknown_format": 2}
     for v in sorted((x for x in verdicts if x.bucket != "drop"), key=lambda x: order.get(x.bucket, 9)):
         t, c, key = norm(v.title), norm(v.company), dedup_key(v)
-        if any(key == lk or _similar(t, c, lt, lc) for lt, lc, lk in ledger_norm):
+        # без компании ключ = одно название («|senior data analyst») — тогда дубль только по той же ссылке
+        if any(v.item.url == lu or (c and key == lk) or _similar(t, c, lt, lc)
+               for lt, lc, lk, lu in ledger_norm):
             v.bucket, v.drop_reason = "drop", "уже присылал раньше"
             continue
         twin = next((k for k in kept if _similar(t, c, norm(k.title), norm(k.company))), None)

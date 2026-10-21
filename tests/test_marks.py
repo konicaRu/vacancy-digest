@@ -68,6 +68,24 @@ class StoreMarksTests(unittest.TestCase):
         keys = {r["dedup_key"] for r in self.store.recent_ledger(30)}
         self.assertEqual(keys, {"k1", "k2"})  # k3 забыт через 30 дней; отмеченные — помним всегда
 
+    def test_reissued_vacancy_gets_new_code(self):
+        # вакансию прислали снова через 30+ дней — отметка по новому коду должна сработать
+        self.store.commit_after_send({}, [], [{"dedup_key": "k1", "title": "Аналитик 1", "company": "Авито",
+                                               "url": "u1", "source": "site:jabka", "bucket": "main",
+                                               "code": "vd-20261125-am-4"}])
+        self.assertEqual([r["title"] for r in self.store.pending_marks({"vd-20261125-am-4": "applied"})],
+                         ["Аналитик 1"])
+
+    def test_stats_show_applied_and_reviewed(self):
+        self.store.commit_after_send({}, [], [], marks={"vd-20261020-am-1": "applied", "vd-20261020-am-2": "reviewed"})
+        stats = {(s, b): n for s, b, n in self.store.source_stats(30)}
+        self.assertEqual(stats[("site:jabka", "main")], 3)
+        self.assertEqual(stats[("site:jabka", "откликнулся")], 1)
+        self.assertEqual(stats[("site:jabka", "разобрано")], 1)
+
+    def test_resend_codes(self):
+        self.assertEqual(parse_marks("t,id\nx,vd-20261021-am2-3 · Аналитик\n"), {"vd-20261021-am2-3": "applied"})
+
     def test_old_database_gets_code_column(self):
         path = Path(tempfile.mkdtemp()) / "old.sqlite"
         c = sqlite3.connect(path)

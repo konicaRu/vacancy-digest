@@ -225,6 +225,36 @@ class PipelineTests(unittest.TestCase):
         codes = [r[0] for r in store.conn.execute("SELECT code FROM ledger")]
         self.assertTrue(codes and all(c.startswith("vd-20261020-am-") for c in codes))
 
+    def test_crash_sends_alert_and_closes_run(self):
+        # упавший запуск не должен выглядеть как «вакансий нет»
+        args = main.argparse.Namespace(dry_run=False, force=False, no_llm=True, stats=False)
+        with mock.patch.object(main, "collect_all", side_effect=KeyError("sources")), \
+             mock.patch.object(main, "make_fetcher", return_value=lambda u: ""), \
+             mock.patch.object(mailer, "send", return_value="<id@x>") as m:
+            code = main.run(args)
+        self.assertEqual(code, 3)
+        self.assertIn("СБОЙ", m.call_args.args[1])
+        self.assertIn("KeyError", m.call_args.args[3])
+        store = Store(self.tmp / "data" / "state.sqlite")
+        self.assertEqual(store.conn.execute("SELECT status FROM runs").fetchall(), [("failed",)])
+
+    def test_forced_resend_in_same_issue_gets_own_codes(self):
+        at = datetime(2026, 10, 21, 10, 0)
+        self.run_main(at=at)
+        fresh = JABKA_HTML.replace("-rerb", "-zz22").replace("для разработки AI-решений", "для финтеха")
+        _, m = self.run_main("--force", at=at.replace(hour=11), results=[
+            SourceResult(source="site:jabka", items=jabka.parse_page(fresh), new_bookmark="y")])
+        self.assertIn("для финтеха", m.call_args.args[2])  # новая вакансия действительно ушла во 2-м письме
+        store = Store(self.tmp / "data" / "state.sqlite")
+        codes = [r[0] for r in store.conn.execute("SELECT code FROM ledger WHERE code IS NOT NULL")]
+        self.assertEqual(len(codes), len(set(codes)))  # одна отметка — одна вакансия
+
+    def test_page_limit_warning_in_letter(self):
+        res = fake_results()
+        res[0].warning = "больше 5 страниц новых постов — часть старых пропущена"
+        _, m = self.run_main(results=res)
+        self.assertIn("часть старых пропущена", m.call_args.args[2])
+
     def test_failed_send_keeps_state(self):
         def boom(*a, **k):
             raise mailer.SendError("auth failed")

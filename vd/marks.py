@@ -13,7 +13,7 @@ from typing import Callable
 from urllib.parse import quote
 
 # только коды выпусков (тестовые «vd-test-…» не подходят): выпуск + номер или номера группы через запятую
-CODE_RE = re.compile(r"(vd-\d{8}-(?:am|pm))-(\d+(?:,\d+)*)(?![\w,])")
+CODE_RE = re.compile(r"(vd-\d{8}-(?:am|pm)\d*)-(\d+(?:,\d+)*)(?![\w,])")  # am2 — повторная отправка (--force)
 REVIEWED = "Разобрано"
 
 

@@ -43,6 +43,15 @@ class TelegramTests(unittest.TestCase):
         self.assertEqual([int(i.external_id) for i in res.items], list(range(643, 655)))
         self.assertEqual(res.new_bookmark, "654")
         self.assertEqual(len(calls), 3)  # 650-654, 645-649, 640-644
+        self.assertIsNone(res.warning)
+
+    def test_page_limit_reported_not_silent(self):
+        # после долгого перерыва новых постов больше, чем помещается в max_pages — пропуск не должен быть молчаливым
+        data = [(i, NOW - timedelta(hours=100 - i)) for i in range(640, 655)]
+        fetch, _ = make_channel("ch", data)
+        res = telegram.collect("ch", "600", fetch, lookback_days=3, max_pages=2)
+        self.assertEqual(res.new_bookmark, "654")
+        self.assertIn("2 страниц", res.warning)
 
     def test_first_run_uses_lookback(self):
         data = [(i, NOW - timedelta(days=(20 - i) * 0.5)) for i in range(10, 21)]  # 0..5 дней назад
