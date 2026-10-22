@@ -49,6 +49,7 @@ jabka.work (позже — уведомления LinkedIn), отбирает в
 |---|---|---|
 | nodatanojobs, careerstation_analyst, codeworkshopru, HR_CATExpert, talentmove_channel, mtsbankcareer, young_june, newdirections, bigtechjobs | веб-превью `t.me/s/<канал>`, без аккаунта | `sources.telegram.channels` |
 | jabka.work | ссылка поиска с фильтрами «Аналитик» + удалёнка, листает страницы выдачи | `sources.sites` |
+| youngjunior.ru | разделы /product-analyst/jobs и /data-analyst/jobs; метка junior/intern, «стажировка», «в офис» → отсев | `sources.sites` |
 | LinkedIn | только письма-уведомления в почте (подписки на вакансии, посты знакомых) | `sources.linkedin_mail` (выключен) |
 
 ## Установка (Windows, один раз)

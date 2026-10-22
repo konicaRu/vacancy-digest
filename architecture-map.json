@@ -29,7 +29,7 @@
     "scheduler": "Планировщик Windows, задача VacancyDigest",
     "llm": "LM Studio + Qwen 2.5-14B Instruct 1M — код есть, выключено (llm.enabled: false)",
     "tooling": [
-      "unittest (78 тестов)",
+      "unittest (82 теста)",
       "pyright (≈38 ошибок типов — шум BeautifulSoup)",
       "Archify для схемы потока"
     ],
@@ -41,6 +41,7 @@
     "vd/models.py": "Item (сырой элемент: text, anchors, blocks, via), Verdict (разбор + bucket, num), SourceResult",
     "vd/sources/telegram.py": "t.me/s/<канал>, пагинация ?before=, один пост ?embed=1; текст строками по <br> (_text); цитаты со ссылкой → Item.blocks",
     "vd/sources/jabka.py": "выдача jabka.work, листает &page=N пока есть свежие непросмотренные карточки",
+    "vd/sources/youngjunior.py": "выдача youngjunior.ru (разделы product-analyst, data-analyst); метка грейда → grade_hint; листание через jabka.collect",
     "vd/sources/linkedin_mail.py": "письма LinkedIn по IMAP (выключено)",
     "vd/expand.py": "подборки → отдельные вакансии: ссылки-названия, вложенные, цитаты, «Подборка…» с одной ссылкой; грейд вакансии из раздела подборки (section_grade → Item.grade_hint)",
     "vd/classify.py": "предфильтр (в т.ч. ссылка на hh.ru), keyword_classify, title_match, decide (корзины, грейд из подборки), guard_llm, dedup (+ junior-двойники из других каналов)",
@@ -114,7 +115,8 @@
     "Меню канала «Вакансии │ Стажировки │ … │ Удалёнка │ …» (young_june, newdirections, bigtechjobs) убирается из текста — иначе «Удалёнка» = «удалённо из РФ».",
     "young_june / newdirections — junior/стажировки (youngjunior.ru); bigtechjobs делит подборки на «Стажёр: / Junior: / Middle:» — грейд берётся из раздела.",
     "youngjunior.ru — НЕ признак junior: через него идут и Middle-вакансии bigtechjobs.",
-    "api.hh.ru /vacancies и /employers без токена приложения — 403 (справочники открыты); выдуманный email в User-Agent — «blacklisted»."
+    "api.hh.ru /vacancies и /employers без токена приложения — 403 (справочники открыты); выдуманный email в User-Agent — «blacklisted».",
+    "youngjunior.ru — «junior и без опыта», но карточки без метки грейда бывают middle; метка junior/intern/«стажировка» → отсев."
   ],
   "secrets": {
     "file": "secrets.env (в .gitignore): EMAIL_USER, EMAIL_APP_PASSWORD",

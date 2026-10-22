@@ -23,7 +23,7 @@ def source_name(source: str) -> str:
     if source.startswith("tg:"):
         return f"TG · {source[3:]}"
     if source.startswith("site:"):
-        return {"jabka": "jabka.work"}.get(source[5:], source[5:])
+        return {"jabka": "jabka.work", "youngjunior": "youngjunior.ru"}.get(source[5:], source[5:])
     if source == "linkedin":
         return "LinkedIn"
     if source == "marks":

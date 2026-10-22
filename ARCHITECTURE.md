@@ -39,6 +39,7 @@ flowchart LR
 | `vd/models.py` | `Item` (сырой элемент), `Verdict` (результат разбора), `SourceResult`, `SourceError` |
 | `vd/store.py` | SQLite: закладки, просмотренные, журнал отправленного, журнал запусков |
 | `vd/sources/telegram.py` | Парсинг `t.me/s/<канал>`, пагинация `?before=`, один пост через `?embed=1` |
+| `vd/sources/youngjunior.py` | Выдача youngjunior.ru (`<article>`: должность, формат, зарплата, метка грейда, `<b>` компания, город, «сегодня/вчера/N дней назад»); листание — через `jabka.collect(source=, parse=)` |
 | `vd/sources/jabka.py` | Парсинг выдачи jabka.work (ссылки `/jobs/<slug>-YYYYMMDD-<код>`) |
 | `vd/sources/linkedin_mail.py` | Письма LinkedIn по IMAP: вакансии (`/jobs/view/<id>`) и посты знакомых |
 | `vd/expand.py` | Разворачивание постов-подборок в отдельные вакансии |
@@ -202,3 +203,4 @@ salary, contact, reason`. Блоки `<think>` вырезаются (Qwen3). Е�
 | 2026-10-21 | — | Ревью кода: дедуп без компании — только по ссылке; компания jabka из «@ \| Компания»; письмо «СБОЙ» и `fail_running`; повторно присланная вакансия получает новый код (upsert); `--force` в тот же выпуск — коды `am2…`; `--stats` с откликами; предупреждение о лимите страниц Telegram |
 | 2026-10-21 | — | Письма только в рабочие дни: `vd/workcal.py` (isdayoff.ru + кэш), `run.workdays_only`; лимит листания jabka 20 страниц (`max_pages`) |
 | 2026-10-22 | — | Каналы young_june, newdirections, bigtechjobs; отсев ссылок на hh.ru; грейд из разделов подборки + junior-двойники в других каналах; меню канала «│» убирается из текста; подборка «Подборка…» с одной ссылкой разворачивается |
+| 2026-10-22 | — | Источник youngjunior.ru (`vd/sources/youngjunior.py`; `jabka.collect` принимает `source`/`parse`); сайты в `main.collect_all` — таблица имя → collector |

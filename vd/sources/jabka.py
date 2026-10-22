@@ -56,10 +56,12 @@ def collect(
     first_run: bool,
     lookback_days: int = 3,
     max_pages: int = 10,
+    source: str = "site:jabka",
+    parse: Callable[[str], list[Item]] = lambda html: parse_page(html),
 ) -> SourceResult:
     """Листает выдачу (&page=2, 3, …), пока на странице есть свежие непросмотренные карточки:
-    на 1-й странице только ~20 карточек за последние сутки, а ~19 удалённых «Аналитиков» выходит в день."""
-    source = "site:jabka"
+    на 1-й странице только ~20 карточек за последние сутки, а ~19 удалённых «Аналитиков» выходит в день.
+    source/parse — для другого сайта с такой же выдачей (youngjunior.ru)."""
     cutoff = datetime.combine(date.today() - timedelta(days=lookback_days), datetime.min.time())
     collected: dict[str, Item] = {}
     try:
@@ -67,7 +69,7 @@ def collect(
             prev_ids: set[str] = set()
             for n in range(1, max_pages + 1):
                 page_url = url if n == 1 else f"{url}{'&' if '?' in url else '?'}page={n}"
-                page_items = parse_page(fetch(page_url))
+                page_items = parse(fetch(page_url))
                 if not page_items:
                     if n == 1:
                         raise SourceError(f"в выдаче {url} не найдено ни одной вакансии — проверь ссылку или вёрстку сайта")

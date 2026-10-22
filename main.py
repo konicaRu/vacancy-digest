@@ -25,7 +25,7 @@ from vd.config import ConfigError, load_config
 from vd.expand import expand_bundles
 from vd.marks import fetch_marks, mark_link
 from vd.llm import LMStudioClient
-from vd.sources import jabka, linkedin_mail, make_session, telegram
+from vd.sources import jabka, linkedin_mail, make_session, telegram, youngjunior
 from vd.store import Store
 
 ROOT = Path(__file__).resolve().parent
@@ -73,10 +73,11 @@ def collect_all(cfg: dict, store: Store, fetch) -> list:
     for site in cfg["sources"].get("sites", []):
         if not site.get("enabled", True):
             continue
-        if site["name"] == "jabka":
-            first_run = store.get_bookmark("site:jabka") is None
-            res = jabka.collect(site["urls"], fetch, store.is_seen, first_run, site.get("lookback_days_first_run", 3),
-                               site.get("max_pages", 10))
+        collector = {"jabka": jabka.collect, "youngjunior": youngjunior.collect}.get(site["name"])
+        if collector:
+            first_run = store.get_bookmark(f"site:{site['name']}") is None
+            res = collector(site["urls"], fetch, store.is_seen, first_run, site.get("lookback_days_first_run", 3),
+                            site.get("max_pages", 10))
         else:
             log.warning("Сайт %s пока не поддерживается", site["name"])
             continue
