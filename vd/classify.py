@@ -5,6 +5,7 @@ import logging
 import re
 from difflib import SequenceMatcher
 from typing import Optional
+from urllib.parse import urlparse
 
 from .llm import LLMUnavailable
 from .models import Item, Verdict
@@ -17,11 +18,18 @@ HIRING_HINT = re.compile(r"ищем|ищу|вакансия|hiring|#hiring|open 
 
 
 # ---------------------------------------------------------------- предфильтр
+def _is_hh(url: str) -> bool:
+    host = urlparse(url or "").netloc.lower().split(":")[0]
+    return any(host == d or host.endswith("." + d) for d in ("hh.ru", "headhunter.ru"))
+
+
 def prefilter(item: Item) -> Optional[str]:
     """Возвращает причину отсева или None, если пост стоит показывать модели."""
     text = item.text or ""
     if len(text.strip()) < 30 and not item.hint_title:
         return "пустой пост"
+    if any(_is_hh(link) for link in [item.url, *item.links]):
+        return "ссылка на hh.ru"  # на hh.ru откликаюсь сам
     if item.kind == "linkedin_post":
         return None if HIRING_HINT.search(text) else "пост без признаков найма"
     if not ROLE_HINT.search(text):
@@ -178,6 +186,8 @@ def decide(v: Verdict, profile: dict) -> Verdict:
             return drop("нельзя удалённо из РФ")
         v.bucket = "network"
         return v
+    if v.item.grade_hint in exclude_grades:
+        return drop(f"грейд: {v.item.grade_hint} (подборка)")  # раздел «Junior:» / «Подборка Junior/Стажёр …»
     if queries:
         reason = title_match(v.title or "", queries)
         if reason:
@@ -222,10 +232,15 @@ def dedup(verdicts: list[Verdict], recent_ledger: list[dict]) -> None:
     """Помечает дубли (внутри запуска и уже отправленные ранее) корзиной drop."""
     ledger_norm = [(norm(r.get("title")), norm(r.get("company")), r.get("dedup_key"), r.get("url"))
                    for r in recent_ledger]
+    # junior/стажёр по разделу подборки одного канала — то же самое и в другом канале, где грейда нет
+    juniors = [(norm(x.title), norm(x.company)) for x in verdicts if x.drop_reason.endswith("(подборка)")]
     kept: list[Verdict] = []
     order = {"network": 0, "main": 1, "unknown_format": 2}
     for v in sorted((x for x in verdicts if x.bucket != "drop"), key=lambda x: order.get(x.bucket, 9)):
         t, c, key = norm(v.title), norm(v.company), dedup_key(v)
+        if any((t, c) == (jt, jc) or _similar(t, c, jt, jc) for jt, jc in juniors):
+            v.bucket, v.drop_reason = "drop", "грейд: junior (подборка другого канала)"
+            continue
         # без компании ключ = одно название («|senior data analyst») — тогда дубль только по той же ссылке
         if any(v.item.url == lu or (c and key == lk) or _similar(t, c, lt, lc)
                for lt, lc, lk, lu in ledger_norm):

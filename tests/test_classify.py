@@ -57,6 +57,27 @@ class PrefilterTests(unittest.TestCase):
         self.assertIsNone(prefilter(tg_item("vv_product")))
 
 
+class HHLinkTests(unittest.TestCase):
+    """На hh.ru откликаюсь сам — вакансии со ссылкой туда в письмо не нужны."""
+
+    def item(self, url="https://t.me/ch/1", links=(), kind="telegram"):
+        return Item(source="tg:ch", kind=kind, external_id="1", url=url, links=list(links),
+                    text="Продуктовый аналитик в Авито. Удалённо из РФ, SQL, Python, A/B-тесты.")
+
+    def test_post_linking_to_hh_is_dropped(self):
+        for link in ("https://hh.ru/vacancy/123", "https://spb.hh.ru/vacancy/9?from=tg", "http://headhunter.ru/vacancy/1"):
+            with self.subTest(link=link):
+                self.assertEqual(prefilter(self.item(links=[link])), "ссылка на hh.ru")
+
+    def test_bundle_link_to_hh_is_dropped(self):
+        self.assertEqual(prefilter(self.item(url="https://hh.ru/vacancy/555", kind="digest_link")), "ссылка на hh.ru")
+
+    def test_similar_hosts_are_not_hh(self):
+        for link in ("https://github.com/hh/repo", "https://ahh.ru/x", "https://career.habr.com/vacancies/1"):
+            with self.subTest(link=link):
+                self.assertIsNone(prefilter(self.item(links=[link])))
+
+
 class DecideTests(unittest.TestCase):
     def bucket(self, key):
         return decide(keyword_classify(tg_item(key)), PROFILE)
@@ -133,6 +154,17 @@ class DedupTests(unittest.TestCase):
         dedup([other, same], ledger)
         self.assertNotEqual(other.bucket, "drop")
         self.assertEqual(same.drop_reason, "уже присылал раньше")
+
+    def test_junior_from_one_channel_drops_twin_in_another(self):
+        def v(channel, grade_hint):
+            item = Item(source=f"tg:{channel}", kind="digest_link", external_id=channel, url=f"https://x/{channel}",
+                        text="Data Analyst в Сбер Банк\nУдалённо из РФ", hint_title="Data Analyst в Сбер Банк",
+                        grade_hint=grade_hint)
+            return decide(keyword_classify(item), dict(PROFILE, title_queries=TITLE_QUERIES))
+        junior, twin = v("bigtechjobs", "junior"), v("newdirections", None)
+        self.assertEqual(twin.bucket, "main")  # сам по себе — подходит
+        dedup([junior, twin], [])
+        self.assertEqual(twin.drop_reason, "грейд: junior (подборка другого канала)")
 
     def test_jabka_company_after_separated_at_sign(self):
         # живая карточка jabka 21.10: «@» и компания — разные части текста

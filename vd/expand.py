@@ -42,7 +42,34 @@ def role_anchors(item: Item) -> list[tuple[str, str]]:
 
 
 def is_bundle(item: Item) -> bool:
-    return item.kind == "telegram" and (len(role_anchors(item)) >= 2 or len(item.blocks) >= 2)
+    if item.kind != "telegram":
+        return False
+    roles = len(role_anchors(item))
+    # «Подборка …» с единственной ссылкой-аналитиком — тоже подборка, иначе предфильтр выкинет пост вместе с вакансией
+    titled = bool(re.match(r"\W*подборк", (item.text or "").lstrip(), re.I))
+    return roles >= 2 or len(item.blocks) >= 2 or (titled and roles >= 1)
+
+
+GRADE_WORDS = [(re.compile(r"стаж|intern", re.I), "intern"), (re.compile(r"junior|джун|младш", re.I), "junior"),
+               (re.compile(r"middle|мидл", re.I), "middle"), (re.compile(r"senior|сеньор|старш|ведущ", re.I), "senior"),
+               (re.compile(r"lead|лид", re.I), "lead")]
+
+
+def _grade_word(line: str):
+    """Самое раннее слово-грейд в строке: «Подборка Junior/Стажёр» → junior."""
+    hits = [(m.start(), g) for rx, g in GRADE_WORDS for m in [rx.search(line)] if m]
+    return min(hits)[1] if hits else None
+
+
+def section_grade(bundle_text: str, title: str):
+    """Грейд вакансии из подборки: ближайший раздел над её строкой («Junior:», «Middle:»), иначе заголовок подборки."""
+    lines = [ln.strip() for ln in (bundle_text or "").splitlines()]
+    idx = next((i for i, ln in enumerate(lines) if title and title in ln), None)
+    if idx is not None:
+        for ln in reversed(lines[:idx]):
+            if ln.endswith(":") and len(ln) <= 40 and _grade_word(ln):
+                return _grade_word(ln)
+    return _grade_word(lines[0]) if lines else None
 
 
 def _block_title(text: str) -> str:
@@ -104,6 +131,7 @@ def expand_bundles(
                     expand(child)
                     continue
                 child.via = it.source
+                child.grade_hint = section_grade(it.text, title)
                 out.append(child)
                 info["new"] += 1
             else:
@@ -116,7 +144,8 @@ def expand_bundles(
                 text = (f"Вакансия: {title}\nСсылка: {url}\n---\n"
                         f"Контекст (пост-подборка, где была ссылка):\n{(it.text or '')[:1500]}")
                 out.append(Item(source=it.source, kind="digest_link", external_id=url, url=url,
-                                text=text, hint_title=title, published_at=it.published_at, via=it.source))
+                                text=text, hint_title=title, published_at=it.published_at, via=it.source,
+                                grade_hint=section_grade(it.text, title)))
                 info["new"] += 1
 
     for it in items:

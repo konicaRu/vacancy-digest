@@ -3,7 +3,7 @@ import unittest
 from pathlib import Path
 
 from tests.test_classify import TITLE_QUERIES
-from vd.classify import classify_all, decide, keyword_classify
+from vd.classify import classify_all, decide, dedup, keyword_classify
 from vd.expand import expand_bundles
 from vd.models import Verdict
 from vd.sources import telegram
@@ -79,6 +79,66 @@ class MtsBankBundleTests(unittest.TestCase):
         out, info = self.expand("2521")
         self.assertEqual(info["bundles"], 1)
         self.assertEqual(sorted(i.hint_title for i in out), ["Бизнес-аналитик", "Системный аналитик"])
+
+
+class BundleGradeTests(unittest.TestCase):
+    """Грейд из заголовков подборки (живые страницы 22.10.2026): «Подборка Junior/Стажёр …» или разделы «Junior:» / «Middle:»."""
+
+    def expand(self, sample_name, channel, pid):
+        posts = {p.external_id: p for p in telegram.parse_page(sample(sample_name), channel)}
+        out, _ = expand_bundles([posts[pid]], lambda s, e: False, lambda ch, p: None)
+        return {i.hint_title: i for i in out}
+
+    def test_sections_set_grade(self):
+        got = {t: i.grade_hint for t, i in self.expand("tg_bigtechjobs_2026-10-22.html", "bigtechjobs", "1130").items()}
+        self.assertEqual(got["Data Analyst в Сбер Банк"], "junior")
+        self.assertEqual(got["Продуктовый аналитик в Дзен в VK, Дзен"], "middle")
+        got = {t: i.grade_hint for t, i in self.expand("tg_bigtechjobs_2026-10-22.html", "bigtechjobs", "1141").items()}
+        self.assertEqual(got["Аналитик данных в Альфа-Банк: блок управления по работе с персоналом"], "junior")
+        self.assertEqual(got["Продуктовый аналитик в Такси в RWB (Wildberries & Russ)"], "middle")
+
+    def test_bundle_title_sets_grade_and_junior_is_dropped(self):
+        items = self.expand("tg_young_june_2026-10-22.html", "young_june", "3584")
+        profile = dict(PROFILE, title_queries=TITLE_QUERIES)
+        for title, item in items.items():
+            with self.subTest(title=title):
+                self.assertEqual(item.grade_hint, "junior")  # «Подборка Junior/Стажёр удалённо»
+                self.assertEqual(decide(keyword_classify(item), profile).drop_reason, "грейд: junior (подборка)")
+
+    def test_bundle_with_single_analyst_link_is_expanded(self):
+        # young_june/3586 «Подборка Junior/Стажёр удалённо»: одна ссылка-аналитик — раньше пост терялся целиком
+        items = self.expand("tg_young_june_2026-10-22.html", "young_june", "3586")
+        self.assertEqual(list(items), ["Аналитик данных в ТОЧКА ОПОРЫ"])
+        self.assertEqual(items["Аналитик данных в ТОЧКА ОПОРЫ"].grade_hint, "junior")
+
+    def test_middle_from_bundle_passes(self):
+        item = self.expand("tg_bigtechjobs_2026-10-22.html", "bigtechjobs", "1130")["Продуктовый аналитик в Дзен в VK, Дзен"]
+        v = decide(keyword_classify(item), dict(PROFILE, title_queries=TITLE_QUERIES))
+        self.assertNotIn("грейд", v.drop_reason)
+
+
+class ChannelFooterTests(unittest.TestCase):
+    def test_navigation_footer_is_not_remote(self):
+        # «Вакансии │ Стажировки │ За рубежом │ Удалёнка │ …» — меню канала, а не формат работы (пост — Москва)
+        posts = {p.external_id: p for p in telegram.parse_page(sample("tg_young_june_2026-10-22.html"), "young_june")}
+        post = posts["3585"]
+        self.assertNotIn("Удалёнка", post.text)
+        self.assertIn("Опыт проведения A/B-тестов", post.text)
+        self.assertEqual(keyword_classify(post).remote_from_russia, "unknown")
+
+
+class JuniorTwinTests(unittest.TestCase):
+    def test_junior_in_one_channel_drops_twin_from_another(self):
+        # «Data Analyst в Сбер Банк»: в bigtechjobs — раздел «Junior:», в newdirections — без грейда
+        big = {p.external_id: p for p in telegram.parse_page(sample("tg_bigtechjobs_2026-10-22.html"), "bigtechjobs")}
+        new = {p.external_id: p for p in telegram.parse_page(sample("tg_newdirections_2026-10-22.html"), "newdirections")}
+        bundles = [big["1130"]] + [p for p in new.values() if "Data Analyst в Сбер Банк" in (p.text or "")]
+        items, _ = expand_bundles(bundles, lambda s, e: False, lambda ch, p: None)
+        verdicts, _ = classify_all(items, dict(PROFILE, title_queries=TITLE_QUERIES), None)
+        dedup(verdicts, [])
+        sber = [v for v in verdicts if v.title == "Data Analyst в Сбер Банк"]
+        self.assertEqual(len(sber), 2)
+        self.assertTrue(all(v.bucket == "drop" for v in sber), [v.drop_reason for v in sber])  # ни одна копия не в письме
 
 
 class FakeLLM:

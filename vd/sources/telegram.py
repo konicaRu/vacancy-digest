@@ -23,7 +23,8 @@ def _text(el) -> str:
     for br in el.find_all("br"):
         br.replace_with("\n")
     lines = (ln.strip() for ln in el.get_text().splitlines())
-    return "\n".join(ln for ln in lines if ln)
+    # меню канала «Вакансии │ Стажировки │ За рубежом │ Удалёнка │ …» — не текст вакансии («Удалёнка» ≠ формат работы)
+    return "\n".join(ln for ln in lines if ln and ln.count("│") < 3)
 
 
 def parse_page(html: str, channel: str) -> list[Item]:

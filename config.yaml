@@ -56,6 +56,11 @@ sources:
       - {name: talentmove_channel,    enabled: true}
       # Карьерный канал МТС Банка (с 20.10): подборки — ссылки-названия или цитаты «вакансия + Откликнуться»
       - {name: mtsbankcareer,         enabled: true}
+      # с 22.10: каналы junior/стажировок (youngjunior.ru) — грейд берётся из заголовков подборок
+      - {name: young_june,            enabled: true}
+      - {name: newdirections,         enabled: true}
+      # с 22.10: подборки «из бигтеха» с разделами Стажёр/Junior/Middle; источник большинства карточек jabka.work
+      - {name: bigtechjobs,           enabled: true}
 
   sites:
     - name: jabka

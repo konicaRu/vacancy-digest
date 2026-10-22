@@ -23,6 +23,7 @@ class Item:
     anchors: list[tuple[str, str]] = field(default_factory=list)   # (ссылка, текст ссылки)
     blocks: list[tuple[str, str]] = field(default_factory=list)    # цитаты со ссылкой: (текст цитаты, ссылка)
     via: Optional[str] = None       # пришло из подборки этого источника (для статистики и подписи)
+    grade_hint: Optional[str] = None  # грейд из заголовка подборки («Junior:», «Подборка Junior/Стажёр …»)
 
 
 @dataclass
