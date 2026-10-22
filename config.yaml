@@ -61,6 +61,8 @@ sources:
       - {name: newdirections,         enabled: true}
       # с 22.10: подборки «из бигтеха» с разделами Стажёр/Junior/Middle; источник большинства карточек jabka.work
       - {name: bigtechjobs,           enabled: true}
+      # с 22.10: ~7 постов в день, вакансии разных уровней (Lead / Senior Analyst) + утренние junior-подборки
+      - {name: myresume_ru,           enabled: true}
 
   sites:
     - name: jabka
