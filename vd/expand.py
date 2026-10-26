@@ -52,7 +52,7 @@ def is_bundle(item: Item) -> bool:
 
 GRADE_WORDS = [(re.compile(r"стаж|intern", re.I), "intern"), (re.compile(r"junior|джун|младш", re.I), "junior"),
                (re.compile(r"middle|мидл", re.I), "middle"), (re.compile(r"senior|сеньор|старш|ведущ", re.I), "senior"),
-               (re.compile(r"lead|лид", re.I), "lead")]
+               (re.compile(r"\blead\b|лид", re.I), "lead")]
 
 
 def _grade_word(line: str):

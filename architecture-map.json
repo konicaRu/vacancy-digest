@@ -1,7 +1,7 @@
 {
   "meta": {
     "name": "vacancy-digest — карта архитектуры для агента",
-    "snapshot_date": "2026-10-22",
+    "snapshot_date": "2026-10-26",
     "code_revision": "dc5cf62 (+ каналы и фильтры 22.10 в этом же коммите)",
     "staleness_policy": "Снимок, не живой источник правды. Автоматически не обновляется. При расхождении с кодом верить коду, карту поправить. Обновлять по «гит сейв», только когда менялись структура, схема БД, расписание или автоматика — и только после вопроса пользователю «структура изменилась — обновить карту?».",
     "human_view": "architecture-map.html",
@@ -29,7 +29,7 @@
     "scheduler": "Планировщик Windows, задача VacancyDigest",
     "llm": "LM Studio + Qwen 2.5-14B Instruct 1M — код есть, выключено (llm.enabled: false)",
     "tooling": [
-      "unittest (82 теста)",
+      "unittest (85 тестов)",
       "pyright (≈38 ошибок типов — шум BeautifulSoup)",
       "Archify для схемы потока"
     ],
@@ -53,7 +53,8 @@
     "vd/store.py": "SQLite: закладки, seen, ledger, runs; commit_after_send — одна транзакция после отправки",
     "tests/": "unittest; tests/samples/ — живые страницы Telegram",
     "config.yaml": "источники, profile.title_queries, mail, marks, llm, run (once_per_slot, evening_hour)",
-    "run_digest.bat / setup.bat / register_task.ps1": "запуск (лог → logs/scheduler.log), установка .venv, регистрация задачи"
+    "run_digest.bat / setup.bat / register_task.ps1": "запуск (лог → logs/scheduler.log), установка .venv, регистрация задачи",
+    "tools/build_map.py": "сборка architecture-map.html из architecture-map.json"
   },
   "database": {
     "file": "data/state.sqlite (в .gitignore); рядом кэш календаря data/calendar-<год>.txt",
@@ -83,7 +84,8 @@
     "stats": ".venv\\Scripts\\python main.py --stats",
     "tests": ".venv/Scripts/python -X utf8 -m unittest discover -s tests -t .",
     "register_task": "powershell -ExecutionPolicy Bypass -File register_task.ps1",
-    "typecheck": "pyright --pythonpath .venv/Scripts/python.exe main.py vd tests"
+    "typecheck": "pyright --pythonpath .venv/Scripts/python.exe main.py vd tests",
+    "build_map": ".venv/Scripts/python tools/build_map.py  (architecture-map.json → .html)"
   },
   "frontend": {
     "kind": "HTML-письмо (Яндекс Почта)",
@@ -116,7 +118,9 @@
     "young_june / newdirections — junior/стажировки (youngjunior.ru); bigtechjobs делит подборки на «Стажёр: / Junior: / Middle:» — грейд берётся из раздела.",
     "youngjunior.ru — НЕ признак junior: через него идут и Middle-вакансии bigtechjobs.",
     "api.hh.ru /vacancies и /employers без токена приложения — 403 (справочники открыты); выдуманный email в User-Agent — «blacklisted».",
-    "youngjunior.ru — «junior и без опыта», но карточки без метки грейда бывают middle; метка junior/intern/«стажировка» → отсев."
+    "youngjunior.ru — «junior и без опыта», но карточки без метки грейда бывают middle; метка junior/intern/«стажировка» → отсев.",
+    "Telegram заблокирован провайдером: t.me читается только через VPN (раздельное туннелирование t.me/telegram.org в AmneziaVPN). Если не прочитан ни один канал — письмо пишет «нужен VPN».",
+    "Не вставлять регулярки с обратным слэшем через heredoc-строки Python: \b превращается в невидимый \b (так сломался «Lead:» 22.10)."
   ],
   "secrets": {
     "file": "secrets.env (в .gitignore): EMAIL_USER, EMAIL_APP_PASSWORD",

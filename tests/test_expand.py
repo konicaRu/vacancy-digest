@@ -83,3 +83,10 @@ class ExpandTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class SectionGradeTests(unittest.TestCase):
+    def test_lead_section_is_recognised(self):
+        from vd.expand import section_grade
+        text = "Подборка вакансий из бигтеха\nLead:\n- Lead Product Analyst в Ozon"
+        self.assertEqual(section_grade(text, "Lead Product Analyst в Ozon"), "lead")

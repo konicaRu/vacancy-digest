@@ -41,6 +41,36 @@ def fake_results(fail_jabka=False):
     return res
 
 
+class ErrorTextTests(unittest.TestCase):
+    """Причина сбоя — понятным языком (письмо 26.10 09:30: все 10 каналов — «простыни» urllib3)."""
+    SSL = ("SSLError: HTTPSConnectionPool(host='t.me', port=443): Max retries exceeded with url: /s/x (Caused by "
+           "SSLError(SSLEOFError(8, '[SSL: UNEXPECTED_EOF_WHILE_READING] EOF occurred in violation of protocol')))")
+    RESET = ("ConnectionError: ('Connection aborted.', ConnectionResetError(10054, 'Удаленный хост принудительно "
+             "разорвал существующее подключение', None, 10054, None))")
+    DNS = ("ConnectionError: HTTPSConnectionPool(host='t.me', port=443): Max retries exceeded with url: /s/x (Caused by "
+           "NameResolutionError(\"HTTPSConnection(host='t.me', port=443): Failed to resolve 't.me' ([Errno 11001] getaddrinfo failed)\"))")
+
+    def test_explanations(self):
+        self.assertIn("похоже на блокировку", digest.explain_error(self.SSL))
+        self.assertIn("похоже на блокировку", digest.explain_error(self.RESET))
+        self.assertIn("адрес сайта", digest.explain_error(self.DNS))
+        self.assertIn("не ответил", digest.explain_error("ReadTimeout: HTTPSConnectionPool(host='t.me', port=443): Read timed out. (read timeout=25)"))
+        self.assertIn("ошибкой 503", digest.explain_error("HTTPError: 503 Server Error: Service Unavailable for url: https://jabka.work/"))
+        ru = "страница канала пустая — канал закрыт или изменилась вёрстка"
+        self.assertEqual(digest.explain_error(ru), ru)  # уже понятное — как есть
+
+    def test_all_telegram_down_is_one_line(self):
+        failed = {f"tg:ch{i}": (self.SSL if i % 3 else self.RESET) for i in range(10)}
+        failed["tg:nodatanojobs"] = self.DNS
+        read = {"site:jabka": 24, "site:youngjunior": 20}
+        subject, html, text = digest.build([], read, failed, {"llm_off": True})
+        self.assertNotIn("HTTPSConnectionPool", html)
+        self.assertNotIn("HTTPSConnectionPool", text)
+        self.assertIn("Telegram: не прочитан ни один из 11 каналов", html)
+        self.assertIn("VPN", html)
+        self.assertIn("не прочитано источников: 11", subject)
+
+
 class LLMBannerTests(unittest.TestCase):
     BANNER = "Локальная модель была недоступна"
 

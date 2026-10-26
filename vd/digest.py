@@ -1,6 +1,7 @@
 """Сборка письма-дайджеста: HTML + текстовая версия."""
 from __future__ import annotations
 
+import re
 from collections import Counter, defaultdict
 from datetime import date
 from html import escape
@@ -31,6 +32,40 @@ def source_name(source: str) -> str:
     if source == "calendar":
         return "Производственный календарь"
     return source
+
+
+def explain_error(err: str) -> str:
+    """Техническая ошибка источника → причина понятным языком (подробности остаются в logs/run.log)."""
+    e = err or ""
+    if re.search(r"NameResolution|getaddrinfo|Failed to resolve", e):
+        return "не удалось найти адрес сайта (DNS не ответил)"
+    if re.search(r"SSLEOF|UNEXPECTED_EOF|handshake|ConnectionReset|10054|Connection aborted|RemoteDisconnected", e):
+        return "соединение обрывается — похоже на блокировку провайдером"
+    if re.search(r"Timeout|timed out", e):
+        return "сайт не ответил вовремя"
+    if m := re.search(r"\b([45]\d\d)\b (?:Client|Server) Error", e):
+        return f"сайт ответил ошибкой {m.group(1)}"
+    if re.search(r"[а-яё]", e, re.I) and not re.search(r"HTTPSConnectionPool|Errno", e):
+        return e  # наши сообщения уже по-русски
+    return f"техническая ошибка ({e.split(':', 1)[0][:40]}) — подробности в logs/run.log"
+
+
+def _failed_summary(failed: dict[str, str], read_stats: dict) -> tuple[str, set[str]]:
+    """Одна понятная строка о сбоях; если не прочитан ни один канал Telegram — одной фразой, а не списком."""
+    tg_failed = [s for s in failed if s.startswith("tg:")]
+    tg_total = len(tg_failed) + sum(1 for s in read_stats if s.startswith("tg:"))
+    parts, grouped = [], set()
+    if len(tg_failed) >= 2 and len(tg_failed) == tg_total:
+        reasons = Counter(explain_error(failed[s]) for s in tg_failed)
+        reason = reasons.most_common(1)[0][0]
+        hint = (" Telegram с этого компьютера доступен только через VPN — проверьте, что VPN был включён к запуску."
+                if "блокировк" in reason or "адрес сайта" in reason else "")
+        parts.append(f"Telegram: не прочитан ни один из {len(tg_failed)} каналов — {reason}.{hint}")
+        grouped = set(tg_failed)
+    for s in failed:
+        if s not in grouped:
+            parts.append(f"Не удалось прочитать {source_name(s)}: {explain_error(failed[s])}.")
+    return " ".join(parts), grouped
 
 
 def _meta(v: Verdict) -> str:
@@ -173,7 +208,7 @@ def build(verdicts: list[Verdict], read_stats: dict, failed: dict[str, str],
     for src in sorted(set(read_stats) | set(failed)):
         if src in failed:
             stat_rows += (f'<tr><td style="padding:2px 12px 2px 0;">{escape(source_name(src))}</td>'
-                          f'<td colspan="2" style="color:#b03030;">не прочитан: {escape(failed[src])}</td></tr>')
+                          f'<td colspan="2" style="color:#b03030;">не прочитан: {escape(explain_error(failed[src]))}</td></tr>')
         elif not read_stats.get(src):
             stat_rows += (f'<tr><td style="padding:2px 12px 2px 0;">{escape(source_name(src))}</td>'
                           f'<td colspan="2" style="padding:2px 12px;color:#888;">новых постов нет</td></tr>')
@@ -187,8 +222,8 @@ def build(verdicts: list[Verdict], read_stats: dict, failed: dict[str, str],
     warn = ""
     if failed:
         warn += ('<div style="background:#fdecec;color:#8a1f1f;padding:8px 12px;margin:12px 0;font-size:13px;">'
-                 'Не удалось прочитать: ' + escape(", ".join(source_name(s) for s in failed)) +
-                 '. Их закладки не сдвинуты — следующий запуск заберёт пропущенное.</div>')
+                 + escape(_failed_summary(failed, read_stats)[0]) +
+                 ' Закладки не сдвинуты — следующий выпуск заберёт пропущенное.</div>')
     for src, w in (warnings or {}).items():
         warn += ('<div style="background:#fff6e0;color:#7a5a00;padding:8px 12px;margin:12px 0;font-size:13px;">'
                  f'{escape(source_name(src))}: {escape(w)}.</div>')
@@ -224,7 +259,7 @@ def build(verdicts: list[Verdict], read_stats: dict, failed: dict[str, str],
     # --- текстовая версия ---
     lines = [f"Вакансии на {run_date:%d.%m.%Y}", ""]
     if failed:
-        lines += ["Не удалось прочитать: " + ", ".join(source_name(s) for s in failed), ""]
+        lines += [_failed_summary(failed, read_stats)[0], ""]
     lines += [f"{source_name(s)}: {w}." for s, w in (warnings or {}).items()]
     if marked_line:
         lines += [marked_line, ""]
@@ -247,7 +282,7 @@ def build(verdicts: list[Verdict], read_stats: dict, failed: dict[str, str],
     lines += ["", "== Источники =="]
     for src in sorted(set(read_stats) | set(failed)):
         if src in failed:
-            status = f"не прочитан: {failed[src]}"
+            status = f"не прочитан: {explain_error(failed[src])}"
         elif not read_stats.get(src):
             status = "новых постов нет"
         elif in_digest.get(src):
