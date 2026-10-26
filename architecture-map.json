@@ -70,7 +70,7 @@
   "automation": {
     "task": "VacancyDigest (register_task.ps1)",
     "triggers": [
-      "при входе в Windows + 3 мин",
+      "при входе в Windows + 10 мин (успевает подключиться Browsec)",
       "ежедневно 17:00 (время компьютера = МСК)"
     ],
     "settings": "StartWhenAvailable, RunOnlyIfNetworkAvailable, лимит 1 час",

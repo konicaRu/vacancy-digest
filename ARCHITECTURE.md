@@ -6,7 +6,7 @@
 
 ```mermaid
 flowchart LR
-    T[Планировщик Windows<br/>вход + 3 мин, 17:00] --> M[main.py]
+    T[Планировщик Windows<br/>вход + 10 мин, 17:00] --> M[main.py]
     M --> C{Этот выпуск<br/>уже отправлен?}
     C -- да --> X[выход]
     C -- нет --> S
@@ -206,3 +206,4 @@ salary, contact, reason`. Блоки `<think>` вырезаются (Qwen3). Е�
 | 2026-10-22 | — | Источник youngjunior.ru (`vd/sources/youngjunior.py`; `jabka.collect` принимает `source`/`parse`); сайты в `main.collect_all` — таблица имя → collector |
 | 2026-10-26 | — | Причина сбоя источника понятным языком (`digest.explain_error`), все каналы Telegram разом — одной строкой «нужен VPN»; исправлены невидимые символы вместо «\b» в `expand.GRADE_WORDS` («Lead:»); `tools/build_map.py` — сборка карты в проекте |
 | 2026-10-26 | — | `vd/mailer.py`: отправка через системный curl.exe (Python идёт через VPN Browsec, а VPN закрывает почтовые порты); smtplib — запасной путь без curl |
+| 2026-10-26 | — | Задержка утреннего запуска после входа — 10 минут (успевает подключиться Browsec VPN) |
