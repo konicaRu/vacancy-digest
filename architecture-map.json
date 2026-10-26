@@ -24,12 +24,12 @@
       "python-dotenv"
     ],
     "storage": "SQLite data/state.sqlite",
-    "mail": "SMTP Яндекс (smtp.yandex.ru:465), пароль приложения",
+    "mail": "SMTP Яндекс (smtps 465) через системный curl.exe — мимо VPN; пароль приложения",
     "marks": "Google Форма (GET formResponse) + Google Таблица ответов (CSV export)",
     "scheduler": "Планировщик Windows, задача VacancyDigest",
     "llm": "LM Studio + Qwen 2.5-14B Instruct 1M — код есть, выключено (llm.enabled: false)",
     "tooling": [
-      "unittest (85 тестов)",
+      "unittest (89 тестов)",
       "pyright (≈38 ошибок типов — шум BeautifulSoup)",
       "Archify для схемы потока"
     ],
@@ -49,7 +49,7 @@
     "vd/marks.py": "ссылки на форму, разбор CSV таблицы → {код: applied|reviewed}",
     "vd/workcal.py": "рабочий ли день: календарь года с isdayoff.ru → кэш; не скачался — «пн–пт» + предупреждение",
     "vd/digest.py": "HTML + текст письма: группы по источникам, номера, «✓ Откликнулся», «☑ Разобрал группу», таблица источников, плашки",
-    "vd/mailer.py": "SMTP; «отправлено» только если сервер принял адресата",
+    "vd/mailer.py": "письмо: на Windows отправляет curl.exe (smtps, пароль через stdin), иначе smtplib",
     "vd/store.py": "SQLite: закладки, seen, ledger, runs; commit_after_send — одна транзакция после отправки",
     "tests/": "unittest; tests/samples/ — живые страницы Telegram",
     "config.yaml": "источники, profile.title_queries, mail, marks, llm, run (once_per_slot, evening_hour)",
@@ -120,7 +120,8 @@
     "api.hh.ru /vacancies и /employers без токена приложения — 403 (справочники открыты); выдуманный email в User-Agent — «blacklisted».",
     "youngjunior.ru — «junior и без опыта», но карточки без метки грейда бывают middle; метка junior/intern/«стажировка» → отсев.",
     "Telegram заблокирован провайдером: t.me читается только через VPN (раздельное туннелирование t.me/telegram.org в AmneziaVPN). Если не прочитан ни один канал — письмо пишет «нужен VPN».",
-    "Не вставлять регулярки с обратным слэшем через heredoc-строки Python: \b превращается в невидимый \b (так сломался «Lead:» 22.10)."
+    "Не вставлять регулярки с обратным слэшем через heredoc-строки Python: \b превращается в невидимый \b (так сломался «Lead:» 22.10).",
+    "VPN — Browsec Desktop, «умный» режим: через VPN только программы из списка (в т.ч. весь Python311). Почтовые порты через VPN закрыты — поэтому письмо шлёт curl.exe, которого в списке нет. Не добавлять curl.exe в Browsec."
   ],
   "secrets": {
     "file": "secrets.env (в .gitignore): EMAIL_USER, EMAIL_APP_PASSWORD",
