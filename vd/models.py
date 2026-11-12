@@ -53,3 +53,4 @@ class SourceResult:
     new_bookmark: Optional[str] = None
     error: Optional[str] = None
     warning: Optional[str] = None  # прочитан, но не целиком (упёрлись в лимит страниц) — в письмо жёлтой плашкой
+    seen_ids: list[str] = field(default_factory=list)  # старые карточки первого обхода; запомнить после отправки

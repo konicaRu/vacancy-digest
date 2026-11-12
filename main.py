@@ -25,7 +25,7 @@ from vd.config import ConfigError, load_config
 from vd.expand import expand_bundles
 from vd.marks import fetch_marks, mark_link
 from vd.llm import LMStudioClient
-from vd.sources import jabka, linkedin_mail, make_session, telegram, youngjunior
+from vd.sources import aviasales, avito, habr, jabka, linkedin_mail, make_session, telegram, youngjunior
 from vd.store import Store
 
 ROOT = Path(__file__).resolve().parent
@@ -58,7 +58,7 @@ def make_fetcher(cfg: dict):
     return fetch
 
 
-def collect_all(cfg: dict, store: Store, fetch) -> list:
+def collect_all(cfg: dict, store: Store, fetch, slot: str = "am", dry_run: bool = False) -> list:
     results = []
     tg_cfg = cfg["sources"].get("telegram", {})
     for ch in tg_cfg.get("channels", []):
@@ -70,14 +70,18 @@ def collect_all(cfg: dict, store: Store, fetch) -> list:
         log.info("%s: новых постов %s%s", res.source, len(res.items), f", ОШИБКА: {res.error}" if res.error else "")
         results.append(res)
 
+    career_collectors = {"habr": habr.collect, "avito": avito.collect, "aviasales": aviasales.collect}
     for site in cfg["sources"].get("sites", []):
         if not site.get("enabled", True):
             continue
-        collector = {"jabka": jabka.collect, "youngjunior": youngjunior.collect}.get(site["name"])
+        if site.get("morning_only") and slot != "am" and not dry_run:
+            continue
+        collector = {"jabka": jabka.collect, "youngjunior": youngjunior.collect, **career_collectors}.get(site["name"])
         if collector:
             first_run = store.get_bookmark(f"site:{site['name']}") is None
+            extra = {"profile": cfg.get("profile", {})} if site["name"] in career_collectors else {}
             res = collector(site["urls"], fetch, store.is_seen, first_run, site.get("lookback_days_first_run", 3),
-                            site.get("max_pages", 10))
+                            site.get("max_pages", 10), **extra)
         else:
             log.warning("Сайт %s пока не поддерживается", site["name"])
             continue
@@ -158,7 +162,7 @@ def _run(args, cfg: dict, store: Store) -> int:
 
     run_id = store.start_run(now)
     started = time.time()
-    results = collect_all(cfg, store, fetch)
+    results = collect_all(cfg, store, fetch, slot=slot, dry_run=args.dry_run)
     failed = {r.source: r.error for r in results if r.error}
     if calendar_warning:
         failed["calendar"] = calendar_warning
@@ -232,7 +236,8 @@ def _run(args, cfg: dict, store: Store) -> int:
         return 0
 
     bookmarks = {r.source: r.new_bookmark for r in results if not r.error and r.new_bookmark}
-    seen = list({(it.source, it.external_id) for it in items + to_classify})
+    seen = list({(it.source, it.external_id) for it in items + to_classify}
+                | {(r.source, external_id) for r in results if not r.error for external_id in r.seen_ids})
     ledger_rows = [{"dedup_key": dedup_key(v), "title": v.title, "company": v.company,
                     "url": v.item.url, "source": v.item.source, "bucket": v.bucket,
                     "code": f"{tag}-{v.num}"} for v in picked]

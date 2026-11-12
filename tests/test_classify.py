@@ -42,6 +42,13 @@ class RemoteTests(unittest.TestCase):
             "Гибридный формат: можно из дома, можно из офиса в Москве": "no",
             "Удалёнка из любой точки мира или уютный офис в Ташкенте": "yes",
             "Международный B2B SaaS-продукт, рынок США": "unknown",
+            # релокация сильнее слова «удалённо» (GRC Automation Analyst, прогон 20.10)
+            "GRC Automation Analyst — релокация в Германию. Удалённо на старте": "no",
+            "Relocation to Berlin, remote first 3 months": "no",
+            # но «без релокации» и «не требуется» — это удалёнка
+            "Удалённо из РФ, без релокации": "yes",
+            "Формат: remote, релокация не требуется": "yes",
+            "Remote, no relocation required": "yes",
         }
         for text, expected in cases.items():
             with self.subTest(text=text):

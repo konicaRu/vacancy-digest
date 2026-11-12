@@ -84,6 +84,32 @@ sources:
         - "https://youngjunior.ru/product-analyst/jobs"
         - "https://youngjunior.ru/data-analyst/jobs"
 
+    # с 12.11: карьерные сайты — один утренний обход; --dry-run проверяет и вечером.
+    - name: habr
+      enabled: true
+      morning_only: true
+      lookback_days_first_run: 5
+      max_pages: 20
+      urls:
+        - "https://career.habr.com/vacancies?q=аналитик&type=all&sort=date"
+        - "https://career.habr.com/vacancies?q=analyst&type=all&sort=date"
+
+    - name: avito
+      enabled: true
+      morning_only: true
+      lookback_days_first_run: 5
+      max_pages: 10
+      urls:
+        - "https://career.avito.com/vacancies/analitika-dannykh/"
+
+    - name: aviasales
+      enabled: true
+      morning_only: true
+      lookback_days_first_run: 5
+      max_pages: 1
+      urls:
+        - "https://www.aviasales.ru/about/vacancies"
+
   linkedin_mail:
     # Включить после недели проверки, что уведомления LinkedIn приходят на почту
     enabled: false

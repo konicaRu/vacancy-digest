@@ -44,7 +44,11 @@ def prefilter(item: Item) -> Optional[str]:
 NO_RF = re.compile(r"не\s*из\s*рф|\(не\s*рф\)|не\s*рф\b|кроме\s+(?:беларуси\s+и\s+)?росси|кроме\s+рф|"
                    r"not\s+(?:from\s+)?russia|excluding\s+russia|except\s+russia", re.I)
 REMOTE = re.compile(r"удал[её]нн|удал[её]нк|удаленно|удалённо|remote|из любой точки", re.I)
-OFFICE = re.compile(r"\bофис|гибрид|hybrid|релокац|relocat|onsite|on-site", re.I)
+OFFICE = re.compile(r"\bофис|гибрид|hybrid|onsite|on-site", re.I)
+# релокация сильнее слова «удалённо» («релокация в Германию, удалённо на старте»), но «без релокации» — не она
+RELOC = re.compile(r"релокац|relocat", re.I)
+NO_RELOC = re.compile(r"без\s+релокац|релокац\w*\s+не\s+(?:требу|нужн)|не\s+(?:требу\w*|нужн\w*)\s+релокац|"
+                      r"no\s+relocat|without\s+relocat|relocat\w*\s+(?:is\s+)?not\s+(?:required|needed)", re.I)
 SALARY = re.compile(r"(\d[\d\s]{2,}(?:\s*[-–]\s*\d[\d\s]{2,})?\s*(?:₽|руб|\$|USD|€|EUR|USDT))", re.I)
 CONTACT = re.compile(r"(@[A-Za-z0-9_]{4,})")
 EMOJI_PUNCT = re.compile(r"^[\W_]+", re.U)
@@ -96,6 +100,8 @@ def _grade_of(s: str) -> str:
 
 def remote_of(text: str) -> str:
     if NO_RF.search(text):
+        return "no"
+    if RELOC.search(text) and not NO_RELOC.search(text):
         return "no"
     if REMOTE.search(text):
         return "yes"
