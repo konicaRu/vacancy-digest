@@ -1,0 +1,1327 @@
+{
+  "data": [
+    {
+      "id": "znmfr93iim85xzhl2t9sulk2",
+      "contentRevision": 2,
+      "slug": "soc-l3-719596608026574931",
+      "title": "Аналитик SOC L3",
+      "displayTitle": "Аналитик SOC L3",
+      "summary": null,
+      "cities": [
+        {
+          "id": "h0scutr0ddllx6rcc8r7xv0q",
+          "slug": "v-552794318700651",
+          "title": "Москва"
+        }
+      ],
+      "employer": {
+        "id": "x6dmumxfiqy69fvmt73qosyl",
+        "slug": "v-60374775695933556",
+        "title": "ПАО МТС-Банк",
+        "logoUrl": null
+      },
+      "professionalRoles": [
+        {
+          "id": "dklfk6pfno15nwhgon5ahwa0",
+          "slug": "v-60377519668330606",
+          "title": "Безопасность и охрана труда"
+        },
+        {
+          "id": "wl3g7ukxyfhu9z8en6h6lfaf",
+          "slug": "v-427822716028977248",
+          "title": "Информационная безопасность"
+        }
+      ],
+      "experience": {
+        "id": "vzcvr9rwze9fyoxxyt3zk3ou",
+        "slug": "3-6-BETWEENTREESIX",
+        "title": "3-6 лет",
+        "code": "BETWEENTREESIX"
+      },
+      "workFormats": [
+        {
+          "id": "wqr3qrdqiwqtzw3xysoxibfx",
+          "slug": "v-office",
+          "title": "В офисе",
+          "code": "office"
+        }
+      ],
+      "employmentForms": [
+        {
+          "id": "pj9v4kg6kbmey0fkwx79wf17",
+          "slug": "v-FULL",
+          "title": "Полный день",
+          "code": "FULL"
+        }
+      ],
+      "isRemote": false,
+      "isInternship": false,
+      "startLeto": false,
+      "isMass": false,
+      "isReferal": false,
+      "salary": null,
+      "externalUrl": "https://job.mts.ru/jobs/719596608026574931",
+      "publishedAt": "2026-10-21T17:01:06.768Z",
+      "imageUrl": null,
+      "tags": []
+    },
+    {
+      "id": "l3x5brw1ydekixv7al65k3vb",
+      "contentRevision": 4,
+      "slug": "kyc-717343768415568182",
+      "title": "Стажер Продуктовый аналитик [KYC Платформа, МТС Веб Сервисы]",
+      "displayTitle": "Стажер Продуктовый аналитик [KYC Платформа, МТС Веб Сервисы]",
+      "summary": null,
+      "cities": [
+        {
+          "id": "h0scutr0ddllx6rcc8r7xv0q",
+          "slug": "v-552794318700651",
+          "title": "Москва"
+        }
+      ],
+      "employer": {
+        "id": "b767rtkqq1uvenv2pcvghp53",
+        "slug": "v-60374715453145167",
+        "title": "ООО МТС Веб Сервисы",
+        "logoUrl": null
+      },
+      "professionalRoles": [
+        {
+          "id": "uu7fa0zico2f11umo13vtjcn",
+          "slug": "v-60377545291333713",
+          "title": "Аналитика"
+        },
+        {
+          "id": "w8gu6z70zd7nms8vrr329cve",
+          "slug": "v-60378626381578361",
+          "title": "Продуктовая аналитика"
+        }
+      ],
+      "experience": {
+        "id": "v217he2d0yyhyu2jd3vldr64",
+        "slug": "v-NOT",
+        "title": "Без опыта",
+        "code": "NOT"
+      },
+      "workFormats": [
+        {
+          "id": "ehylbxl5f3s9phvtopwbzabb",
+          "slug": "v-hybrid",
+          "title": "Гибридный",
+          "code": "hybrid"
+        }
+      ],
+      "employmentForms": [
+        {
+          "id": "xyo8yvl3n56ku7zbovr07f4s",
+          "slug": "v-FLEXIBLE",
+          "title": "Гибкий график",
+          "code": "FLEXIBLE"
+        }
+      ],
+      "isRemote": false,
+      "isInternship": true,
+      "startLeto": false,
+      "isMass": false,
+      "isReferal": false,
+      "salary": null,
+      "externalUrl": "https://job.mts.ru/jobs/717343768415568182",
+      "publishedAt": "2026-10-21T08:00:21.371Z",
+      "imageUrl": null,
+      "tags": []
+    },
+    {
+      "id": "ntn371cjuhnivspsjop1wth4",
+      "contentRevision": 2,
+      "slug": "v-719139019144823086",
+      "title": "Старший Бизнес аналитик [Моя команда, МТС Веб Сервисы]",
+      "displayTitle": "Старший Бизнес аналитик [Моя команда, МТС Веб Сервисы]",
+      "summary": null,
+      "cities": [
+        {
+          "id": "h0scutr0ddllx6rcc8r7xv0q",
+          "slug": "v-552794318700651",
+          "title": "Москва"
+        }
+      ],
+      "employer": {
+        "id": "b767rtkqq1uvenv2pcvghp53",
+        "slug": "v-60374715453145167",
+        "title": "ООО МТС Веб Сервисы",
+        "logoUrl": null
+      },
+      "professionalRoles": [
+        {
+          "id": "uu7fa0zico2f11umo13vtjcn",
+          "slug": "v-60377545291333713",
+          "title": "Аналитика"
+        },
+        {
+          "id": "of9arlrzqz3782r3smo847xp",
+          "slug": "v-295882384589602892",
+          "title": "Бизнес аналитика"
+        }
+      ],
+      "experience": {
+        "id": "vzcvr9rwze9fyoxxyt3zk3ou",
+        "slug": "3-6-BETWEENTREESIX",
+        "title": "3-6 лет",
+        "code": "BETWEENTREESIX"
+      },
+      "workFormats": [
+        {
+          "id": "kbd8hdjlf9ifcf7d8mu8kcvm",
+          "slug": "v-remote",
+          "title": "Удалённая работа",
+          "code": "remote"
+        }
+      ],
+      "employmentForms": [
+        {
+          "id": "pj9v4kg6kbmey0fkwx79wf17",
+          "slug": "v-FULL",
+          "title": "Полный день",
+          "code": "FULL"
+        }
+      ],
+      "isRemote": false,
+      "isInternship": false,
+      "startLeto": false,
+      "isMass": false,
+      "isReferal": false,
+      "salary": null,
+      "externalUrl": "https://job.mts.ru/jobs/719139019144823086",
+      "publishedAt": "2026-10-20T10:42:37.774Z",
+      "imageUrl": null,
+      "tags": []
+    },
+    {
+      "id": "h51hks895h155tsk7ybnt51s",
+      "contentRevision": 2,
+      "slug": "m-a-719113426504253551",
+      "title": "Ведущий аналитик M&A",
+      "displayTitle": "Ведущий аналитик M&A",
+      "summary": null,
+      "cities": [
+        {
+          "id": "h0scutr0ddllx6rcc8r7xv0q",
+          "slug": "v-552794318700651",
+          "title": "Москва"
+        }
+      ],
+      "employer": {
+        "id": "x6dmumxfiqy69fvmt73qosyl",
+        "slug": "v-60374775695933556",
+        "title": "ПАО МТС-Банк",
+        "logoUrl": null
+      },
+      "professionalRoles": [
+        {
+          "id": "ynh2dkbt85uxjit2s58ohq17",
+          "slug": "v-60377668213801046",
+          "title": "Финансы"
+        }
+      ],
+      "experience": {
+        "id": "adjb80fghnrzhupkidfehuft",
+        "slug": "1-3-BETWEENONETREE",
+        "title": "1-3 года",
+        "code": "BETWEENONETREE"
+      },
+      "workFormats": [
+        {
+          "id": "wqr3qrdqiwqtzw3xysoxibfx",
+          "slug": "v-office",
+          "title": "В офисе",
+          "code": "office"
+        }
+      ],
+      "employmentForms": [
+        {
+          "id": "pj9v4kg6kbmey0fkwx79wf17",
+          "slug": "v-FULL",
+          "title": "Полный день",
+          "code": "FULL"
+        }
+      ],
+      "isRemote": false,
+      "isInternship": false,
+      "startLeto": false,
+      "isMass": false,
+      "isReferal": false,
+      "salary": null,
+      "externalUrl": "https://job.mts.ru/jobs/719113426504253551",
+      "publishedAt": "2026-10-20T09:02:52.585Z",
+      "imageUrl": null,
+      "tags": []
+    },
+    {
+      "id": "z9mfifluo8ripjc5rq8rc1d1",
+      "contentRevision": 2,
+      "slug": "v-716979675712192823",
+      "title": "Ведущий пресейл-менеджер по видеонаблюдению и видеоаналитике",
+      "displayTitle": "Ведущий пресейл-менеджер по видеонаблюдению и видеоаналитике",
+      "summary": null,
+      "cities": [
+        {
+          "id": "zo6jk44llscqpj5fzdmi001p",
+          "slug": "v-552791365910635",
+          "title": "Екатеринбург, Свердловская область"
+        }
+      ],
+      "employer": {
+        "id": "v3z1n3ovh1zopqy4vaf9zi58",
+        "slug": "v-22239684461592654",
+        "title": "ПАО МТС",
+        "logoUrl": null
+      },
+      "professionalRoles": [
+        {
+          "id": "xyezi273fbk3hbnwdehangle",
+          "slug": "v-60376857320620106",
+          "title": "Продажи и развитие"
+        },
+        {
+          "id": "qsozd7hwf61pd7g43ccz3fzj",
+          "slug": "v-60378501705891926",
+          "title": "Пресейл"
+        }
+      ],
+      "experience": {
+        "id": "adjb80fghnrzhupkidfehuft",
+        "slug": "1-3-BETWEENONETREE",
+        "title": "1-3 года",
+        "code": "BETWEENONETREE"
+      },
+      "workFormats": [
+        {
+          "id": "wqr3qrdqiwqtzw3xysoxibfx",
+          "slug": "v-office",
+          "title": "В офисе",
+          "code": "office"
+        }
+      ],
+      "employmentForms": [
+        {
+          "id": "pj9v4kg6kbmey0fkwx79wf17",
+          "slug": "v-FULL",
+          "title": "Полный день",
+          "code": "FULL"
+        }
+      ],
+      "isRemote": false,
+      "isInternship": false,
+      "startLeto": false,
+      "isMass": false,
+      "isReferal": true,
+      "salary": null,
+      "externalUrl": "https://job.mts.ru/jobs/716979675712192823",
+      "publishedAt": "2026-10-14T11:42:21.397Z",
+      "imageUrl": null,
+      "tags": []
+    },
+    {
+      "id": "lfgy32q8xwwowrkdfydbxn7q",
+      "contentRevision": 3,
+      "slug": "v-716679676520566012",
+      "title": "Ведущий Системный аналитик [Безопасное мобильное рабочее место]",
+      "displayTitle": "Ведущий Системный аналитик [Безопасное мобильное рабочее место]",
+      "summary": null,
+      "cities": [
+        {
+          "id": "h0scutr0ddllx6rcc8r7xv0q",
+          "slug": "v-552794318700651",
+          "title": "Москва"
+        }
+      ],
+      "employer": {
+        "id": "b767rtkqq1uvenv2pcvghp53",
+        "slug": "v-60374715453145167",
+        "title": "ООО МТС Веб Сервисы",
+        "logoUrl": null
+      },
+      "professionalRoles": [
+        {
+          "id": "uu7fa0zico2f11umo13vtjcn",
+          "slug": "v-60377545291333713",
+          "title": "Аналитика"
+        },
+        {
+          "id": "hw1zmayplwod3dzj3vjza1g6",
+          "slug": "v-60378652839247957",
+          "title": "Системная аналитика"
+        }
+      ],
+      "experience": {
+        "id": "vzcvr9rwze9fyoxxyt3zk3ou",
+        "slug": "3-6-BETWEENTREESIX",
+        "title": "3-6 лет",
+        "code": "BETWEENTREESIX"
+      },
+      "workFormats": [
+        {
+          "id": "ehylbxl5f3s9phvtopwbzabb",
+          "slug": "v-hybrid",
+          "title": "Гибридный",
+          "code": "hybrid"
+        }
+      ],
+      "employmentForms": [
+        {
+          "id": "pj9v4kg6kbmey0fkwx79wf17",
+          "slug": "v-FULL",
+          "title": "Полный день",
+          "code": "FULL"
+        }
+      ],
+      "isRemote": false,
+      "isInternship": false,
+      "startLeto": false,
+      "isMass": false,
+      "isReferal": false,
+      "salary": null,
+      "externalUrl": "https://job.mts.ru/jobs/716679676520566012",
+      "publishedAt": "2026-10-13T15:55:02.076Z",
+      "imageUrl": null,
+      "tags": []
+    },
+    {
+      "id": "a4h4h6c5hbwyuppuv7m2qgpc",
+      "contentRevision": 2,
+      "slug": "1-716652211014205563",
+      "title": "Аналитик 1С (Москва)",
+      "displayTitle": "Аналитик 1С (Москва)",
+      "summary": null,
+      "cities": [
+        {
+          "id": "h0scutr0ddllx6rcc8r7xv0q",
+          "slug": "v-552794318700651",
+          "title": "Москва"
+        }
+      ],
+      "employer": {
+        "id": "x6dmumxfiqy69fvmt73qosyl",
+        "slug": "v-60374775695933556",
+        "title": "ПАО МТС-Банк",
+        "logoUrl": null
+      },
+      "professionalRoles": [
+        {
+          "id": "uu7fa0zico2f11umo13vtjcn",
+          "slug": "v-60377545291333713",
+          "title": "Аналитика"
+        },
+        {
+          "id": "hw1zmayplwod3dzj3vjza1g6",
+          "slug": "v-60378652839247957",
+          "title": "Системная аналитика"
+        }
+      ],
+      "experience": {
+        "id": "adjb80fghnrzhupkidfehuft",
+        "slug": "1-3-BETWEENONETREE",
+        "title": "1-3 года",
+        "code": "BETWEENONETREE"
+      },
+      "workFormats": [
+        {
+          "id": "wqr3qrdqiwqtzw3xysoxibfx",
+          "slug": "v-office",
+          "title": "В офисе",
+          "code": "office"
+        }
+      ],
+      "employmentForms": [
+        {
+          "id": "pj9v4kg6kbmey0fkwx79wf17",
+          "slug": "v-FULL",
+          "title": "Полный день",
+          "code": "FULL"
+        }
+      ],
+      "isRemote": false,
+      "isInternship": false,
+      "startLeto": false,
+      "isMass": false,
+      "isReferal": false,
+      "salary": null,
+      "externalUrl": "https://job.mts.ru/jobs/716652211014205563",
+      "publishedAt": "2026-10-13T14:03:00.819Z",
+      "imageUrl": null,
+      "tags": []
+    },
+    {
+      "id": "jb3c48sm54j7wmvcnjedozw7",
+      "contentRevision": 3,
+      "slug": "gsm-709323618491829475",
+      "title": "Ведущий Системный аналитик (GSM) [Иртея]",
+      "displayTitle": "Ведущий Системный аналитик (GSM) [Иртея]",
+      "summary": null,
+      "cities": [
+        {
+          "id": "h0scutr0ddllx6rcc8r7xv0q",
+          "slug": "v-552794318700651",
+          "title": "Москва"
+        }
+      ],
+      "employer": {
+        "id": "ce43x3o1m4a326lziik9b20p",
+        "slug": "v-533537271840770901",
+        "title": "ООО Иртея",
+        "logoUrl": null
+      },
+      "professionalRoles": [
+        {
+          "id": "uu7fa0zico2f11umo13vtjcn",
+          "slug": "v-60377545291333713",
+          "title": "Аналитика"
+        }
+      ],
+      "experience": {
+        "id": "vzcvr9rwze9fyoxxyt3zk3ou",
+        "slug": "3-6-BETWEENTREESIX",
+        "title": "3-6 лет",
+        "code": "BETWEENTREESIX"
+      },
+      "workFormats": [
+        {
+          "id": "wqr3qrdqiwqtzw3xysoxibfx",
+          "slug": "v-office",
+          "title": "В офисе",
+          "code": "office"
+        }
+      ],
+      "employmentForms": [
+        {
+          "id": "pj9v4kg6kbmey0fkwx79wf17",
+          "slug": "v-FULL",
+          "title": "Полный день",
+          "code": "FULL"
+        }
+      ],
+      "isRemote": false,
+      "isInternship": false,
+      "startLeto": false,
+      "isMass": false,
+      "isReferal": false,
+      "salary": null,
+      "externalUrl": "https://job.mts.ru/jobs/709323618491829475",
+      "publishedAt": "2026-10-05T13:00:02.099Z",
+      "imageUrl": null,
+      "tags": []
+    },
+    {
+      "id": "immnkkigyziz17wndf6bw61a",
+      "contentRevision": 2,
+      "slug": "b2b-711155384731042083",
+      "title": "Старший Бизнес аналитик [Маркетплейс B2B, МТС Веб Сервисы]",
+      "displayTitle": "Старший Бизнес аналитик [Маркетплейс B2B, МТС Веб Сервисы]",
+      "summary": null,
+      "cities": [
+        {
+          "id": "h0scutr0ddllx6rcc8r7xv0q",
+          "slug": "v-552794318700651",
+          "title": "Москва"
+        }
+      ],
+      "employer": {
+        "id": "b767rtkqq1uvenv2pcvghp53",
+        "slug": "v-60374715453145167",
+        "title": "ООО МТС Веб Сервисы",
+        "logoUrl": null
+      },
+      "professionalRoles": [
+        {
+          "id": "v6h8jo6w5y2gn0a8xg02jsef",
+          "slug": "it-60376693377859705",
+          "title": "Работа в IT"
+        }
+      ],
+      "experience": {
+        "id": "adjb80fghnrzhupkidfehuft",
+        "slug": "1-3-BETWEENONETREE",
+        "title": "1-3 года",
+        "code": "BETWEENONETREE"
+      },
+      "workFormats": [
+        {
+          "id": "ehylbxl5f3s9phvtopwbzabb",
+          "slug": "v-hybrid",
+          "title": "Гибридный",
+          "code": "hybrid"
+        }
+      ],
+      "employmentForms": [
+        {
+          "id": "pj9v4kg6kbmey0fkwx79wf17",
+          "slug": "v-FULL",
+          "title": "Полный день",
+          "code": "FULL"
+        }
+      ],
+      "isRemote": false,
+      "isInternship": false,
+      "startLeto": false,
+      "isMass": false,
+      "isReferal": false,
+      "salary": null,
+      "externalUrl": "https://job.mts.ru/jobs/711155384731042083",
+      "publishedAt": "2026-09-28T09:58:28.320Z",
+      "imageUrl": null,
+      "tags": []
+    },
+    {
+      "id": "fna6f3isw8xdclw4mag1xusw",
+      "contentRevision": 2,
+      "slug": "v-711119473578347713",
+      "title": "Ведущий Системный аналитик [Единое Окно, МТС Веб Сервисы]",
+      "displayTitle": "Ведущий Системный аналитик [Единое Окно, МТС Веб Сервисы]",
+      "summary": null,
+      "cities": [
+        {
+          "id": "h0scutr0ddllx6rcc8r7xv0q",
+          "slug": "v-552794318700651",
+          "title": "Москва"
+        }
+      ],
+      "employer": {
+        "id": "b767rtkqq1uvenv2pcvghp53",
+        "slug": "v-60374715453145167",
+        "title": "ООО МТС Веб Сервисы",
+        "logoUrl": null
+      },
+      "professionalRoles": [
+        {
+          "id": "uu7fa0zico2f11umo13vtjcn",
+          "slug": "v-60377545291333713",
+          "title": "Аналитика"
+        },
+        {
+          "id": "hw1zmayplwod3dzj3vjza1g6",
+          "slug": "v-60378652839247957",
+          "title": "Системная аналитика"
+        }
+      ],
+      "experience": {
+        "id": "vzcvr9rwze9fyoxxyt3zk3ou",
+        "slug": "3-6-BETWEENTREESIX",
+        "title": "3-6 лет",
+        "code": "BETWEENTREESIX"
+      },
+      "workFormats": [
+        {
+          "id": "kbd8hdjlf9ifcf7d8mu8kcvm",
+          "slug": "v-remote",
+          "title": "Удалённая работа",
+          "code": "remote"
+        }
+      ],
+      "employmentForms": [
+        {
+          "id": "pj9v4kg6kbmey0fkwx79wf17",
+          "slug": "v-FULL",
+          "title": "Полный день",
+          "code": "FULL"
+        }
+      ],
+      "isRemote": false,
+      "isInternship": false,
+      "startLeto": false,
+      "isMass": false,
+      "isReferal": false,
+      "salary": null,
+      "externalUrl": "https://job.mts.ru/jobs/711119473578347713",
+      "publishedAt": "2026-09-28T07:36:46.007Z",
+      "imageUrl": null,
+      "tags": []
+    },
+    {
+      "id": "o0e7big9675m9ik4y41tdbox",
+      "contentRevision": 2,
+      "slug": "senior-710091840560303317",
+      "title": "Senior системный аналитик [ИРТЕЯ]",
+      "displayTitle": "Senior системный аналитик [ИРТЕЯ]",
+      "summary": null,
+      "cities": [
+        {
+          "id": "h0scutr0ddllx6rcc8r7xv0q",
+          "slug": "v-552794318700651",
+          "title": "Москва"
+        }
+      ],
+      "employer": {
+        "id": "ce43x3o1m4a326lziik9b20p",
+        "slug": "v-533537271840770901",
+        "title": "ООО Иртея",
+        "logoUrl": null
+      },
+      "professionalRoles": [
+        {
+          "id": "uu7fa0zico2f11umo13vtjcn",
+          "slug": "v-60377545291333713",
+          "title": "Аналитика"
+        },
+        {
+          "id": "hw1zmayplwod3dzj3vjza1g6",
+          "slug": "v-60378652839247957",
+          "title": "Системная аналитика"
+        }
+      ],
+      "experience": {
+        "id": "v217he2d0yyhyu2jd3vldr64",
+        "slug": "v-NOT",
+        "title": "Без опыта",
+        "code": "NOT"
+      },
+      "workFormats": [
+        {
+          "id": "ehylbxl5f3s9phvtopwbzabb",
+          "slug": "v-hybrid",
+          "title": "Гибридный",
+          "code": "hybrid"
+        }
+      ],
+      "employmentForms": [
+        {
+          "id": "pj9v4kg6kbmey0fkwx79wf17",
+          "slug": "v-FULL",
+          "title": "Полный день",
+          "code": "FULL"
+        }
+      ],
+      "isRemote": false,
+      "isInternship": false,
+      "startLeto": false,
+      "isMass": false,
+      "isReferal": false,
+      "salary": null,
+      "externalUrl": "https://job.mts.ru/jobs/710091840560303317",
+      "publishedAt": "2026-09-25T11:32:15.929Z",
+      "imageUrl": null,
+      "tags": []
+    },
+    {
+      "id": "o9agstgawfpm08g30xmyeq4p",
+      "contentRevision": 2,
+      "slug": "dwh-data-694133355704224969",
+      "title": "Младший Системный аналитик [DWH в РТК Data, МТС Веб Сервисы]",
+      "displayTitle": "Младший Системный аналитик [DWH в РТК Data, МТС Веб Сервисы]",
+      "summary": null,
+      "cities": [
+        {
+          "id": "h0scutr0ddllx6rcc8r7xv0q",
+          "slug": "v-552794318700651",
+          "title": "Москва"
+        }
+      ],
+      "employer": {
+        "id": "b767rtkqq1uvenv2pcvghp53",
+        "slug": "v-60374715453145167",
+        "title": "ООО МТС Веб Сервисы",
+        "logoUrl": null
+      },
+      "professionalRoles": [
+        {
+          "id": "v6h8jo6w5y2gn0a8xg02jsef",
+          "slug": "it-60376693377859705",
+          "title": "Работа в IT"
+        }
+      ],
+      "experience": {
+        "id": "adjb80fghnrzhupkidfehuft",
+        "slug": "1-3-BETWEENONETREE",
+        "title": "1-3 года",
+        "code": "BETWEENONETREE"
+      },
+      "workFormats": [
+        {
+          "id": "ehylbxl5f3s9phvtopwbzabb",
+          "slug": "v-hybrid",
+          "title": "Гибридный",
+          "code": "hybrid"
+        }
+      ],
+      "employmentForms": [
+        {
+          "id": "pj9v4kg6kbmey0fkwx79wf17",
+          "slug": "v-FULL",
+          "title": "Полный день",
+          "code": "FULL"
+        }
+      ],
+      "isRemote": false,
+      "isInternship": false,
+      "startLeto": false,
+      "isMass": false,
+      "isReferal": false,
+      "salary": null,
+      "externalUrl": "https://job.mts.ru/jobs/694133355704224969",
+      "publishedAt": "2026-09-22T08:55:52.684Z",
+      "imageUrl": null,
+      "tags": []
+    },
+    {
+      "id": "v21nfqklen3kv2l47xmjkagj",
+      "contentRevision": 2,
+      "slug": "v-703634900384746747",
+      "title": "Веб-аналитик",
+      "displayTitle": "Веб-аналитик",
+      "summary": null,
+      "cities": [
+        {
+          "id": "h0scutr0ddllx6rcc8r7xv0q",
+          "slug": "v-552794318700651",
+          "title": "Москва"
+        }
+      ],
+      "employer": {
+        "id": "v3z1n3ovh1zopqy4vaf9zi58",
+        "slug": "v-22239684461592654",
+        "title": "ПАО МТС",
+        "logoUrl": null
+      },
+      "professionalRoles": [
+        {
+          "id": "uu7fa0zico2f11umo13vtjcn",
+          "slug": "v-60377545291333713",
+          "title": "Аналитика"
+        }
+      ],
+      "experience": {
+        "id": "adjb80fghnrzhupkidfehuft",
+        "slug": "1-3-BETWEENONETREE",
+        "title": "1-3 года",
+        "code": "BETWEENONETREE"
+      },
+      "workFormats": [
+        {
+          "id": "ehylbxl5f3s9phvtopwbzabb",
+          "slug": "v-hybrid",
+          "title": "Гибридный",
+          "code": "hybrid"
+        }
+      ],
+      "employmentForms": [
+        {
+          "id": "pj9v4kg6kbmey0fkwx79wf17",
+          "slug": "v-FULL",
+          "title": "Полный день",
+          "code": "FULL"
+        }
+      ],
+      "isRemote": false,
+      "isInternship": false,
+      "startLeto": false,
+      "isMass": false,
+      "isReferal": false,
+      "salary": null,
+      "externalUrl": "https://job.mts.ru/jobs/703634900384746747",
+      "publishedAt": "2026-09-07T15:54:37.807Z",
+      "imageUrl": null,
+      "tags": []
+    },
+    {
+      "id": "m5f4gd06r8ni0vplo5ckmcrl",
+      "contentRevision": 2,
+      "slug": "v-689445789449060623",
+      "title": "Финансовый аналитик в отдел финансового анализа и контроллинга финтех",
+      "displayTitle": "Финансовый аналитик в отдел финансового анализа и контроллинга финтех",
+      "summary": null,
+      "cities": [
+        {
+          "id": "h0scutr0ddllx6rcc8r7xv0q",
+          "slug": "v-552794318700651",
+          "title": "Москва"
+        }
+      ],
+      "employer": {
+        "id": "v3z1n3ovh1zopqy4vaf9zi58",
+        "slug": "v-22239684461592654",
+        "title": "ПАО МТС",
+        "logoUrl": null
+      },
+      "professionalRoles": [
+        {
+          "id": "ynh2dkbt85uxjit2s58ohq17",
+          "slug": "v-60377668213801046",
+          "title": "Финансы"
+        }
+      ],
+      "experience": {
+        "id": "vzcvr9rwze9fyoxxyt3zk3ou",
+        "slug": "3-6-BETWEENTREESIX",
+        "title": "3-6 лет",
+        "code": "BETWEENTREESIX"
+      },
+      "workFormats": [
+        {
+          "id": "wqr3qrdqiwqtzw3xysoxibfx",
+          "slug": "v-office",
+          "title": "В офисе",
+          "code": "office"
+        }
+      ],
+      "employmentForms": [
+        {
+          "id": "pj9v4kg6kbmey0fkwx79wf17",
+          "slug": "v-FULL",
+          "title": "Полный день",
+          "code": "FULL"
+        }
+      ],
+      "isRemote": false,
+      "isInternship": false,
+      "startLeto": false,
+      "isMass": false,
+      "isReferal": false,
+      "salary": null,
+      "externalUrl": "https://job.mts.ru/jobs/689445789449060623",
+      "publishedAt": "2026-09-02T20:42:57.808Z",
+      "imageUrl": null,
+      "tags": []
+    },
+    {
+      "id": "jmfzpqjwcpxdhiyjqe04zuz2",
+      "contentRevision": 2,
+      "slug": "v-689448514303820055",
+      "title": "Финансовый аналитик (Отдел инвестиционного анализа)",
+      "displayTitle": "Финансовый аналитик (Отдел инвестиционного анализа)",
+      "summary": null,
+      "cities": [
+        {
+          "id": "h0scutr0ddllx6rcc8r7xv0q",
+          "slug": "v-552794318700651",
+          "title": "Москва"
+        }
+      ],
+      "employer": {
+        "id": "v3z1n3ovh1zopqy4vaf9zi58",
+        "slug": "v-22239684461592654",
+        "title": "ПАО МТС",
+        "logoUrl": null
+      },
+      "professionalRoles": [
+        {
+          "id": "ynh2dkbt85uxjit2s58ohq17",
+          "slug": "v-60377668213801046",
+          "title": "Финансы"
+        }
+      ],
+      "experience": {
+        "id": "vzcvr9rwze9fyoxxyt3zk3ou",
+        "slug": "3-6-BETWEENTREESIX",
+        "title": "3-6 лет",
+        "code": "BETWEENTREESIX"
+      },
+      "workFormats": [
+        {
+          "id": "wqr3qrdqiwqtzw3xysoxibfx",
+          "slug": "v-office",
+          "title": "В офисе",
+          "code": "office"
+        }
+      ],
+      "employmentForms": [
+        {
+          "id": "pj9v4kg6kbmey0fkwx79wf17",
+          "slug": "v-FULL",
+          "title": "Полный день",
+          "code": "FULL"
+        }
+      ],
+      "isRemote": false,
+      "isInternship": false,
+      "startLeto": false,
+      "isMass": false,
+      "isReferal": false,
+      "salary": null,
+      "externalUrl": "https://job.mts.ru/jobs/689448514303820055",
+      "publishedAt": "2026-09-02T20:42:57.583Z",
+      "imageUrl": null,
+      "tags": []
+    },
+    {
+      "id": "w2187sc2vkul3m3q1yjsknh0",
+      "contentRevision": 1,
+      "slug": "senior-gsm-515767619593179549",
+      "title": "Senior аналитик GSM [Иртея]",
+      "displayTitle": "Senior аналитик GSM [Иртея]",
+      "summary": null,
+      "cities": [
+        {
+          "id": "h0scutr0ddllx6rcc8r7xv0q",
+          "slug": "v-552794318700651",
+          "title": "Москва"
+        }
+      ],
+      "employer": {
+        "id": "b767rtkqq1uvenv2pcvghp53",
+        "slug": "v-60374715453145167",
+        "title": "ООО МТС Веб Сервисы",
+        "logoUrl": null
+      },
+      "professionalRoles": [
+        {
+          "id": "uu7fa0zico2f11umo13vtjcn",
+          "slug": "v-60377545291333713",
+          "title": "Аналитика"
+        }
+      ],
+      "experience": {
+        "id": "vzcvr9rwze9fyoxxyt3zk3ou",
+        "slug": "3-6-BETWEENTREESIX",
+        "title": "3-6 лет",
+        "code": "BETWEENTREESIX"
+      },
+      "workFormats": [
+        {
+          "id": "kbd8hdjlf9ifcf7d8mu8kcvm",
+          "slug": "v-remote",
+          "title": "Удалённая работа",
+          "code": "remote"
+        }
+      ],
+      "employmentForms": [
+        {
+          "id": "pj9v4kg6kbmey0fkwx79wf17",
+          "slug": "v-FULL",
+          "title": "Полный день",
+          "code": "FULL"
+        }
+      ],
+      "isRemote": false,
+      "isInternship": false,
+      "startLeto": false,
+      "isMass": false,
+      "isReferal": false,
+      "salary": null,
+      "externalUrl": "https://job.mts.ru/jobs/515767619593179549",
+      "publishedAt": "2026-09-02T07:21:15.762Z",
+      "imageUrl": null,
+      "tags": []
+    },
+    {
+      "id": "jag801ywcoquddwxbehf3khr",
+      "contentRevision": 1,
+      "slug": "v-690844438326414537",
+      "title": "Процессный аналитик",
+      "displayTitle": "Процессный аналитик",
+      "summary": null,
+      "cities": [
+        {
+          "id": "h0scutr0ddllx6rcc8r7xv0q",
+          "slug": "v-552794318700651",
+          "title": "Москва"
+        }
+      ],
+      "employer": {
+        "id": "v3z1n3ovh1zopqy4vaf9zi58",
+        "slug": "v-22239684461592654",
+        "title": "ПАО МТС",
+        "logoUrl": null
+      },
+      "professionalRoles": [
+        {
+          "id": "w8n047srgbvbl3ibgu3v5bgy",
+          "slug": "hr-60376885560868989",
+          "title": "HR"
+        }
+      ],
+      "experience": {
+        "id": "adjb80fghnrzhupkidfehuft",
+        "slug": "1-3-BETWEENONETREE",
+        "title": "1-3 года",
+        "code": "BETWEENONETREE"
+      },
+      "workFormats": [
+        {
+          "id": "ehylbxl5f3s9phvtopwbzabb",
+          "slug": "v-hybrid",
+          "title": "Гибридный",
+          "code": "hybrid"
+        }
+      ],
+      "employmentForms": [
+        {
+          "id": "xyo8yvl3n56ku7zbovr07f4s",
+          "slug": "v-FLEXIBLE",
+          "title": "Гибкий график",
+          "code": "FLEXIBLE"
+        }
+      ],
+      "isRemote": false,
+      "isInternship": false,
+      "startLeto": false,
+      "isMass": false,
+      "isReferal": true,
+      "salary": null,
+      "externalUrl": "https://job.mts.ru/jobs/690844438326414537",
+      "publishedAt": "2026-09-02T07:19:24.237Z",
+      "imageUrl": null,
+      "tags": []
+    },
+    {
+      "id": "ndhxrm4owws2uw3ofuk7gwvv",
+      "contentRevision": 1,
+      "slug": "v-695954494856364296",
+      "title": "Финансовый аналитик (МГТС)",
+      "displayTitle": "Финансовый аналитик (МГТС)",
+      "summary": null,
+      "cities": [
+        {
+          "id": "h0scutr0ddllx6rcc8r7xv0q",
+          "slug": "v-552794318700651",
+          "title": "Москва"
+        }
+      ],
+      "employer": {
+        "id": "lhz25noz7bemjnah83dett9x",
+        "slug": "v-60374684327215180",
+        "title": "ПАО МГТС",
+        "logoUrl": null
+      },
+      "professionalRoles": [
+        {
+          "id": "uu7fa0zico2f11umo13vtjcn",
+          "slug": "v-60377545291333713",
+          "title": "Аналитика"
+        },
+        {
+          "id": "e8uaej4pq0gyzu5hxqq3cp57",
+          "slug": "v-60378676868415604",
+          "title": "Финансовая аналитика"
+        }
+      ],
+      "experience": {
+        "id": "vzcvr9rwze9fyoxxyt3zk3ou",
+        "slug": "3-6-BETWEENTREESIX",
+        "title": "3-6 лет",
+        "code": "BETWEENTREESIX"
+      },
+      "workFormats": [
+        {
+          "id": "wqr3qrdqiwqtzw3xysoxibfx",
+          "slug": "v-office",
+          "title": "В офисе",
+          "code": "office"
+        }
+      ],
+      "employmentForms": [
+        {
+          "id": "pj9v4kg6kbmey0fkwx79wf17",
+          "slug": "v-FULL",
+          "title": "Полный день",
+          "code": "FULL"
+        }
+      ],
+      "isRemote": false,
+      "isInternship": false,
+      "startLeto": false,
+      "isMass": false,
+      "isReferal": false,
+      "salary": null,
+      "externalUrl": "https://job.mts.ru/jobs/695954494856364296",
+      "publishedAt": "2026-09-02T07:18:57.786Z",
+      "imageUrl": null,
+      "tags": []
+    },
+    {
+      "id": "wbyb4k3iuw22s2nn2ydosfkq",
+      "contentRevision": 1,
+      "slug": "v-698555947240390963",
+      "title": "Менеджер продукта (Видеоаналитика)",
+      "displayTitle": "Менеджер продукта (Видеоаналитика)",
+      "summary": null,
+      "cities": [
+        {
+          "id": "h0scutr0ddllx6rcc8r7xv0q",
+          "slug": "v-552794318700651",
+          "title": "Москва"
+        }
+      ],
+      "employer": {
+        "id": "v3z1n3ovh1zopqy4vaf9zi58",
+        "slug": "v-22239684461592654",
+        "title": "ПАО МТС",
+        "logoUrl": null
+      },
+      "professionalRoles": [
+        {
+          "id": "bm0a7qkqgm70l0sqly4vfi2i",
+          "slug": "v-60376758221799509",
+          "title": "Управление продуктами/проектами/процессами"
+        }
+      ],
+      "experience": {
+        "id": "adjb80fghnrzhupkidfehuft",
+        "slug": "1-3-BETWEENONETREE",
+        "title": "1-3 года",
+        "code": "BETWEENONETREE"
+      },
+      "workFormats": [
+        {
+          "id": "ehylbxl5f3s9phvtopwbzabb",
+          "slug": "v-hybrid",
+          "title": "Гибридный",
+          "code": "hybrid"
+        }
+      ],
+      "employmentForms": [
+        {
+          "id": "pj9v4kg6kbmey0fkwx79wf17",
+          "slug": "v-FULL",
+          "title": "Полный день",
+          "code": "FULL"
+        }
+      ],
+      "isRemote": false,
+      "isInternship": false,
+      "startLeto": false,
+      "isMass": false,
+      "isReferal": false,
+      "salary": null,
+      "externalUrl": "https://job.mts.ru/jobs/698555947240390963",
+      "publishedAt": "2026-09-02T07:18:39.639Z",
+      "imageUrl": null,
+      "tags": []
+    },
+    {
+      "id": "cxpaydio3zbqwpvjxvf9u0ix",
+      "contentRevision": 1,
+      "slug": "hr-701437804583849190",
+      "title": "Начальник отдела бюджетирования и аналитики HR (МГТС)",
+      "displayTitle": "Начальник отдела бюджетирования и аналитики HR (МГТС)",
+      "summary": null,
+      "cities": [
+        {
+          "id": "h0scutr0ddllx6rcc8r7xv0q",
+          "slug": "v-552794318700651",
+          "title": "Москва"
+        }
+      ],
+      "employer": {
+        "id": "lhz25noz7bemjnah83dett9x",
+        "slug": "v-60374684327215180",
+        "title": "ПАО МГТС",
+        "logoUrl": null
+      },
+      "professionalRoles": [
+        {
+          "id": "w8n047srgbvbl3ibgu3v5bgy",
+          "slug": "hr-60376885560868989",
+          "title": "HR"
+        },
+        {
+          "id": "a6k8x7hvgzzxk95t6c2lpnsc",
+          "slug": "hrbp-hrg-295882384589783116",
+          "title": "HRBP/HRG"
+        }
+      ],
+      "experience": {
+        "id": "v217he2d0yyhyu2jd3vldr64",
+        "slug": "v-NOT",
+        "title": "Без опыта",
+        "code": "NOT"
+      },
+      "workFormats": [
+        {
+          "id": "wqr3qrdqiwqtzw3xysoxibfx",
+          "slug": "v-office",
+          "title": "В офисе",
+          "code": "office"
+        }
+      ],
+      "employmentForms": [
+        {
+          "id": "pj9v4kg6kbmey0fkwx79wf17",
+          "slug": "v-FULL",
+          "title": "Полный день",
+          "code": "FULL"
+        }
+      ],
+      "isRemote": false,
+      "isInternship": false,
+      "startLeto": false,
+      "isMass": false,
+      "isReferal": false,
+      "salary": null,
+      "externalUrl": "https://job.mts.ru/jobs/701437804583849190",
+      "publishedAt": "2026-09-02T07:17:16.430Z",
+      "imageUrl": null,
+      "tags": []
+    },
+    {
+      "id": "hi4lrhmgp2h2xhylrxju4e6b",
+      "contentRevision": 1,
+      "slug": "v-506844733251780696",
+      "title": "Системный аналитик",
+      "displayTitle": "Системный аналитик",
+      "summary": null,
+      "cities": [
+        {
+          "id": "h0scutr0ddllx6rcc8r7xv0q",
+          "slug": "v-552794318700651",
+          "title": "Москва"
+        }
+      ],
+      "employer": {
+        "id": "x6dmumxfiqy69fvmt73qosyl",
+        "slug": "v-60374775695933556",
+        "title": "ПАО МТС-Банк",
+        "logoUrl": null
+      },
+      "professionalRoles": [
+        {
+          "id": "uu7fa0zico2f11umo13vtjcn",
+          "slug": "v-60377545291333713",
+          "title": "Аналитика"
+        },
+        {
+          "id": "hw1zmayplwod3dzj3vjza1g6",
+          "slug": "v-60378652839247957",
+          "title": "Системная аналитика"
+        }
+      ],
+      "experience": {
+        "id": "vzcvr9rwze9fyoxxyt3zk3ou",
+        "slug": "3-6-BETWEENTREESIX",
+        "title": "3-6 лет",
+        "code": "BETWEENTREESIX"
+      },
+      "workFormats": [
+        {
+          "id": "wqr3qrdqiwqtzw3xysoxibfx",
+          "slug": "v-office",
+          "title": "В офисе",
+          "code": "office"
+        }
+      ],
+      "employmentForms": [
+        {
+          "id": "pj9v4kg6kbmey0fkwx79wf17",
+          "slug": "v-FULL",
+          "title": "Полный день",
+          "code": "FULL"
+        }
+      ],
+      "isRemote": false,
+      "isInternship": false,
+      "startLeto": false,
+      "isMass": false,
+      "isReferal": false,
+      "salary": null,
+      "externalUrl": "https://job.mts.ru/jobs/506844733251780696",
+      "publishedAt": "2026-09-02T07:16:56.220Z",
+      "imageUrl": null,
+      "tags": []
+    }
+  ],
+  "meta": {
+    "pagination": {
+      "page": 2,
+      "pageSize": 25,
+      "pageCount": 2,
+      "total": 46
+    }
+  }
+}

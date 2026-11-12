@@ -37,8 +37,8 @@ def add_detail(item: Item, elements, extra: str = '', published: str | None = No
     if not elements or not any(el.get_text(strip=True) for el in elements):
         raise SourceError('описание вакансии не найдено — проверь вёрстку сайта')
     item.text = '\n'.join([item.text, extra, *(el.get_text(' ', strip=True) for el in elements)]).strip()
-    item.links = list(dict.fromkeys(urljoin(item.url, a['href'])
-                                  for el in elements for a in el.select('a[href]')))
+    links = item.links + [urljoin(item.url, a['href']) for el in elements for a in el.select('a[href]')]
+    item.links = list(dict.fromkeys(links))
     item.published_at = item.published_at or parse_date(published)
     return item
 

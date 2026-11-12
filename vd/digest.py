@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import re
 from collections import Counter, defaultdict
-from datetime import date
+from datetime import date, timedelta, timezone
 from html import escape
 from urllib.parse import quote
 
@@ -25,7 +25,7 @@ def source_name(source: str) -> str:
         return f"TG · {source[3:]}"
     if source.startswith("site:"):
         return {"jabka": "jabka.work", "youngjunior": "youngjunior.ru", "habr": "Хабр Карьера",
-                "avito": "Авито", "aviasales": "Aviasales"}.get(source[5:], source[5:])
+                "avito": "Авито", "aviasales": "Aviasales", "vk": "VK", "mts": "МТС"}.get(source[5:], source[5:])
     if source == "linkedin":
         return "LinkedIn"
     if source == "marks":
@@ -72,6 +72,14 @@ def _failed_summary(failed: dict[str, str], read_stats: dict) -> tuple[str, set[
 def _meta(v: Verdict) -> str:
     parts = [v.company or "", ROLE_RU.get(v.role, ""), GRADE_RU.get(v.grade, ""),
              REMOTE_RU.get(v.remote_from_russia, ""), v.salary or ""]
+    published = v.item.published_at
+    if published is not None:
+        if published.tzinfo is not None:
+            published = published.astimezone(timezone(timedelta(hours=3)))
+        label = "Дата подборки" if v.item.kind == "digest_link" else "Размещено"
+        parts.append(f"{label}: {published:%d.%m.%Y}")
+    else:
+        parts.append("Дата размещения не указана")
     return " · ".join(p for p in parts if p)
 
 

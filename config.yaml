@@ -110,6 +110,24 @@ sources:
       urls:
         - "https://www.aviasales.ru/about/vacancies"
 
+    - name: vk
+      enabled: true
+      morning_only: true
+      lookback_days_first_run: 14
+      max_pages: 5
+      urls:
+        - "https://team.vk.company/career/api/v2/vacancies/?title=аналитик&limit=25&offset=0"
+        - "https://team.vk.company/career/api/v2/vacancies/?title=analyst&limit=25&offset=0"
+
+    - name: mts
+      enabled: true
+      morning_only: true
+      lookback_days_first_run: 14
+      max_pages: 5
+      urls:
+        - "https://job.mts.ru/api/v2/catalog/v1/vacancies?q=аналитик&limit=25&offset=0"
+        - "https://job.mts.ru/api/v2/catalog/v1/vacancies?q=analyst&limit=25&offset=0"
+
   linkedin_mail:
     # Включить после недели проверки, что уведомления LinkedIn приходят на почту
     enabled: false
