@@ -84,10 +84,10 @@ sources:
         - "https://youngjunior.ru/product-analyst/jobs"
         - "https://youngjunior.ru/data-analyst/jobs"
 
-    # с 12.11: карьерные сайты — один утренний обход; --dry-run проверяет и вечером.
+    # с 16.11: все карьерные сайты проверяются утром и в 17:00.
     - name: habr
       enabled: true
-      morning_only: true
+      morning_only: false
       lookback_days_first_run: 5
       max_pages: 20
       urls:
@@ -96,7 +96,7 @@ sources:
 
     - name: avito
       enabled: true
-      morning_only: true
+      morning_only: false
       lookback_days_first_run: 5
       max_pages: 10
       urls:
@@ -104,7 +104,7 @@ sources:
 
     - name: aviasales
       enabled: true
-      morning_only: true
+      morning_only: false
       lookback_days_first_run: 5
       max_pages: 1
       urls:
@@ -112,7 +112,7 @@ sources:
 
     - name: vk
       enabled: true
-      morning_only: true
+      morning_only: false
       lookback_days_first_run: 14
       max_pages: 5
       urls:
@@ -121,7 +121,7 @@ sources:
 
     - name: mts
       enabled: true
-      morning_only: true
+      morning_only: false
       lookback_days_first_run: 14
       max_pages: 5
       urls:
@@ -131,7 +131,7 @@ sources:
     # с 16.11: дополнительные карьерные сайты; только подтверждённая удалёнка.
     - name: megafon
       enabled: true
-      morning_only: true
+      morning_only: false
       lookback_days_first_run: 14
       max_pages: 10
       urls:
@@ -141,7 +141,7 @@ sources:
 
     - name: sber
       enabled: true
-      morning_only: true
+      morning_only: false
       lookback_days_first_run: 14
       max_pages: 10
       urls:
@@ -150,7 +150,7 @@ sources:
 
     - name: twogis
       enabled: true
-      morning_only: true
+      morning_only: false
       lookback_days_first_run: 14
       max_pages: 10
       urls:
@@ -158,7 +158,7 @@ sources:
 
     - name: magnit
       enabled: true
-      morning_only: true
+      morning_only: false
       lookback_days_first_run: 14
       max_pages: 20
       urls:
