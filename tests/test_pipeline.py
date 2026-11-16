@@ -317,6 +317,33 @@ class PipelineTests(unittest.TestCase):
         self.assertFalse(store.is_seen("tg:nodatanojobs", "100"))
         self.assertFalse(store.sent_in_slot(datetime.now()))
 
+    def test_failed_digest_sends_separate_email_alert(self):
+        at = datetime(2026, 11, 16, 10, 15)
+        reason = "curl (28): server response timeout <SMTP>"
+        code, sent = self.run_main(at=at, send=[mailer.SendError(reason), "<alert@x>"])
+        self.assertEqual(code, 1)
+        self.assertEqual(sent.call_count, 2)
+        alert = sent.call_args.args
+        self.assertIn("СБОЙ отправки дайджеста", alert[1])
+        self.assertIn("16.11.2026 10:15", alert[3])
+        self.assertIn(reason, alert[3])
+        self.assertIn("&lt;SMTP&gt;", alert[2])
+        self.assertIn("out/digest_2026-11-16-am.html", alert[3])
+        store = Store(self.tmp / "data" / "state.sqlite")
+        self.addCleanup(store.close)
+        self.assertEqual(store.conn.execute("SELECT status, error FROM runs").fetchone(), ("failed", reason))
+        self.assertEqual(store.conn.execute("SELECT COUNT(*) FROM ledger").fetchone()[0], 0)
+        self.assertIsNone(store.get_bookmark("tg:nodatanojobs"))
+
+    def test_failed_alert_is_logged_without_further_send_attempts(self):
+        with self.assertLogs("digest", level="ERROR") as logs:
+            code, sent = self.run_main(send=[mailer.SendError("digest timeout"),
+                                             mailer.SendError("alert timeout")])
+        self.assertEqual(code, 1)
+        self.assertEqual(sent.call_count, 2)
+        self.assertTrue(any("Извещение о сбое тоже не ушло" in line and "alert timeout" in line
+                            for line in logs.output))
+
     def test_failed_source_flagged_and_bookmark_kept(self):
         code, m = self.run_main(results=fake_results(fail_jabka=True))
         subject, html = m.call_args.args[1], m.call_args.args[2]

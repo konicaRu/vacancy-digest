@@ -132,6 +132,22 @@ def _alert_crash(cfg: dict) -> None:
 ISSUE_RU = {"am": "утро", "pm": "вечер"}
 
 
+def _alert_send_failure(cfg: dict, issue: str, at: datetime, reason: str, out_file: Path) -> None:
+    subject = f"{at:%d.%m} СБОЙ отправки дайджеста"
+    text = (f"Отправка дайджеста не подтверждена.\n"
+            f"Запуск: {at:%d.%m.%Y %H:%M}.\nВыпуск: {issue}.\nПричина: {reason}\n\n"
+            f"Подборка сохранена: {out_file.relative_to(ROOT).as_posix()}\n"
+            "История вакансий не изменена — следующий запуск соберёт их заново.\n"
+            "При таймауте сервер мог принять исходное письмо без подтверждения.\n"
+            "Подробности: logs/run.log")
+    html = f"<html><body><pre>{escape(text)}</pre></body></html>"
+    try:
+        mailer.send(cfg["mail"], subject, html, text)
+        log.info("Извещение о сбое отправлено на %s", cfg["mail"]["to"])
+    except Exception as e:
+        log.error("Извещение о сбое тоже не ушло: %s", e)
+
+
 def _now() -> datetime:
     return datetime.now()
 
@@ -256,6 +272,7 @@ def _run(args, cfg: dict, store: Store) -> int:
         # Письмо не ушло → закладки и журнал не трогаем, следующий запуск соберёт всё заново
         store.finish_run(run_id, "failed", stats, str(e))
         log.error("Письмо НЕ отправлено: %s", e)
+        _alert_send_failure(cfg, subject, now, str(e), out_file)
         return 1
 
     store.commit_after_send(bookmarks, seen, ledger_rows, marks)
