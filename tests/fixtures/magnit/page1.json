@@ -1,0 +1,130 @@
+{
+  "success": true,
+  "meta": {
+    "from": 1,
+    "to": 9,
+    "per_page": 9,
+    "current_page": 1,
+    "has_more_pages": true,
+    "total": 48,
+    "total_without_params": 48
+  },
+  "results": [
+    {
+      "id": 2921,
+      "title": "Главный Kotlin разработчик",
+      "location": null,
+      "is_internship": false,
+      "work_formats": [
+        {
+          "foreign_id": 16108,
+          "name": "Москва и Краснодар (гибрид/офис), другие города - удаленно"
+        }
+      ]
+    },
+    {
+      "id": 2953,
+      "title": "Лидер направления Вовлечение",
+      "location": "Москва",
+      "is_internship": false,
+      "work_formats": [
+        {
+          "foreign_id": 16100,
+          "name": "Москва (гибрид/офис)"
+        }
+      ]
+    },
+    {
+      "id": 3000,
+      "title": "Ведущий ML-инженер",
+      "location": null,
+      "is_internship": false,
+      "work_formats": [
+        {
+          "foreign_id": 16108,
+          "name": "Москва и Краснодар (гибрид/офис), другие города - удаленно"
+        }
+      ]
+    },
+    {
+      "id": 3009,
+      "title": "Менеджер продукта Кредиты",
+      "location": null,
+      "is_internship": false,
+      "work_formats": [
+        {
+          "foreign_id": 16100,
+          "name": "Москва (гибрид/офис)"
+        }
+      ]
+    },
+    {
+      "id": 3011,
+      "title": "Бизнес-аналитик в Лабораторию ИИ",
+      "location": null,
+      "is_internship": false,
+      "work_formats": [
+        {
+          "foreign_id": 16100,
+          "name": "Москва (гибрид/офис)"
+        },
+        {
+          "foreign_id": 16101,
+          "name": "Краснодар (гибрид/офис)"
+        }
+      ]
+    },
+    {
+      "id": 3012,
+      "title": "Руководитель проекта в Лабораторию ИИ",
+      "location": null,
+      "is_internship": false,
+      "work_formats": [
+        {
+          "foreign_id": 16100,
+          "name": "Москва (гибрид/офис)"
+        },
+        {
+          "foreign_id": 16101,
+          "name": "Краснодар (гибрид/офис)"
+        }
+      ]
+    },
+    {
+      "id": 3016,
+      "title": "Главный разработчик MLOps",
+      "location": null,
+      "is_internship": false,
+      "work_formats": [
+        {
+          "foreign_id": 16108,
+          "name": "Москва и Краснодар (гибрид/офис), другие города - удаленно"
+        }
+      ]
+    },
+    {
+      "id": 3049,
+      "title": "Аналитик данных (Маркетинговая аналитика / MMM / CMI)",
+      "location": "Москва",
+      "is_internship": false,
+      "work_formats": [
+        {
+          "foreign_id": 16100,
+          "name": "Москва (гибрид/офис)"
+        }
+      ]
+    },
+    {
+      "id": 3051,
+      "title": "Продуктовый аналитик",
+      "location": null,
+      "is_internship": false,
+      "work_formats": [
+        {
+          "foreign_id": 16108,
+          "name": "Москва и Краснодар (гибрид/офис), другие города - удаленно"
+        }
+      ]
+    }
+  ]
+}

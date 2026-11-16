@@ -25,7 +25,7 @@ from vd.config import ConfigError, load_config
 from vd.expand import expand_bundles
 from vd.marks import fetch_marks, mark_link
 from vd.llm import LMStudioClient
-from vd.sources import aviasales, avito, habr, jabka, linkedin_mail, make_session, megafon, mts, sber, telegram, twogis, vk, youngjunior
+from vd.sources import aviasales, avito, habr, jabka, linkedin_mail, magnit, make_session, megafon, mts, sber, telegram, twogis, vk, youngjunior
 from vd.store import Store
 
 ROOT = Path(__file__).resolve().parent
@@ -72,7 +72,7 @@ def collect_all(cfg: dict, store: Store, fetch, slot: str = "am", dry_run: bool 
 
     career_collectors = {"habr": habr.collect, "avito": avito.collect, "aviasales": aviasales.collect,
                          "vk": vk.collect, "mts": mts.collect, "megafon": megafon.collect,
-                         "sber": sber.collect, "twogis": twogis.collect}
+                         "sber": sber.collect, "twogis": twogis.collect, "magnit": magnit.collect}
     for site in cfg["sources"].get("sites", []):
         if not site.get("enabled", True):
             continue
