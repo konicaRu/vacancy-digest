@@ -12,6 +12,7 @@ import smtplib
 import subprocess
 import tempfile
 from email.message import EmailMessage
+from email.policy import SMTP
 from email.utils import make_msgid
 from pathlib import Path
 from typing import Optional
@@ -34,7 +35,7 @@ def _send_curl(curl: str, preset: dict, user: str, password: str, to: str, msg: 
     fd, path = tempfile.mkstemp(suffix=".eml")
     try:
         with os.fdopen(fd, "wb") as f:
-            f.write(msg.as_bytes())
+            f.write(msg.as_bytes(policy=SMTP))
         args = [curl, "--silent", "--show-error", "--ssl-reqd", "--connect-timeout", "30", "--max-time", "120",
                 f"smtps://{preset['smtp']}:{preset['smtp_port']}",
                 "--mail-from", user, "--mail-rcpt", to, "--upload-file", path, "--config", "-"]

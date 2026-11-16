@@ -42,6 +42,13 @@ class CurlSendTests(unittest.TestCase):
             self.run_send(returncode=67, stderr="curl: (67) Login denied")
         self.assertIn("логин/пароль приложения", str(e.exception))
 
+    def test_uploaded_message_uses_smtp_crlf_lines(self):
+        _, seen = self.run_send()
+        message = seen["message"]
+        self.assertIn(b"\r\n\r\n", message)
+        self.assertNotIn(b"\n", message.replace(b"\r\n", b""))
+        self.assertNotIn(b"\r", message.replace(b"\r\n", b""))
+
     def test_other_curl_error(self):
         with self.assertRaises(mailer.SendError) as e:
             self.run_send(returncode=28, stderr="curl: (28) Connection timed out")

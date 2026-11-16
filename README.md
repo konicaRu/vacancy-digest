@@ -113,6 +113,9 @@ run_digest.bat --no-llm                 без модели, по ключевы
 ## Если что-то не так
 
 - Письма нет → `logs\run.log`, `logs\scheduler.log`; статусы запусков — таблица `runs` в `data\state.sqlite`.
+- SMTP `server response timeout` после передачи письма: файл для curl должен иметь окончания строк CRLF
+  (`email.policy.SMTP`). На Яндексе LF воспроизводил зависание после DATA/354; CRLF принят на том же порту 465.
+  Разбор и результаты сравнения: `docs/smtp-timeout-2026-11-16.md`.
 - «Telegram: не прочитан ни один из N каналов — соединение обрывается» → провайдер блокирует t.me, запросы скрипта
   должны идти через VPN. Browsec Desktop в «умном» режиме пускает через VPN только выбранные программы — добавить в его
   список приложений `C:\Users\w-w3\AppData\Local\Programs\Python\Python311\python.exe` (именно он ходит в сеть; venv-овский
