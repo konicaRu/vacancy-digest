@@ -1,0 +1,52 @@
+{
+  "data": {
+    "vacancies": [
+      {
+        "requisitionId": "a523a700-2310-4a3e-8d2b-947e4e666850",
+        "internalId": 4581675,
+        "title": "Аналитик по разработке моделей ( международный проект)",
+        "company": "ПАО Сбербанк",
+        "companyShortName": "PAOSberbank",
+        "publicationDate": "2026-11-11T08:52:36.000Z",
+        "introduction": "Мы ищем аналитика, который будет работать на стыке рыночной аналитики, автоматизации сбора данных и подготовки стратегических материалов для руководства.",
+        "specialization": "Информационные технологии:Аналитик",
+        "specializationId": "9b07fbb7-3259-4eb5-839c-ea14b08ad51a",
+        "duties": "*   планирование этапов сбора рыночной аналитики: определение критического пути, контрольных точек и зависимостей",
+        "requirements": "*   высшее образование: экономическое, техническое, математическое или в сфере ИТ",
+        "conditions": "*   комфортный офис рядом с метро Кутузовская",
+        "acceptHandicappedFlag": null,
+        "city": "г Москва",
+        "region": "",
+        "salary_min": null,
+        "salary_max": null,
+        "workScheduleId": 1,
+        "experienceId": "7d2adf16-4635-4f0f-bf6e-f6089a702b5d",
+        "publicationId": "9b9f52fc-f987-4f21-96af-3a85443aaf38"
+      },
+      {
+        "requisitionId": "b033bea8-0f4d-4a2e-b162-91381507949a",
+        "internalId": 4578291,
+        "title": "Специалист технической поддержки",
+        "company": "ПАО Сбербанк",
+        "companyShortName": "PAOSberbank",
+        "publicationDate": "2026-10-12T04:06:01.000Z",
+        "introduction": "Ищешь работу с возможностью карьерного роста и профессионального развития? Мы всему научим и поможем построить карьеру! Сбер раскроет твой карьерный потенциал! Откликайся!",
+        "specialization": "Продажи, обслуживание клиентов:Специалист технической поддержки",
+        "specializationId": "6be58e22-4a8d-4863-adc5-6a3d28a0babb",
+        "duties": "### **Что мы предлагаем:**",
+        "requirements": "### **Что нужно делать:**",
+        "conditions": "### **Мы ждем, что ты:**",
+        "acceptHandicappedFlag": null,
+        "city": "г Тула",
+        "region": "Тульская область",
+        "salary_min": 65000,
+        "salary_max": null,
+        "workScheduleId": 4,
+        "experienceId": "07544111-3b15-475c-9980-1d0fa3d031c5",
+        "publicationId": "fb23032d-b0d8-4e42-9bb5-7d544f042906"
+      }
+    ],
+    "total": 3
+  },
+  "success": true
+}

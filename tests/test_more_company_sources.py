@@ -5,8 +5,8 @@ from pathlib import Path
 from urllib.parse import parse_qs, urlparse
 
 import main
-from vd.classify import keyword_classify, prefilter
-from vd.models import Item, SourceError
+from vd.classify import keyword_classify, prefilter, decide
+from vd.models import Item, SourceError, Verdict
 from vd.sources import vk, mts
 from vd.store import Store
 
@@ -22,7 +22,54 @@ def sample(name):
 class VKSourceTests(unittest.TestCase):
     URL = 'https://team.vk.company/career/api/v2/vacancies/?title=аналитик&limit=25&offset=0'
 
-    def test_real_list_titles_company_and_explicit_remote(self):
+    def test_detail_format_tags_are_required_for_remote(self):
+        for tags, want in ((['Дистанционный'], 'yes'),
+                           (['Дистанционный', 'Комбинированный'], 'yes'),
+                           (['Комбинированный'], 'no'), (['Офисный'], 'no'),
+                           (['гибкий'], 'no'), ([], 'no')):
+            with self.subTest(tags=tags):
+                items, _ = vk.parse_page(sample('vk_api.json'), self.URL)
+                # API remote=True and generic remote wording must not override the tags.
+                item = items[0]
+                html = ('<div><div><h4 class="vacancy-title">Формат работы</h4></div><div>'
+                        + ''.join(f'<div class="vacancy-tag">{tag}</div>' for tag in tags)
+                        + '</div></div><div itemprop="description">Аналитик данных. '
+                        'SQL. Удалённо, комфортный офис.</div>'
+                        '<nav><div class="vacancy-tag">Дистанционный</div></nav>')
+                item = vk.parse_detail(html, item)
+                self.assertEqual(keyword_classify(item).remote_from_russia, want)
+                v = Verdict(item=item, is_vacancy=True, title='Аналитик данных',
+                            role='data_analyst', remote_from_russia='yes', by_llm=True)
+                self.assertEqual(decide(v, {}).bucket, 'main' if want == 'yes' else 'drop')
+
+    def test_missing_detail_format_cannot_be_inferred_from_api_or_description(self):
+        items, _ = vk.parse_page(sample('vk_api.json'), self.URL)
+        item = vk.parse_detail('<div itemprop="description">Аналитик данных. Удалённо.</div>', items[0])
+        self.assertEqual(keyword_classify(item).remote_from_russia, 'no')
+
+    def test_detail_remote_does_not_override_russia_restriction(self):
+        items, _ = vk.parse_page(sample('vk_api.json'), self.URL)
+        html = ('<div><div><h4 class="vacancy-title">Формат работы</h4></div>'
+                '<div><div class="vacancy-tag">Дистанционный</div></div></div>'
+                '<div itemprop="description">Аналитик данных. Удалённо, кроме России.</div>')
+        self.assertEqual(keyword_classify(vk.parse_detail(html, items[0])).remote_from_russia, 'no')
+
+    def test_detail_remote_overrides_api_false_and_generic_office_text(self):
+        data = json.loads(sample('vk_api.json'))
+        data['results'][0]['remote'] = False
+        data['results'][0]['work_format'] = 'Комбинированный'
+        items, _ = vk.parse_page(json.dumps(data), self.URL)
+        html = ('<div><div><h4 class="vacancy-title">Формат работы</h4></div>'
+                '<div><div class="vacancy-tag">Дистанционный</div>'
+                '<div class="vacancy-tag">Комбинированный</div></div></div>'
+                '<div itemprop="description">Аналитик данных. Комфортный офис.</div>')
+        item = vk.parse_detail(html, items[0])
+        self.assertEqual(keyword_classify(item).remote_from_russia, 'yes')
+        v = Verdict(item=item, is_vacancy=True, title='Аналитик данных',
+                    role='data_analyst', remote_from_russia='no', by_llm=True)
+        self.assertEqual(decide(v, {}).bucket, 'main')
+
+    def test_real_list_titles_company_and_remote_requires_detail(self):
         items, next_url = vk.parse_page(sample('vk_api.json'), self.URL)
         self.assertEqual(len(items), 25)
         self.assertEqual(items[0].external_id, '54827')
@@ -30,7 +77,7 @@ class VKSourceTests(unittest.TestCase):
         self.assertEqual(items[0].url, 'https://team.vk.company/vacancy/54827/')
         verdict = keyword_classify(items[0])
         self.assertEqual(verdict.company, 'VK / Облако')
-        self.assertEqual(verdict.remote_from_russia, 'yes')
+        self.assertEqual(verdict.remote_from_russia, 'no')
         self.assertEqual(urlparse(next_url).scheme, 'https')
         self.assertEqual(parse_qs(urlparse(next_url).query)['offset'], ['25'])
 
@@ -56,7 +103,7 @@ class VKSourceTests(unittest.TestCase):
         self.assertIn('Superset', item.text)
         self.assertNotIn('Похожие вакансии', item.text)
         self.assertNotIn('Head of analytics', item.text)
-        self.assertEqual(keyword_classify(item).remote_from_russia, 'unknown')
+        self.assertEqual(keyword_classify(item).remote_from_russia, 'no')
 
     def test_empty_and_broken_lists_are_different(self):
         self.assertEqual(vk.parse_page('{"count":0,"next":null,"results":[]}', self.URL), ([], None))

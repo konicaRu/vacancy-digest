@@ -98,11 +98,13 @@ def _grade_of(s: str) -> str:
     return "unknown"
 
 
-def remote_of(text: str) -> str:
+def remote_of(text: str, remote_format: Optional[bool] = None) -> str:
     if NO_RF.search(text):
         return "no"
     if RELOC.search(text) and not NO_RELOC.search(text):
         return "no"
+    if remote_format is not None:
+        return "yes" if remote_format else "no"
     if REMOTE.search(text):
         return "yes"
     if OFFICE.search(text):
@@ -137,7 +139,7 @@ def keyword_classify(item: Item) -> Verdict:
         company=company,
         role=role,
         grade=_grade_of(title),
-        remote_from_russia=remote_of(text),
+        remote_from_russia=remote_of(text, item.remote_format),
         salary=sal.group(1).strip() if sal else None,
         contact=contact.group(1) if contact else None,
         reason="",  # про режим без модели предупреждает плашка в письме
@@ -172,6 +174,8 @@ def title_match(title: str, queries: list[dict]) -> str:
 
 
 def decide(v: Verdict, profile: dict) -> Verdict:
+    if v.item.remote_format is not None:
+        v.remote_from_russia = remote_of(v.item.text or "", v.item.remote_format)
     targets = set(profile.get("target_roles", ["product_analyst", "data_analyst"]))
     exclude_grades = set(profile.get("exclude_grades", ["intern", "junior"]))
     exclude_words = [w.lower() for w in profile.get("exclude_title_words", [])]

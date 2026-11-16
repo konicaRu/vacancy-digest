@@ -39,13 +39,9 @@ def parse_page(text: str, url: str):
                 raise ValueError('неполная карточка')
             group = (row.get('group') or {}).get('name', '')
             company = 'VK / ' + group if group else 'VK'
-            fmt = row.get('work_format') or ''
-            if fmt.lower() == 'комбинированный':
-                fmt = 'Гибрид'
-            if row.get('remote') is True:
-                fmt = 'Удалённо | ' + fmt
             items.append(Item(SOURCE, 'site', ext_id, f'{BASE}/vacancy/{ext_id}/',
-                              ' | '.join([title, '@' + company, fmt]), hint_title=title))
+                              ' | '.join([title, '@' + company]), hint_title=title,
+                              remote_format=False))
         return items, next_url
     except (ValueError, TypeError, KeyError, AttributeError) as e:
         raise SourceError('выдача VK не распознана — проверь API или вёрстку сайта') from e
@@ -53,8 +49,15 @@ def parse_page(text: str, url: str):
 
 def parse_detail(html: str, item: Item) -> Item:
     soup = BeautifulSoup(html, 'html.parser')
+    formats = []
+    for heading in soup.select('.vacancy-title'):
+        if heading.get_text(' ', strip=True).casefold() == 'формат работы':
+            formats = [tag.get_text(' ', strip=True) for tag in heading.parent.parent.select('.vacancy-tag')]
+            break
+    item.remote_format = any(fmt.casefold() == 'дистанционный' for fmt in formats)
     posted = soup.select_one('meta[itemprop="datePosted"][content]')
     return career.add_detail(item, [soup.select_one('[itemprop="description"]')],
+                             extra='Формат работы: ' + (', '.join(formats) if formats else 'не указан'),
                              published=posted['content'] if posted else None)
 
 
