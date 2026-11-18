@@ -1,0 +1,223 @@
+{
+  "resultCode": "OK",
+  "payload": {
+    "vacancies": [
+      {
+        "title": "Системный аналитик",
+        "category": "tcareer_it",
+        "regionId": null,
+        "shortDescription": "В несколько направлений Т‑Банка ищем опытных системных аналитиков, которые станут связующим звеном между бизнесом и разработкой",
+        "cities": [
+          ""
+        ],
+        "tags": [
+          "Удаленный",
+          "Middle",
+          "5/2"
+        ],
+        "urlSlug": "ca55f0ed-d75c-437f-bd36-d0f34ac4cb88",
+        "seoSlug": "sistemnyj-analitik-union",
+        "source": "publisher",
+        "backend": "publisher",
+        "redirectUrl": null,
+        "isPredstavitel": false
+      },
+      {
+        "title": "Продуктовый аналитик",
+        "subtitle": "Нижний Новгород",
+        "category": "tcareer_it",
+        "regionId": "555e7d61-d9a7-4ba6-9770-6caa8198c483",
+        "shortDescription": "Проводите A/B‑тесты и развивайте продуктовые метрики",
+        "cities": [
+          ""
+        ],
+        "tags": [
+          "Офис",
+          "Гибрид",
+          "Middle",
+          "5/2"
+        ],
+        "urlSlug": "9ac4d342-b64c-4528-a428-be80fb099bc2",
+        "seoSlug": "produktovyj-analitik",
+        "source": "publisher",
+        "backend": "publisher",
+        "redirectUrl": null,
+        "isPredstavitel": false
+      },
+      {
+        "title": "Продуктовый аналитик ",
+        "category": "tcareer_it",
+        "regionId": null,
+        "shortDescription": "Проводите A/B‑тесты и развивайте продуктовые метрики",
+        "cities": [
+          ""
+        ],
+        "tags": [
+          "Офис",
+          "Гибрид",
+          "Middle",
+          "5/2"
+        ],
+        "urlSlug": "de29f713-5624-44eb-ae0f-34d624116763",
+        "seoSlug": "produktovyj-analitik",
+        "source": "publisher",
+        "backend": "publisher",
+        "redirectUrl": null,
+        "isPredstavitel": false
+      },
+      {
+        "title": "Бизнес-аналитик",
+        "subtitle": "Москва",
+        "category": "tcareer_it",
+        "regionId": "0c5b2444-70a0-4932-980c-b4dc0d3f02b5",
+        "shortDescription": "Развивайте продукты и проекты — от бизнес-требований до внедрения решений",
+        "cities": [
+          ""
+        ],
+        "tags": [
+          "Гибрид",
+          "Senior",
+          "1 – 5 лет",
+          "5/2"
+        ],
+        "urlSlug": "fcfd41af-a0bf-4f96-b5ae-f89a9d5784f7",
+        "seoSlug": "biznes-analitik",
+        "source": "publisher",
+        "backend": "publisher",
+        "redirectUrl": null,
+        "isPredstavitel": false
+      },
+      {
+        "title": "Продуктовый аналитик",
+        "subtitle": "Москва",
+        "category": "tcareer_it",
+        "regionId": "0c5b2444-70a0-4932-980c-b4dc0d3f02b5",
+        "shortDescription": "Развивайте продукты B2B-кредитования через аналитику и эксперименты",
+        "cities": [
+          ""
+        ],
+        "tags": [
+          "Гибрид",
+          "Middle",
+          "5/2"
+        ],
+        "urlSlug": "baaff85a-3b03-4b93-bca8-6dc096d07308",
+        "seoSlug": "produktovyj-analitik",
+        "source": "publisher",
+        "backend": "publisher",
+        "redirectUrl": null,
+        "isPredstavitel": false
+      },
+      {
+        "title": "Портфельный аналитик",
+        "subtitle": "Москва",
+        "category": "tcareer_it",
+        "regionId": "0c5b2444-70a0-4932-980c-b4dc0d3f02b5",
+        "shortDescription": "Ищем опытных аналитиков, которые будут работать с рисковой стратегией принятия решений по нашим банковским продуктам",
+        "cities": [
+          ""
+        ],
+        "tags": [
+          "Middle",
+          "Senior",
+          "1 – 5 лет",
+          "Более 5 лет",
+          "5/2"
+        ],
+        "urlSlug": "3b0455ac-e3a6-46f3-867e-e9e12a858ad9",
+        "seoSlug": "analitik_riskov",
+        "source": "publisher",
+        "backend": "publisher",
+        "redirectUrl": null,
+        "isPredstavitel": false
+      },
+      {
+        "title": "Бизнес-аналитик BI",
+        "category": "tcareer_it",
+        "regionId": null,
+        "shortDescription": "Развиваем корпоративное хранилище данных. Ищем бизнес-аналитика со знанием SQL, который будет работать с данными, бизнес-требованиями и отчетами",
+        "cities": [
+          ""
+        ],
+        "tags": [
+          "Удаленный",
+          "Middle",
+          "1 – 5 лет",
+          "Более 5 лет",
+          "5/2"
+        ],
+        "urlSlug": "af43bb37-fd70-4849-b9c3-1e308e3410b4",
+        "seoSlug": "business_analyst_bi",
+        "source": "publisher",
+        "backend": "publisher",
+        "redirectUrl": null,
+        "isPredstavitel": false
+      },
+      {
+        "title": "Стажер BI-аналитик",
+        "category": "tcareer_it",
+        "regionId": null,
+        "shortDescription": "Помогайте бизнесу работать с данными: анализируйте информацию, создавайте витрины и разрабатывайте дашборды",
+        "cities": [
+          ""
+        ],
+        "tags": [
+          "Стажер",
+          "Без опыта",
+          "5/2"
+        ],
+        "urlSlug": "5e108fdc-209d-4d9c-baea-13999bba3f34",
+        "seoSlug": null,
+        "source": "publisher",
+        "backend": "publisher",
+        "redirectUrl": "https://l.tbank.ru/vac_dwh",
+        "isPredstavitel": false
+      },
+      {
+        "title": "Стажер продуктовый аналитик",
+        "category": "tcareer_it",
+        "regionId": null,
+        "shortDescription": "Развивайте продукты с помощью данных: находите точки роста, проверяйте гипотезы и анализируйте результаты A/B-тестов",
+        "cities": [
+          ""
+        ],
+        "tags": [
+          "Стажер",
+          "Без опыта",
+          "5/2"
+        ],
+        "urlSlug": "059001c8-9b11-40d1-b269-dd9f24419ade",
+        "seoSlug": null,
+        "source": "publisher",
+        "backend": "publisher",
+        "redirectUrl": "https://l.tbank.ru/vac_analyst",
+        "isPredstavitel": false
+      },
+      {
+        "title": "Стажер бизнес-аналитик",
+        "category": "tcareer_it",
+        "regionId": null,
+        "shortDescription": "Выстраивайте бизнес-процессы, собирайте требования заказчиков и помогайте воплощать идеи в реальные решения",
+        "cities": [
+          ""
+        ],
+        "tags": [
+          "Стажер",
+          "Без опыта",
+          "5/2"
+        ],
+        "urlSlug": "3b645f3b-5e1a-4503-8bf4-1bc05e89f4f2",
+        "seoSlug": null,
+        "source": "publisher",
+        "backend": "publisher",
+        "redirectUrl": "https://l.tbank.ru/vac_analyst",
+        "isPredstavitel": false
+      }
+    ],
+    "nextPagination": {
+      "offset": 10,
+      "isFinished": false,
+      "totalCount": 96
+    }
+  }
+}

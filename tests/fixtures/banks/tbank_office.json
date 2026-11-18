@@ -1,0 +1,192 @@
+{
+  "resultCode": "OK",
+  "payload": {
+    "backend": "publisher",
+    "vacancyId": "9ac4d342-b64c-4528-a428-be80fb099bc2",
+    "extraIds": {
+      "candyId": "f0160438-ed48-4024-be50-4d0eeedcc6f5",
+      "pfaVacancyId": "9ac4d342-b64c-4528-a428-be80fb099bc2"
+    },
+    "regionId": "555e7d61-d9a7-4ba6-9770-6caa8198c483",
+    "seoSlug": "produktovyj-analitik",
+    "segmentType": "HQ",
+    "category": "tcareer_it",
+    "status": "published",
+    "title": "Продуктовый аналитик",
+    "redirectUrl": null,
+    "tags": [
+      {
+        "text": "Офис"
+      },
+      {
+        "text": "Гибрид"
+      },
+      {
+        "text": "Middle"
+      },
+      {
+        "text": "5/2"
+      }
+    ],
+    "subtitle": "Нижний Новгород",
+    "isResumeRequired": true,
+    "salary": {},
+    "isPredstavitel": false,
+    "shortDescriptionForSearch": "Проводите A/B‑тесты и развивайте продуктовые метрики",
+    "description": [
+      {
+        "title": "Подзаголовок (короткое описание)",
+        "key": "shortDescription",
+        "content": "Проводите A/B‑тесты и развивайте продуктовые метрики"
+      },
+      {
+        "title": "Описание",
+        "key": "Описание",
+        "content": "<p>Мы&nbsp;— продуктовая команда Т‑Банка. В&nbsp;экосистеме&nbsp;— сотни продуктов и&nbsp;сервисов для&nbsp;более чем 50&nbsp;млн клиентов, поэтому скорость изменений и&nbsp;масштаб экспериментов&nbsp;— одни из&nbsp;самых высоких на&nbsp;рынке.</p><p>Команда ежедневно анализирует поведение пользователей, проводит тысячи тестов в&nbsp;месяц и&nbsp;помогает принимать продуктовые решения на&nbsp;основе данных. Мы&nbsp;работаем со&nbsp;сложными экспериментами, ML‑моделями и&nbsp;методами causal inference, обмениваемся экспертизой с&nbsp;центральными аналитическими клубами и&nbsp;используем платформенные инструменты, чтобы больше времени уделять исследованиям.</p><p><strong>Стек: </strong>Greenplum, Hadoop, Hive, ClickHouse, S3, Spark; SQL и&nbsp;Python; Proteus (внутренняя версия Superset); Feature Store и&nbsp;AutoML‑платформа; собственная платформа экспериментов Hippo; Jira.</p><p><span style=\"color: rgb(0, 0, 0);\">Узнать больше о&nbsp;профессии: </span><a target=\"_blank\" rel=\"noopener noreferrer nofollow\" href=\"https://www.tbank.ru/career/it/product-analytics/?internal_source=vacancy\"><span style=\"color: rgb(17, 85, 204);\"><u>продуктовые аналитики в&nbsp;Т-Банке.</u></span></a></p>"
+      },
+      {
+        "title": "Обязанности",
+        "key": "Обязанности",
+        "content": [
+          {
+            "description": "Проводить и анализировать A/B‑тесты и продуктовые эксперименты",
+            "title": null,
+            "__typename": "Content"
+          },
+          {
+            "description": "Исследовать поведение пользователей и выявлять точки роста",
+            "title": null,
+            "__typename": "Content"
+          },
+          {
+            "description": "Поддерживать продуктовые команды при принятии решений на основе данных",
+            "title": null,
+            "__typename": "Content"
+          },
+          {
+            "description": "Разрабатывать и развивать систему продуктовых метрик",
+            "title": null,
+            "__typename": "Content"
+          },
+          {
+            "description": "Анализировать продуктовые функции и гипотезы",
+            "title": null,
+            "__typename": "Content"
+          },
+          {
+            "description": "Участвовать в формировании и приоритизации продуктовых планов на основе исследований",
+            "title": null,
+            "__typename": "Content"
+          },
+          {
+            "description": "Визуализировать данные и формировать отчётность в аналитических системах",
+            "title": null,
+            "__typename": "Content"
+          }
+        ]
+      },
+      {
+        "title": "Требования",
+        "key": "Требования",
+        "content": [
+          {
+            "description": "У вас есть опыт работы продуктовым аналитиком от 1 года",
+            "title": null,
+            "__typename": "Content"
+          },
+          {
+            "description": "У вас есть опыт проведения и расчета A/B‑тестов",
+            "title": null,
+            "__typename": "Content"
+          },
+          {
+            "description": "Имеете опыт построения визуализаций данных в аналитических системах",
+            "title": null,
+            "__typename": "Content"
+          },
+          {
+            "description": "Знаете математическую статистику и теорию вероятностей",
+            "title": null,
+            "__typename": "Content"
+          },
+          {
+            "description": "Знаете принципы работы реляционных баз данных и SQL",
+            "title": null,
+            "__typename": "Content"
+          },
+          {
+            "description": "Умеете интерпретировать поведение пользователей на основе данных и объяснять изменения метрик",
+            "title": null,
+            "__typename": "Content"
+          },
+          {
+            "description": "Умеете самостоятельно формулировать вопросы к данным и делать обоснованные выводы",
+            "title": null,
+            "__typename": "Content"
+          },
+          {
+            "description": "Будет преимуществом опыт программирования на Python, использование Git и знание методов машинного обучения",
+            "title": null,
+            "__typename": "Content"
+          }
+        ]
+      },
+      {
+        "title": "Мы предлагаем",
+        "key": "Мы предлагаем",
+        "content": [
+          {
+            "description": "Работу в офисе или гибридный формат — по договоренности с руководителем",
+            "title": null,
+            "__typename": "Content"
+          },
+          {
+            "description": "Возможность работы в аккредитованной ИТ-компании",
+            "title": null,
+            "__typename": "Content"
+          },
+          {
+            "description": "ДМС со стоматологией, включая чекапы, компенсацию покупки лекарств и льготные условия страхования для близких. Еще — страховка от несчастных случаев и болезней",
+            "title": null,
+            "__typename": "Content"
+          },
+          {
+            "description": "Рост по карьерному треку: проходите курсы по софт- и хард-скиллам, развивайтесь с поддержкой ментора и повышайте уровень с матрицей компетенций и регулярным ревью",
+            "title": null,
+            "__typename": "Content"
+          },
+          {
+            "description": "Сильное комьюнити. Вы будете работать с экспертами в своей области, сможете делиться знаниями и выступать на конференциях, посещать митапы и писать статьи",
+            "title": null,
+            "__typename": "Content"
+          },
+          {
+            "description": "Онлайн-консультации с психологами, юристами, специалистами по финансам и здоровому образу жизни",
+            "title": null,
+            "__typename": "Content"
+          },
+          {
+            "description": "Компенсацию затрат на спортивные абонементы, приложение Т-Спорта для онлайн-занятий и командные тренировки с коллегами",
+            "title": null,
+            "__typename": "Content"
+          },
+          {
+            "description": "3 дополнительных дня к отпуску — можно использовать для отдыха или получить компенсацию",
+            "title": null,
+            "__typename": "Content"
+          },
+          {
+            "description": "Специальные тарифы на продукты Т-Банка и широкую программу скидок от партнеров",
+            "title": null,
+            "__typename": "Content"
+          },
+          {
+            "description": "Достойную зарплату — обсудим ее на собеседовании",
+            "title": null,
+            "__typename": "Content"
+          }
+        ]
+      }
+    ]
+  }
+}

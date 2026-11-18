@@ -1,4 +1,4 @@
-requests>=2.31
+requests>=2.32.3
 beautifulsoup4>=4.12
 PyYAML>=6.0
 python-dotenv>=1.0

@@ -63,6 +63,7 @@ sources:
       - {name: bigtechjobs,           enabled: true}
       # с 22.10: ~7 постов в день, вакансии разных уровней (Lead / Senior Analyst) + утренние junior-подборки
       - {name: myresume_ru,           enabled: true}
+      - {name: FreeWorkFeed,          enabled: true}
 
   sites:
     - name: jabka
@@ -163,6 +164,25 @@ sources:
       max_pages: 20
       urls:
         - "https://magnit.tech/api/v1/vacancy?page=1"
+
+    - name: tbank
+      enabled: true
+      morning_only: false
+      lookback_days_first_run: 14
+      max_pages: 30
+      urls:
+        # Адаптер переводит параметры поиска в читающий POST публичного API.
+        - "https://www.tbank.ru/pfpjobs/papi/getVacancies?searchQuery=аналитик&offset=0&limit=25"
+        - "https://www.tbank.ru/pfpjobs/papi/getVacancies?searchQuery=analyst&offset=0&limit=25"
+
+    - name: alfabank
+      enabled: true
+      morning_only: false
+      lookback_days_first_run: 14
+      max_pages: 10
+      urls:
+        - "https://job.alfabank.ru/api/vacancies?text=аналитик&skip=0&take=100"
+        - "https://job.alfabank.ru/api/vacancies?text=analyst&skip=0&take=100"
 
   linkedin_mail:
     # Включить после недели проверки, что уведомления LinkedIn приходят на почту

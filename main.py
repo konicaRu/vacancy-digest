@@ -25,7 +25,7 @@ from vd.config import ConfigError, load_config
 from vd.expand import expand_bundles
 from vd.marks import fetch_marks, mark_link
 from vd.llm import LMStudioClient
-from vd.sources import aviasales, avito, habr, jabka, linkedin_mail, magnit, make_session, megafon, mts, sber, telegram, twogis, vk, youngjunior
+from vd.sources import alfabank, aviasales, avito, habr, jabka, linkedin_mail, magnit, make_session, megafon, mts, sber, tbank, telegram, twogis, vk, youngjunior
 from vd.store import Store
 
 ROOT = Path(__file__).resolve().parent
@@ -50,8 +50,8 @@ def make_fetcher(cfg: dict):
     session = make_session()
     timeout = cfg.get("run", {}).get("http_timeout_sec", 25)
 
-    def fetch(url: str) -> str:
-        r = session.get(url, timeout=timeout)
+    def fetch(url: str, *, json=None) -> str:
+        r = session.get(url, timeout=timeout) if json is None else session.post(url, json=json, timeout=timeout)
         r.raise_for_status()
         time.sleep(1)  # вежливая пауза между запросами
         return r.text
@@ -72,7 +72,8 @@ def collect_all(cfg: dict, store: Store, fetch, slot: str = "am", dry_run: bool 
 
     career_collectors = {"habr": habr.collect, "avito": avito.collect, "aviasales": aviasales.collect,
                          "vk": vk.collect, "mts": mts.collect, "megafon": megafon.collect,
-                         "sber": sber.collect, "twogis": twogis.collect, "magnit": magnit.collect}
+                         "sber": sber.collect, "twogis": twogis.collect, "magnit": magnit.collect,
+                         "tbank": tbank.collect, "alfabank": alfabank.collect}
     for site in cfg["sources"].get("sites", []):
         if not site.get("enabled", True):
             continue

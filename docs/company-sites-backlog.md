@@ -40,9 +40,9 @@ https://docs.google.com/document/d/1tMgxW62wf4KAz3JdaChmnic1RqDq562AvOjAmIOtsuk/
 | Aviasales | https://www.aviasales.ru/about/vacancies | — |
 | Купер (СберМаркет) | https://team.kuper.ru/catalog-vacancies | — |
 | Сбербанк | https://rabota.sber.ru/search/ | — |
-| Альфа-Банк | https://job.alfabank.ru/vacancies | — |
+| Альфа-Банк | https://job.alfabank.ru/vacancies | подключён 18.11, публичный API, только «Дистанционная работа» |
 | Газпромбанк | https://www.gazprombank.ru/personal/page/gpb-job/ | прошлое место работы |
-| Т-Банк (Тинькофф) | https://www.tbank.ru/career/vacancies/all/moscow/ | — |
+| Т-Банк (Тинькофф) | https://www.tbank.ru/career/vacancies/all/moscow/ | подключён 18.11, публичный POST API, только метка «Удаленный» |
 | 2ГИС | https://job.2gis.ru/ | — |
 | ВкусВилл | https://vkusvill.ru/job/vacancys/ | — |
 | X5 Group | https://rabota.x5.ru/vacancies | — |
