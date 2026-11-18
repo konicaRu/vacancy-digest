@@ -184,6 +184,23 @@ sources:
         - "https://job.alfabank.ru/api/vacancies?text=аналитик&skip=0&take=100"
         - "https://job.alfabank.ru/api/vacancies?text=analyst&skip=0&take=100"
 
+    - name: tochka
+      enabled: true
+      morning_only: false
+      lookback_days_first_run: 14
+      max_pages: 3
+      urls:
+        # Каталог «Удалённо» по IT; остальные страницы подгружаются кнопкой, 6 вакансий помещаются на первую.
+        - "https://hr.tochka.com/vacancies/it/remote-work/"
+
+    - name: ostrovok
+      enabled: true
+      morning_only: false
+      lookback_days_first_run: 14
+      max_pages: 3
+      urls:
+        - "https://career.ostrovok.ru/vacancy"
+
   linkedin_mail:
     # Включить после недели проверки, что уведомления LinkedIn приходят на почту
     enabled: false

@@ -33,4 +33,5 @@ def make_session() -> requests.Session:
     bank_adapter = _RussianCAAdapter()
     s.mount('https://www.tbank.ru/', bank_adapter)
     s.mount('https://job.alfabank.ru/', bank_adapter)
+    s.mount('https://hr.tochka.com/', bank_adapter)
     return s

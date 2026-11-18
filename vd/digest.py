@@ -27,7 +27,8 @@ def source_name(source: str) -> str:
         return {"jabka": "jabka.work", "youngjunior": "youngjunior.ru", "habr": "Хабр Карьера",
                 "avito": "Авито", "aviasales": "Aviasales", "vk": "VK", "mts": "МТС",
                 "megafon": "МегаФон", "sber": "Сбер", "twogis": "2ГИС", "magnit": "Магнит Tech",
-                "tbank": "Т-Банк", "alfabank": "Альфа-Банк"}.get(source[5:], source[5:])
+                "tbank": "Т-Банк", "alfabank": "Альфа-Банк", "tochka": "Точка Банк",
+                "ostrovok": "Островок"}.get(source[5:], source[5:])
     if source == "linkedin":
         return "LinkedIn"
     if source == "marks":

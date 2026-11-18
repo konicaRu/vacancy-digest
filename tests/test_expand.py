@@ -40,19 +40,21 @@ class ExpandTests(unittest.TestCase):
                 return telegram.parse_page(tg_page(ch, [tg_post(ch, 90, HOME_CREDIT, NOW)]), ch)[0]
             raise ConnectionError("не открылся")
 
-        out, info = expand_bundles([weekly, already_in_run], lambda s, e: (s, e) in seen, fetch_post)
-        self.assertEqual(info, {"bundles": 1, "links": 5, "new": 3, "known": 2, "fetched": 1, "fetch_failed": 1})
+        pending = []
+        out, info = expand_bundles([weekly, already_in_run], lambda s, e: (s, e) in seen, fetch_post, pending=pending)
+        self.assertEqual(info, {"bundles": 1, "links": 5, "new": 2, "known": 2, "fetched": 2, "fetch_failed": 1})
         self.assertEqual(fetched, [("careerstation_analyst", "90"), ("careerstation_pm", "1117")])
         by_id = {i.external_id: i for i in out}
         self.assertNotIn("100", by_id)                        # сама подборка в письмо не идёт
         self.assertIn("удалёнка по РФ", by_id["90"].text)    # полный текст поста подтянут
         self.assertEqual(by_id["90"].via, "tg:careerstation_analyst")
-        self.assertEqual(by_id["1117"].text, "Продуктовый аналитик в Game Gears")  # не открылся → название из ссылки
+        self.assertNotIn('1117', by_id)  # Не выдаём название за прочитанный пост.
+        self.assertEqual([(i.source, i.external_id) for i in pending], [('tg:careerstation_analyst', '100')])
+        self.assertEqual(pending[0].anchors[0][0], 'https://t.me/careerstation_pm/1117')
         vk = by_id["https://team.vk.company/vacancy/?q=product"]
         self.assertEqual(vk.kind, "digest_link")
         # разбор: Home Credit подходит, VK — роль есть, формат неизвестен
         self.assertEqual(decide(keyword_classify(by_id["90"]), PROFILE).bucket, "main")
-        self.assertEqual(decide(keyword_classify(by_id["1117"]), PROFILE).bucket, "unknown_format")
 
     def test_company_bundle_takes_conditions_from_post(self):
         otp = post("otp", pid=128)

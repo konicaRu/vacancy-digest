@@ -1,8 +1,8 @@
 # Bank TLS trust
 
 `russian-trusted-root-ca.pem` is the public Russian Trusted Root CA certificate.
-It supplements Requests' standard CA bundle **only** for `https://www.tbank.ru/`
-and `https://job.alfabank.ru/` in `vd.sources.make_session`. Chain validity and
+It supplements Requests' standard CA bundle **only** for `https://www.tbank.ru/`,
+`https://job.alfabank.ru/` and `https://hr.tochka.com/` in `vd.sources.make_session`. Chain validity and
 hostname checks remain enabled. No Windows trust-store or certifi file is edited.
 Explicit Requests CA overrides (including REQUESTS_CA_BUNDLE) take precedence.
 

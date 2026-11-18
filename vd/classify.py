@@ -3,9 +3,8 @@ from __future__ import annotations
 
 import logging
 import re
-from difflib import SequenceMatcher
 from typing import Optional
-from urllib.parse import urlparse
+from urllib.parse import parse_qsl, urlencode, urlparse, urlunparse
 
 from .llm import LLMUnavailable
 from .models import Item, Verdict
@@ -43,7 +42,28 @@ def prefilter(item: Item) -> Optional[str]:
 # ------------------------------------------------- запасной разбор без LLM
 NO_RF = re.compile(r"не\s*из\s*рф|\(не\s*рф\)|не\s*рф\b|кроме\s+(?:беларуси\s+и\s+)?росси|кроме\s+рф|"
                    r"not\s+(?:from\s+)?russia|excluding\s+russia|except\s+russia", re.I)
-REMOTE = re.compile(r"удал[её]нн|удал[её]нк|удаленно|удалённо|remote|из любой точки", re.I)
+REMOTE = re.compile(r"удал[её]нн|удал[её]нк|удаленно|удалённо|дистанцион|remote|из любой точки", re.I)
+REMOTE_DENIED = re.compile(
+    r'(?:удал[её]н\w*|дистанцион\w*|remote)'
+    r'(?:\s+(?:работ\w*|формат\w*|режим\w*|work|is|are)){0,3}\s*[:—-]?\s*'
+    r'(?:не\s+(?:предусмотр\w*|доступ\w*|возмож\w*|разреш\w*|предлага\w*|предполага\w*|рассматрива\w*)'
+    r'|невозмож\w*|запрещ\w*|нет\b|unavailable\b|not\s+(?:available|allowed|supported|possible|offered|provided|permitted))'
+    r'|(?:нет(?:\s+возможност\w*)?|без)\s+(?:удал[её]н\w*|дистанцион\w*)'
+    r'|не\s+(?:(?:предлага\w*|предоставля\w*|рассматрива\w*)\s+)?(?:удал[её]н\w*|дистанцион\w*)'
+    r'|(?:no|not)\s+(?:fully\s+)?remote\b', re.I)
+TERRITORY = re.compile(
+    r'(?:(?:работа|работать|удал[её]н\w*|remote(?:\s+work)?)\s+(?:только|only)\s+(?:из|в|from|in|для(?:\s+(?:жителей|резидентов))?)'
+    r'|candidates?\s+must\s+(?:be\s+based|reside|live)\s+in'
+    r'|кандидат\w*\s+долж\w*\s+(?:проживать|находиться)\s+в)'
+    r'\s+([^\n.;!?]{2,120})', re.I)
+TERRITORY_SUFFIX = re.compile(
+    r'(?:remote|удал[её]н\w*|дистанцион\w*)\s*[:(]\s*'
+    r'([^\n.;!?)]{2,100}?)\s+(?:only|только)\b', re.I)
+TERRITORY_PLAIN = re.compile(r'(?:remote|удал[её]н\w*)\s+([\w-]+)\s+(?:only|только)\b', re.I)
+RF_TERRITORY = re.compile(r'\b(?:рф|росси\w*|russia|russian federation)\b', re.I)
+FOREIGN_TERRITORY = re.compile(
+    r'\b(?:eu|eea|europe|армени\w*|armenia|казахстан\w*|kazakhstan|грузи\w*|georgia|'
+    r'беларус\w*|belarus|серби\w*|serbia|кипр\w*|cyprus|ес|евросоюз\w*|европ\w*)\b', re.I)
 OFFICE = re.compile(r"\bофис|гибрид|hybrid|onsite|on-site", re.I)
 # релокация сильнее слова «удалённо» («релокация в Германию, удалённо на старте»), но «без релокации» — не она
 RELOC = re.compile(r"релокац|relocat", re.I)
@@ -98,11 +118,26 @@ def _grade_of(s: str) -> str:
     return "unknown"
 
 
-def remote_of(text: str, remote_format: Optional[bool] = None) -> str:
+def _remote_restriction(text: str) -> Optional[str]:
     if NO_RF.search(text):
         return "no"
     if RELOC.search(text) and not NO_RELOC.search(text):
         return "no"
+    if REMOTE_DENIED.search(text):
+        return "no"
+    for match in [*TERRITORY.finditer(text), *TERRITORY_SUFFIX.finditer(text), *TERRITORY_PLAIN.finditer(text)]:
+        where = match.group(1)
+        if where.strip().lower() in ('home', 'work', 'working', 'office', 'дома', 'дом', 'офис', 'работа'):
+            continue
+        if not RF_TERRITORY.search(where):
+            return 'no' if FOREIGN_TERRITORY.search(where) else 'unknown'
+    return None
+
+
+def remote_of(text: str, remote_format: Optional[bool] = None) -> str:
+    restriction = _remote_restriction(text)
+    if restriction is not None:
+        return restriction
     if remote_format is not None:
         return "yes" if remote_format else "no"
     if REMOTE.search(text):
@@ -174,7 +209,7 @@ def title_match(title: str, queries: list[dict]) -> str:
 
 
 def decide(v: Verdict, profile: dict) -> Verdict:
-    if v.item.remote_format is not None:
+    if v.item.remote_format is not None or _remote_restriction(v.item.text or '') is not None:
         v.remote_from_russia = remote_of(v.item.text or "", v.item.remote_format)
     targets = set(profile.get("target_roles", ["product_analyst", "data_analyst"]))
     exclude_grades = set(profile.get("exclude_grades", ["intern", "junior"]))
@@ -223,40 +258,53 @@ def norm(s: Optional[str]) -> str:
     return re.sub(r"\s+", " ", s).strip()
 
 
+def canonical_url(url: Optional[str]) -> str:
+    parts = urlparse(url or '')
+    query = [(k, value) for k, value in parse_qsl(parts.query, keep_blank_values=True)
+             if not k.lower().startswith('utm_') and k.lower() not in ('gclid', 'yclid', 'fbclid')]
+    return urlunparse(parts._replace(scheme=parts.scheme.lower(), netloc=parts.netloc.lower(),
+                                    query=urlencode(sorted(query)), fragment=''))
+
+
 def dedup_key(v: Verdict) -> str:
-    return f"{norm(v.company)}|{norm(v.title)}"
+    identity = canonical_url(v.item.url) or f'{v.item.source}:{v.item.external_id}'
+    return f"{norm(v.company)}|{norm(v.title)}|{identity}"
 
 
 def _similar(t1: str, c1: str, t2: str, c2: str) -> bool:
     if not t1 or not t2:
         return False
-    ratio = SequenceMatcher(None, t1, t2).ratio()
-    if c1 and c2:
-        return c1 == c2 and ratio >= 0.8
-    if c1 or c2:
-        return ratio >= 0.9
-    return ratio >= 0.95 and len(t1) > 25
+    return bool(c1 and c2 and c1 == c2 and t1 == t2)
+
+
+def _same_vacancy(v: Verdict, title: str, company: str, url: Optional[str], source: Optional[str]) -> bool:
+    left, right = canonical_url(v.item.url), canonical_url(url)
+    if left and right and left == right:
+        return True
+    # Different cards at one career source are different positions, even with generic titles.
+    if left and right and v.item.source == source and v.item.source.startswith('site:'):
+        return False
+    return _similar(norm(v.title), norm(v.company), title, company)
 
 
 def dedup(verdicts: list[Verdict], recent_ledger: list[dict]) -> None:
     """Помечает дубли (внутри запуска и уже отправленные ранее) корзиной drop."""
-    ledger_norm = [(norm(r.get("title")), norm(r.get("company")), r.get("dedup_key"), r.get("url"))
+    ledger_norm = [(norm(r.get("title")), norm(r.get("company")), r.get("url"), r.get('source'))
                    for r in recent_ledger]
     # junior/стажёр по разделу подборки одного канала — то же самое и в другом канале, где грейда нет
     juniors = [(norm(x.title), norm(x.company)) for x in verdicts if x.drop_reason.endswith("(подборка)")]
     kept: list[Verdict] = []
     order = {"network": 0, "main": 1, "unknown_format": 2}
     for v in sorted((x for x in verdicts if x.bucket != "drop"), key=lambda x: order.get(x.bucket, 9)):
-        t, c, key = norm(v.title), norm(v.company), dedup_key(v)
+        t, c = norm(v.title), norm(v.company)
         if any((t, c) == (jt, jc) or _similar(t, c, jt, jc) for jt, jc in juniors):
             v.bucket, v.drop_reason = "drop", "грейд: junior (подборка другого канала)"
             continue
         # без компании ключ = одно название («|senior data analyst») — тогда дубль только по той же ссылке
-        if any(v.item.url == lu or (c and key == lk) or _similar(t, c, lt, lc)
-               for lt, lc, lk, lu in ledger_norm):
+        if any(_same_vacancy(v, lt, lc, lu, ls) for lt, lc, lu, ls in ledger_norm):
             v.bucket, v.drop_reason = "drop", "уже присылал раньше"
             continue
-        twin = next((k for k in kept if _similar(t, c, norm(k.title), norm(k.company))), None)
+        twin = next((k for k in kept if _same_vacancy(v, norm(k.title), norm(k.company), k.item.url, k.item.source)), None)
         if twin:
             if v.item.source not in twin.also_in and v.item.source != twin.item.source:
                 twin.also_in.append(v.item.source)

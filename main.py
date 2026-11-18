@@ -14,10 +14,13 @@ import sys
 import time
 import traceback
 from collections import Counter
-from datetime import datetime
+from datetime import datetime, timezone
+from email.utils import parsedate_to_datetime
 from html import escape
 from logging.handlers import RotatingFileHandler
 from pathlib import Path
+
+import requests
 
 from vd import digest, mailer, workcal
 from vd.classify import classify_all, dedup, dedup_key
@@ -25,7 +28,7 @@ from vd.config import ConfigError, load_config
 from vd.expand import expand_bundles
 from vd.marks import fetch_marks, mark_link
 from vd.llm import LMStudioClient
-from vd.sources import alfabank, aviasales, avito, habr, jabka, linkedin_mail, magnit, make_session, megafon, mts, sber, tbank, telegram, twogis, vk, youngjunior
+from vd.sources import alfabank, aviasales, avito, habr, jabka, linkedin_mail, magnit, make_session, megafon, mts, ostrovok, sber, tbank, telegram, tochka, twogis, vk, youngjunior
 from vd.store import Store
 
 ROOT = Path(__file__).resolve().parent
@@ -51,10 +54,36 @@ def make_fetcher(cfg: dict):
     timeout = cfg.get("run", {}).get("http_timeout_sec", 25)
 
     def fetch(url: str, *, json=None) -> str:
-        r = session.get(url, timeout=timeout) if json is None else session.post(url, json=json, timeout=timeout)
-        r.raise_for_status()
-        time.sleep(1)  # вежливая пауза между запросами
-        return r.text
+        for attempt in range(3):
+            delay = attempt + 1
+            try:
+                r = session.get(url, timeout=timeout) if json is None else session.post(url, json=json, timeout=timeout)
+            except requests.exceptions.SSLError:
+                raise  # A trust/hostname error must not be retried or bypassed.
+            except (requests.Timeout, requests.ConnectionError, requests.exceptions.ChunkedEncodingError):
+                if attempt == 2:
+                    raise
+            else:
+                if r.status_code not in (408, 429, 500, 502, 503, 504) or attempt == 2:
+                    r.raise_for_status()
+                    time.sleep(1)  # вежливая пауза между запросами
+                    return r.text
+                retry_after = r.headers.get('Retry-After')
+                if retry_after:
+                    try:
+                        try:
+                            seconds = float(retry_after)
+                        except ValueError:
+                            until = parsedate_to_datetime(retry_after)
+                            seconds = (until - datetime.now(timezone.utc)).total_seconds()
+                        delay = max(delay, seconds)
+                    except (ValueError, TypeError, OverflowError):
+                        pass
+                r.close()
+                if delay > 30:
+                    r.raise_for_status()  # Do not violate a long server-requested cooldown.
+            log.warning('Временный сбой HTTP %s; попытка %s/3 через %s с', url, attempt + 2, delay)
+            time.sleep(delay)
     return fetch
 
 
@@ -73,7 +102,8 @@ def collect_all(cfg: dict, store: Store, fetch, slot: str = "am", dry_run: bool 
     career_collectors = {"habr": habr.collect, "avito": avito.collect, "aviasales": aviasales.collect,
                          "vk": vk.collect, "mts": mts.collect, "megafon": megafon.collect,
                          "sber": sber.collect, "twogis": twogis.collect, "magnit": magnit.collect,
-                         "tbank": tbank.collect, "alfabank": alfabank.collect}
+                         "tbank": tbank.collect, "alfabank": alfabank.collect,
+                         "tochka": tochka.collect, "ostrovok": ostrovok.collect}
     for site in cfg["sources"].get("sites", []):
         if not site.get("enabled", True):
             continue
@@ -194,12 +224,27 @@ def _run(args, cfg: dict, store: Store) -> int:
     # подборки → отдельные вакансии (новые посты из подборок забираем целиком)
     tg_cfg = cfg["sources"].get("telegram", {})
     bundle_info: dict = {}
+    pending_bundles = None
     to_classify = items
     if tg_cfg.get("expand_digests", True):
+        saved_pending = store.list_pending_bundles()
+        enabled_tg = {f'tg:{ch["name"]}' for ch in tg_cfg.get('channels', []) if ch.get('enabled', True)}
+        pending_bundles = [it for it in saved_pending if (it.via or it.source) not in enabled_tg]
+        active_pending = [it for it in saved_pending if (it.via or it.source) in enabled_tg]
+        # Old unfinished bundles get the budget first; a freshly fetched parent replaces its cached copy.
+        items = list({(it.source, it.external_id): it for it in active_pending + items}.values())
+        read_stats = Counter({r.source: 0 for r in results if not r.error})
+        read_stats.update(it.source for it in items)
+        deferred = []
         to_classify, bundle_info = expand_bundles(
             items, store.is_seen,
             lambda ch, pid: telegram.fetch_single(ch, pid, fetch),
-            tg_cfg.get("max_digest_fetches", 30))
+            tg_cfg.get("max_digest_fetches", 30), pending=deferred)
+        pending_bundles += deferred
+        bundle_info['pending'] = len(deferred)
+        for source, count in Counter(it.via or it.source for it in deferred).items():
+            message = f'не дочитано подборок: {count}; повторим в следующем выпуске'
+            warnings[source] = '; '.join(filter(None, (warnings.get(source), message)))
         if bundle_info.get("bundles"):
             log.info("Подборки: %s, ссылок %s, новых %s, уже видели %s",
                      bundle_info["bundles"], bundle_info["links"], bundle_info["new"], bundle_info["known"])
@@ -255,7 +300,9 @@ def _run(args, cfg: dict, store: Store) -> int:
         return 0
 
     bookmarks = {r.source: r.new_bookmark for r in results if not r.error and r.new_bookmark}
-    seen = list({(it.source, it.external_id) for it in items + to_classify}
+    pending_keys = {(it.source, it.external_id) for it in pending_bundles or []}
+    seen = list({(it.source, it.external_id) for it in items + to_classify
+                 if (it.source, it.external_id) not in pending_keys}
                 | {(r.source, external_id) for r in results if not r.error for external_id in r.seen_ids})
     ledger_rows = [{"dedup_key": dedup_key(v), "title": v.title, "company": v.company,
                     "url": v.item.url, "source": v.item.source, "bucket": v.bucket,
@@ -263,7 +310,7 @@ def _run(args, cfg: dict, store: Store) -> int:
     marks = {m["code"]: m["status"] for m in marked}
 
     if not picked and not failed and not cfg["mail"].get("send_when_empty", True):
-        store.commit_after_send(bookmarks, seen, ledger_rows, marks)
+        store.commit_after_send(bookmarks, seen, ledger_rows, marks, pending_bundles=pending_bundles)
         store.finish_run(run_id, "empty", stats)
         log.info("Новых нет, письмо не отправляю (send_when_empty: false)")
         return 0
@@ -277,7 +324,7 @@ def _run(args, cfg: dict, store: Store) -> int:
         _alert_send_failure(cfg, subject, now, str(e), out_file)
         return 1
 
-    store.commit_after_send(bookmarks, seen, ledger_rows, marks)
+    store.commit_after_send(bookmarks, seen, ledger_rows, marks, pending_bundles=pending_bundles)
     stats["message_id"] = msg_id
     store.finish_run(run_id, "sent", stats)
     log.info("Письмо отправлено на %s (%s)", cfg["mail"]["to"], subject)

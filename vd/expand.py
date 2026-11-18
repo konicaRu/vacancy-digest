@@ -15,6 +15,7 @@ from __future__ import annotations
 
 import logging
 import re
+from dataclasses import replace
 from typing import Callable, Optional
 
 from .models import Item
@@ -82,13 +83,18 @@ def expand_bundles(
     is_seen: Callable[[str, str], bool],
     fetch_post: Callable[[str, str], Optional[Item]],
     max_fetch: int = 30,
+    pending: Optional[list[Item]] = None,
 ) -> tuple[list[Item], dict]:
     info = {"bundles": 0, "links": 0, "new": 0, "known": 0, "fetched": 0, "fetch_failed": 0}
     current = {(it.source, it.external_id) for it in items}
     taken: set[tuple[str, str]] = set()
     out: list[Item] = []
+    deferred_unattempted: list[Item] = []
+    deferred_attempted: list[Item] = []
 
     def expand(it: Item) -> None:
+        before = info['fetched']
+        unattempted, failed = [], []
         info["bundles"] += 1
         # цитата = вакансия: свой текст (и формат работы) у каждой, ссылка «Откликнуться»
         for block_text, href in it.blocks:
@@ -115,23 +121,27 @@ def expand_bundles(
                     info["known"] += 1
                     continue
                 taken.add(key)
+                if info['fetched'] >= max_fetch:
+                    unattempted.append(href)
+                    continue
                 child = None
-                if info["fetched"] < max_fetch:
-                    try:
-                        child = fetch_post(ch, pid)
-                        info["fetched"] += 1
-                    except Exception as e:
-                        info["fetch_failed"] += 1
-                        log.warning("Не открылся пост из подборки %s: %s", href, e)
+                info['fetched'] += 1  # Limit attempts, including failures.
+                try:
+                    child = fetch_post(ch, pid)
+                except Exception as e:
+                    log.warning("Не открылся пост из подборки %s: %s", href, e)
                 if child is None or not (child.text or "").strip():
-                    child = Item(source=f"tg:{ch}", kind="telegram", external_id=pid,
-                                 url=f"https://t.me/{ch}/{pid}", text=title, hint_title=title)
+                    info['fetch_failed'] += 1
+                    failed.append(href)
+                    continue
                 elif is_bundle(child):
                     # подборка внутри подборки («Подборка вакансий в Авито» из недельной) — разворачиваем и её
-                    expand(child)
+                    child.via = it.via or it.source
+                    child.grade_hint = section_grade(it.text, title) or it.grade_hint
+                    expand(child)  # Cache the nested payload instead of fetching it again next run.
                     continue
-                child.via = it.source
-                child.grade_hint = section_grade(it.text, title)
+                child.via = it.via or it.source
+                child.grade_hint = section_grade(it.text, title) or it.grade_hint
                 out.append(child)
                 info["new"] += 1
             else:
@@ -147,10 +157,19 @@ def expand_bundles(
                                 text=text, hint_title=title, published_at=it.published_at, via=it.source,
                                 grade_hint=section_grade(it.text, title)))
                 info["new"] += 1
+        if unattempted or failed:
+            # Try previously untouched links before a permanently failing prefix.
+            first = [a for a in it.anchors if a[0] in unattempted]
+            second = [a for a in it.anchors if a[0] in failed]
+            rest = [a for a in it.anchors if a[0] not in unattempted and a[0] not in failed]
+            target = deferred_unattempted if before == info['fetched'] else deferred_attempted
+            target.append(replace(it, anchors=first + second + rest))
 
     for it in items:
         if is_bundle(it):
             expand(it)
         else:
             out.append(it)
+    if pending is not None:
+        pending.extend(deferred_unattempted + deferred_attempted)
     return out, info

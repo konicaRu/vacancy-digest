@@ -7,9 +7,12 @@ from __future__ import annotations
 
 import json
 import sqlite3
+from dataclasses import asdict
 from datetime import date, datetime, timedelta
 from pathlib import Path
 from typing import Iterable, Optional
+
+from .models import Item
 
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS bookmarks (
@@ -43,6 +46,12 @@ CREATE TABLE IF NOT EXISTS runs (
     stats_json  TEXT,
     error       TEXT
 );
+CREATE TABLE IF NOT EXISTS pending_bundles (
+    source TEXT NOT NULL,
+    external_id TEXT NOT NULL,
+    payload TEXT NOT NULL,
+    PRIMARY KEY (source, external_id)
+);
 """
 
 
@@ -70,6 +79,15 @@ class Store:
             "SELECT 1 FROM seen WHERE source=? AND external_id=?", (source, external_id)
         ).fetchone()
         return row is not None
+
+    def list_pending_bundles(self) -> list[Item]:
+        items = []
+        for (payload,) in self.conn.execute('SELECT payload FROM pending_bundles ORDER BY rowid'):
+            data = json.loads(payload)
+            if data.get('published_at'):
+                data['published_at'] = datetime.fromisoformat(data['published_at'])
+            items.append(Item(**data))
+        return items
 
     def recent_ledger(self, days: int) -> list[dict]:
         since = (datetime.now() - timedelta(days=days)).isoformat(timespec="seconds")
@@ -128,9 +146,18 @@ class Store:
         seen: Iterable[tuple[str, str]],
         ledger_rows: Iterable[dict],
         marks: Optional[dict[str, str]] = None,
+        pending_bundles: Optional[Iterable[Item]] = None,
     ) -> None:
         now = datetime.now().isoformat(timespec="seconds")
         with self.conn:  # одна транзакция
+            if pending_bundles is not None:
+                self.conn.execute('DELETE FROM pending_bundles')
+                for item in pending_bundles:
+                    data = asdict(item)
+                    if item.published_at:
+                        data['published_at'] = item.published_at.isoformat()
+                    self.conn.execute('INSERT OR REPLACE INTO pending_bundles VALUES (?, ?, ?)',
+                                      (item.source, item.external_id, json.dumps(data, ensure_ascii=False)))
             for source, value in bookmarks.items():
                 self.conn.execute(
                     "INSERT INTO bookmarks (source, value, updated_at) VALUES (?, ?, ?) "
