@@ -64,6 +64,7 @@ sources:
       # с 22.10: ~7 постов в день, вакансии разных уровней (Lead / Senior Analyst) + утренние junior-подборки
       - {name: myresume_ru,           enabled: true}
       - {name: FreeWorkFeed,          enabled: true}
+      - {name: wntdan,                enabled: true}
 
   sites:
     - name: jabka

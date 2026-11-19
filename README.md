@@ -74,7 +74,7 @@ SQLite хранит тексты публикаций, связи одной в�
 
 | Источник | Как читаем | В конфиге |
 |---|---|---|
-| nodatanojobs, careerstation_analyst, codeworkshopru, HR_CATExpert, talentmove_channel, mtsbankcareer, young_june, newdirections, bigtechjobs, myresume_ru, FreeWorkFeed | веб-превью `t.me/s/<канал>`, без аккаунта | `sources.telegram.channels` |
+| nodatanojobs, careerstation_analyst, codeworkshopru, HR_CATExpert, talentmove_channel, mtsbankcareer, young_june, newdirections, bigtechjobs, myresume_ru, FreeWorkFeed, wntdan | веб-превью `t.me/s/<канал>`, без аккаунта | `sources.telegram.channels` |
 | jabka.work | ссылка поиска с фильтрами «Аналитик» + удалёнка, листает страницы выдачи | `sources.sites` |
 | youngjunior.ru | разделы /product-analyst/jobs и /data-analyst/jobs; метка junior/intern, «стажировка», «в офис» → отсев | `sources.sites` |
 | Хабр Карьера | утром и в 17:00: поиск «аналитик» и «analyst», страницы выдачи и полные описания новых подходящих по названию вакансий | `sources.sites`, `morning_only: false` |
