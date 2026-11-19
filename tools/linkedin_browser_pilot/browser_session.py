@@ -68,18 +68,27 @@ def run():
                                     raise ValueError('Only LinkedIn content-search navigation is allowed.')
                                 page.goto(url, wait_until='domcontentloaded', timeout=30000)
                                 result = {'pages': page_state(context)}
-                            elif action == 'read_results':
+                            elif action in ('read_results', 'inspect_dom'):
                                 parsed = urlsplit(page.url)
                                 if parsed.hostname != 'www.linkedin.com' or parsed.path != '/search/results/content/':
                                     raise ValueError('Read results only on the content-search page, never login/feed.')
                                 main = page.get_by_role('main')
+                                if action == 'inspect_dom':
+                                    write_json('response.json', {'id': request_id, 'ok': True,
+                                                                'url': page.url, 'html': main.inner_html()[:240000]})
+                                    continue
                                 links = main.locator('a[href]').evaluate_all(
                                     "els => els.filter(e => e.getClientRects().length).map(e => ({text:(e.innerText || e.getAttribute('aria-label') || '').slice(0,160),url:e.href})).filter(e=>e.url.startsWith('https://'))")
                                 result = {'url': page.url, 'text': main.inner_text(timeout=5000)[:16000],
                                           'links': links[:150]}
                             elif action == 'close':
-                                write_json('response.json', {'id': request_id, 'closed': True})
+                                write_json('response.json', {'id': request_id, 'ok': True, 'closed': True})
                                 break
+                            elif action == 'scan_posts':
+                                import importlib
+                                sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
+                                from vd import linkedin_browser
+                                result = importlib.reload(linkedin_browser).scan(page, command)
                             else:
                                 raise ValueError('Unsupported action')
                             write_json('response.json', {'id': request_id, 'ok': True, **result})

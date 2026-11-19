@@ -27,6 +27,9 @@ class Item:
     remote_format: Optional[bool] = None  # проверенный формат карточки; None — обычный разбор текста
     employer: Optional[str] = None      # работодатель из структурированных данных карточки
     original_text: Optional[str] = None # текст каталога до обогащения полной карточкой
+    author: Optional[str] = None
+    text_complete: bool = True
+    discovery_tags: list[str] = field(default_factory=list)
 
 
 @dataclass
@@ -62,3 +65,4 @@ class SourceResult:
     error: Optional[str] = None
     warning: Optional[str] = None  # прочитан, но не целиком (упёрлись в лимит страниц) — в письмо жёлтой плашкой
     seen_ids: list[str] = field(default_factory=list)  # старые карточки первого обхода; запомнить после отправки
+    stats: dict = field(default_factory=dict)

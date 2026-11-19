@@ -104,7 +104,8 @@ def _format_restriction(v):
             and remote_of(v.item.text, v.item.remote_format) == 'no')
 
 
-def analyze(verdicts: list[Verdict], history: list[dict], now: datetime, exact_days: int = 30) -> list[dict]:
+def analyze(verdicts: list[Verdict], history: list[dict], now: datetime, exact_days: int = 30,
+            permanent_confirmed: bool = False) -> list[dict]:
     """Изменяет только verdicts; возвращает пакет для атомарной записи после отправки."""
     now = now.replace(tzinfo=None)
     candidates = [v for v in verdicts if v.bucket != 'drop' or _format_restriction(v)]
@@ -168,7 +169,7 @@ def analyze(verdicts: list[Verdict], history: list[dict], now: datetime, exact_d
         elif any(h.get('format_restriction') and _date(h.get('observed_at'))
                  and _date(h['observed_at']) >= now - timedelta(days=exact_days) for h in matches):
             v.bucket, v.drop_reason = 'drop', 'источник вакансии запрещает удалёнку из РФ'
-        elif any(_recent(h, now, exact_days) for h in matches):
+        elif any(_recent(h, now, exact_days) or (permanent_confirmed and h.get('reported_at')) for h in matches):
             v.bucket, v.drop_reason = 'drop', 'уже присылал раньше'
         else:
             kept.append((v, row))

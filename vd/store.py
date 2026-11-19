@@ -105,6 +105,9 @@ class Store:
         ).fetchone()
         return row is not None
 
+    def seen_ids_for(self, source: str) -> list[str]:
+        return [r[0] for r in self.conn.execute('SELECT external_id FROM seen WHERE source=?', (source,))]
+
     def list_pending_bundles(self) -> list[Item]:
         items = []
         for (payload,) in self.conn.execute('SELECT payload FROM pending_bundles ORDER BY rowid'):

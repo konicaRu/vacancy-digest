@@ -291,10 +291,17 @@ def _same_vacancy(v: Verdict, title: str, company: str, url: Optional[str], sour
     if len(left_ids) > 1 or len(right_ids) > 1 or (left_ids and right_ids and left_ids != right_ids):
         return False
     if left and right and left == right:
+        if v.item.source == 'linkedin:posts' and source == 'linkedin:posts':
+            other_id = other.item.external_id if other else (archived or {}).get('external_id')
+            if other_id and v.item.external_id != other_id:
+                return False  # Separate vacancies inside one publication.
         return True
     right_grade = other.grade if other else (archived or {}).get('grade', 'unknown')
     if v.grade != 'unknown' and right_grade != 'unknown' and v.grade != right_grade:
         return False
+    if 'linkedin:posts' in (v.item.source, source):
+        # A generic role/company pair in a new post is only a possible match.
+        return bool(left_ids and left_ids == right_ids)
     # Different cards at one career source are different positions, even with generic titles.
     if left and right and v.item.source == source and v.item.source.startswith('site:'):
         return False
@@ -351,6 +358,22 @@ def classify_all(items: list[Item], profile: dict, llm) -> tuple[list[Verdict], 
     verdicts: list[Verdict] = []
     info = {"llm_used": llm is not None, "llm_failed": False, "llm_errors": 0}
     for item in items:
+        if item.source == 'linkedin:posts':
+            from .sources.linkedin_posts import filter_reason
+            verdict = keyword_classify(item)
+            reason = filter_reason(item) or prefilter(item)
+            if reason:
+                verdict.bucket, verdict.drop_reason = 'drop', reason
+                if reason in ('нет признаков найма', 'резюме соискателя'):
+                    verdict.is_vacancy = False
+            else:
+                local_profile = dict(profile)
+                local_profile['target_roles'] = list(set(profile.get('target_roles', ['product_analyst','data_analyst'])) | {'bi_analyst'})
+                verdict = decide(verdict,local_profile)
+            if ':' in item.external_id:
+                verdict.publication_variant = item.external_id.split(':', 1)[1]
+            verdicts.append(verdict)
+            continue
         reason = prefilter(item)
         if reason:
             verdicts.append(Verdict(item=item, bucket="drop", drop_reason=reason))

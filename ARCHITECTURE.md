@@ -56,6 +56,8 @@ flowchart LR
 | `vd/sources/tochka.py` | Каталог hr.tochka.com/vacancies/it/remote-work/: состояние Next.js `initialVacancies` (total/page/pageSize, без «Показать ещё»); карточка — JobPosting с `jobLocationType=TELECOMMUTE` и datePosted |
 | `vd/sources/ostrovok.py` | career.ostrovok.ru/vacancy: `__NEXT_DATA__` (vacancies / vacancy), только approved+actual+OPEN+не hidden; удалёнка — слова «удалёнка/дистанционный» в условиях |
 | `vd/sources/linkedin_mail.py` | Письма LinkedIn по IMAP: вакансии (`/jobs/view/<id>`) и посты знакомых |
+| `vd/sources/linkedin_posts.py` | Независимые хэштеги, нормализация полных постов, несколько вакансий с общими/локальными условиями, метрики тегов |
+| `vd/linkedin_bridge.py`, `vd/linkedin_browser.py` | Локальный IPC с блокировкой и UUID; автозапуск видимого Chrome с отдельным профилем, DOM полного текста и стабильный ID; ручная авторизация |
 | `vd/expand.py` | Разворачивание постов-подборок в отдельные вакансии |
 | `vd/classify.py` | Предфильтр, запасной разбор по ключевым словам, корзины, дедуп |
 | `vd/llm.py` | Клиент LM Studio: автозапуск сервера, JSON-схема ответа, системный промпт |

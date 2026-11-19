@@ -31,6 +31,8 @@ def source_name(source: str) -> str:
                 "ostrovok": "Островок"}.get(source[5:], source[5:])
     if source == "linkedin":
         return "LinkedIn"
+    if source == 'linkedin:posts':
+        return 'LinkedIn · Публикации'
     if source == "marks":
         return "Отметки откликов (Google Таблица)"
     if source == "calendar":
@@ -75,6 +77,8 @@ def _failed_summary(failed: dict[str, str], read_stats: dict) -> tuple[str, set[
 def _meta(v: Verdict) -> str:
     parts = [v.company or "", ROLE_RU.get(v.role, ""), GRADE_RU.get(v.grade, ""),
              REMOTE_RU.get(v.remote_from_russia, ""), v.salary or ""]
+    if v.item.source == 'linkedin:posts' and v.item.author:
+        parts.append(f'Автор: {v.item.author}')
     published = v.item.published_at
     if published is not None:
         if published.tzinfo is not None:
@@ -183,7 +187,8 @@ def build(verdicts: list[Verdict], read_stats: dict, failed: dict[str, str],
           bundle_info: dict | None = None, tag: str | None = None,
           mark_link=None, marked: list[dict] | None = None,
           warnings: dict[str, str] | None = None,
-          duplicate_info: dict | None = None) -> tuple[str, str, str]:
+          duplicate_info: dict | None = None,
+          source_info: dict | None = None) -> tuple[str, str, str]:
     """Возвращает (тема, html, текст). Вакансиям проставляет сквозные номера (v.num).
     tag — метка выпуска («vd-20261020-am»); код вакансии — f"{tag}-{num}". mark_link(код) → ссылка
     «Откликнулся» под вакансией; marked — вакансии, отмеченные с прошлого письма (подтверждение вверху)."""
@@ -278,6 +283,14 @@ def build(verdicts: list[Verdict], read_stats: dict, failed: dict[str, str],
         bundles_line = (f'<div style="font-size:11px;color:#999;margin-top:4px;">Подборки: {bi["bundles"]}, '
                         f'ссылок на вакансии {bi["links"]}, из них новых {bi["new"]}, уже видели {bi["known"]}'
                         + (f', не открылось {bi["fetch_failed"]}' if bi.get("fetch_failed") else "") + '</div>')
+    tag_lines = []
+    for src, info in (source_info or {}).items():
+        for hashtag, counts in info.get('tags', {}).items():
+            tag_lines.append(f"{hashtag}: просмотрено {counts.get('viewed', 0)}, новых {counts.get('new', 0)}, "
+                f"вакансий {counts.get('vacancies', 0)}, в письме {counts.get('passed', 0)}, "
+                f"уже встречалось {counts.get('seen', 0)}, повторов {counts.get('duplicates', 0)}, "
+                f"ошибок {counts.get('errors', 0)}, неполных {counts.get('incomplete', 0)}")
+    tags_html = ''.join(f'<div style="font-size:11px;color:#777;">{escape(line)}</div>' for line in tag_lines)
     html = f"""<html><body style="margin:0;padding:0;background:#ffffff;">
 <div style="max-width:640px;margin:0 auto;padding:16px;font-family:-apple-system,Segoe UI,Roboto,Arial,sans-serif;color:#1a1a1a;">
 <div style="font-size:20px;font-weight:700;">Вакансии на {run_date:%d.%m.%Y}{(", " + issue) if issue else ""}</div>
@@ -288,6 +301,7 @@ def build(verdicts: list[Verdict], read_stats: dict, failed: dict[str, str],
 <table style="font-size:12px;color:#555;border-collapse:collapse;">
 <tr><td style="padding:2px 12px 2px 0;color:#888;">источник</td><td style="padding:2px 12px;color:#888;">новых</td><td style="padding:2px 12px;color:#888;">в письме</td></tr>
 {stat_rows}</table>
+{tags_html}
 <div style="font-size:11px;color:#999;margin-top:8px;">Отсеяно: {escape(top_drops) or "—"}</div>
 {bundles_line}
 <div style="font-size:11px;color:#777;margin-top:8px;">{escape(duplicates_line)}</div>
@@ -335,5 +349,6 @@ def build(verdicts: list[Verdict], read_stats: dict, failed: dict[str, str],
         else:
             status = f"новых {read_stats[src]}, подходящих не найдено"
         lines.append(f"{source_name(src)}: {status}")
+    lines += tag_lines
     text = "\n".join(lines)
     return subject, html, text

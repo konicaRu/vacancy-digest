@@ -202,6 +202,30 @@ sources:
       urls:
         - "https://career.ostrovok.ru/vacancy"
 
+  linkedin_posts:
+    enabled: true   # проверено в Chrome и dry-run на копии SQLite 19.11
+    start_date: "2026-11-20"
+    autostart: true
+    lookback_days_first_run: 7
+    max_posts_per_tag: 12
+    max_scrolls_per_tag: 1
+    request_timeout_sec: 125
+    total_timeout_sec: 360
+    hashtags:
+      - "#hiring"
+      - "#ProductAnalyst"
+      - "#AnalyticsJobs"
+      - "#DataAnalyst"
+      - "#ProductAnalytics"
+      - "#BIAnalyst"
+      - "#продуктовыйаналитик"
+      - "#аналитикданных"
+      - "#vacancy"
+      - "#hr"
+      - "#jobs"
+      - "#вакансия"
+      - "#работа"
+      - "#карьера"
   linkedin_mail:
     # Включить после недели проверки, что уведомления LinkedIn приходят на почту
     enabled: false
@@ -239,5 +263,6 @@ run:
   once_per_slot: true       # два выпуска в день — утро и вечер; каждый не чаще раза (кроме --force)
   evening_hour: 17          # с этого часа (МСК, время компьютера) — вечерний выпуск
   workdays_only: true       # письма только в рабочие дни производственного календаря РФ (isdayoff.ru, кэш в data/)
-  dedup_days: 30            # вакансию, уже отправленную за N дней, повторно не шлём
+  dedup_days: 30            # окно консервативных совпадений и смысловых пометок
+  permanent_confirmed_dedup: true  # исходный ID/URL вакансии или точная публикация — без срока
   http_timeout_sec: 25
