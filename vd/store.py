@@ -6,6 +6,7 @@
 from __future__ import annotations
 
 import json
+import hashlib
 import sqlite3
 from dataclasses import asdict
 from datetime import date, datetime, timedelta
@@ -52,6 +53,29 @@ CREATE TABLE IF NOT EXISTS pending_bundles (
     payload TEXT NOT NULL,
     PRIMARY KEY (source, external_id)
 );
+CREATE TABLE IF NOT EXISTS vacancy_entities (id TEXT PRIMARY KEY);
+CREATE TABLE IF NOT EXISTS publications (
+    id TEXT PRIMARY KEY,
+    entity_id TEXT NOT NULL REFERENCES vacancy_entities(id),
+    first_seen TEXT NOT NULL,
+    payload TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS publications_entity ON publications(entity_id);
+CREATE TABLE IF NOT EXISTS vacancy_deliveries (
+    code TEXT PRIMARY KEY,
+    entity_id TEXT NOT NULL REFERENCES vacancy_entities(id),
+    ledger_key TEXT NOT NULL,
+    reported_at TEXT NOT NULL,
+    status TEXT NOT NULL DEFAULT 'new',
+    title TEXT, company TEXT
+);
+CREATE INDEX IF NOT EXISTS deliveries_entity ON vacancy_deliveries(entity_id);
+CREATE TABLE IF NOT EXISTS duplicate_suggestions (
+    publication_id TEXT NOT NULL REFERENCES publications(id),
+    target_key TEXT NOT NULL,
+    payload TEXT NOT NULL,
+    PRIMARY KEY(publication_id, target_key)
+);
 """
 
 
@@ -59,6 +83,7 @@ class Store:
     def __init__(self, path: Path):
         path.parent.mkdir(parents=True, exist_ok=True)
         self.conn = sqlite3.connect(str(path))
+        self.conn.execute('PRAGMA foreign_keys=ON')
         self.conn.executescript(SCHEMA)
         # базы, созданные до отметок откликов (20.10.2026), — без колонки code
         cols = {r[1] for r in self.conn.execute("PRAGMA table_info(ledger)")}
@@ -103,13 +128,98 @@ class Store:
             return []
         qs = ",".join("?" * len(marks))
         rows = self.conn.execute(
-            f"SELECT code, title, company, status FROM ledger WHERE code IN ({qs})", tuple(marks)).fetchall()
+            f"SELECT code, title, company, status FROM ledger WHERE code IN ({qs}) "
+            f"UNION ALL SELECT code,title,company,status FROM vacancy_deliveries WHERE code IN ({qs}) "
+            "AND code NOT IN (SELECT code FROM ledger WHERE code IS NOT NULL)", tuple(marks) * 2).fetchall()
         out = []
         for code, title, company, status in rows:
             want = marks[code]
             if status == "new" or (status == "reviewed" and want == "applied"):  # отклик важнее «разобрано»
                 out.append({"code": code, "title": title, "company": company, "status": want})
         return sorted(out, key=lambda r: (r["status"], r["code"]))
+
+    def duplicate_history(self, marks: Optional[dict[str, str]] = None) -> list[dict]:
+        """Архив плюс старый ledger без миграции его ключей, кодов или статусов."""
+        from .duplicates import identity
+        deliveries = {}
+        code_entities = {}
+        for code, entity, sent, status in self.conn.execute(
+                'SELECT d.code,d.entity_id,d.reported_at,COALESCE(l.status,d.status) '
+                'FROM vacancy_deliveries d LEFT JOIN ledger l ON l.code=d.code'):
+            code_entities[code] = entity
+            status = self._stronger(status, (marks or {}).get(code, 'new'))
+            entry = deliveries.setdefault(entity, {'reported_at': sent, 'status': status})
+            entry['reported_at'] = max(entry['reported_at'], sent)
+            entry['status'] = self._stronger(entry['status'], status)
+        history = []
+        entity_identities = {}
+        for key, entity, first, payload in self.conn.execute('SELECT id,entity_id,first_seen,payload FROM publications'):
+            row = json.loads(payload)
+            row.update(key=key, entity_id=entity, first_seen=first)
+            row.update(deliveries.get(entity, {}))
+            history.append(row)
+            if row.get('identity'):
+                entity_identities.setdefault(entity, set()).add(row['identity'])
+        for key, title, company, url, source, sent, status, code in self.conn.execute(
+                'SELECT dedup_key,title,company,url,source,reported_at,status,code FROM ledger'):
+            entity = code_entities.get(code, self._legacy_entity(key))
+            row = dict(key=key, entity_id=entity, title=title or '', company=company,
+                                url=url, source=source, first_seen=sent, reported_at=sent,
+                                identity=identity(url), text='', grade='unknown',
+                                status=self._stronger(status, (marks or {}).get(code, 'new')))
+            if entity in deliveries:
+                row['status'] = self._stronger(row['status'], deliveries[entity]['status'])
+                row['reported_at'] = max(row['reported_at'], deliveries[entity]['reported_at'])
+            known_ids = entity_identities.get(entity, set())
+            if len(known_ids) == 1:
+                row['identity'] = next(iter(known_ids))
+            elif len(known_ids) > 1:
+                row['ambiguous'] = True
+            history.append(row)
+        return history
+
+    @staticmethod
+    def _stronger(left: str, right: str) -> str:
+        ranks = {'new': 0, 'reviewed': 1, 'applied': 2}
+        return right if ranks.get(right, 0) > ranks.get(left, 0) else left
+
+    @staticmethod
+    def _legacy_entity(key: str) -> str:
+        return 'legacy:' + hashlib.sha256(key.encode()).hexdigest()
+
+    def duplicate_observation_count(self) -> int:
+        """Только успешные штатные выпуски, явно записанные новым pipeline."""
+        return sum(bool(json.loads(stats or '{}').get('duplicates', {}).get('observation'))
+                   for (stats,) in self.conn.execute("SELECT stats_json FROM runs WHERE status IN ('sent','empty')"))
+
+    def _archive(self, publications: list[dict], ledger_rows: list[dict], now: str) -> None:
+        # Capture old codes before ledger upserts replace them. No legacy row is rewritten.
+        for key, title, company, sent, status, code in self.conn.execute(
+                'SELECT dedup_key,title,company,reported_at,status,code FROM ledger').fetchall():
+            if not code:
+                continue
+            entity = self._legacy_entity(key)
+            self.conn.execute('INSERT OR IGNORE INTO vacancy_entities VALUES (?)', (entity,))
+            self.conn.execute('INSERT OR IGNORE INTO vacancy_deliveries VALUES (?,?,?,?,?,?,?)',
+                              (code, entity, key, sent, status, title, company))
+        for row in publications:
+            entity = row['entity_id']
+            self.conn.execute('INSERT OR IGNORE INTO vacancy_entities VALUES (?)', (entity,))
+            self.conn.execute(
+                'INSERT INTO publications VALUES (?,?,?,?) ON CONFLICT(id) DO UPDATE SET '
+                'entity_id=excluded.entity_id,payload=excluded.payload',
+                (row['key'], entity, row['first_seen'], json.dumps(row, ensure_ascii=False)))
+            if row.get('suggestion'):
+                self.conn.execute('INSERT OR REPLACE INTO duplicate_suggestions VALUES (?,?,?)',
+                                  (row['key'], row['suggestion']['key'], json.dumps(row['suggestion'], ensure_ascii=False)))
+        entities = {r['ledger_key']: r['entity_id'] for r in publications}
+        for row in ledger_rows:
+            if not row.get('code'):
+                continue
+            entity = entities.get(row['dedup_key'], self._legacy_entity(row['dedup_key']))
+            self.conn.execute('INSERT OR IGNORE INTO vacancy_entities VALUES (?)', (entity,))
+            self.conn.execute('INSERT OR IGNORE INTO vacancy_deliveries VALUES (?,?,?,?,?,?,?)',
+                              (row['code'], entity, row['dedup_key'], now, 'new', row['title'], row.get('company')))
 
     def sent_in_slot(self, now: datetime, evening_hour: int = 17) -> bool:
         """Уже был выпуск в этот слот: «утро» — до evening_hour, «вечер» — после (по времени старта запуска)."""
@@ -147,9 +257,13 @@ class Store:
         ledger_rows: Iterable[dict],
         marks: Optional[dict[str, str]] = None,
         pending_bundles: Optional[Iterable[Item]] = None,
+        publications: Optional[list[dict]] = None,
     ) -> None:
+        ledger_rows = list(ledger_rows)
         now = datetime.now().isoformat(timespec="seconds")
         with self.conn:  # одна транзакция
+            if publications is not None:
+                self._archive(publications, ledger_rows, now)
             if pending_bundles is not None:
                 self.conn.execute('DELETE FROM pending_bundles')
                 for item in pending_bundles:
@@ -179,6 +293,10 @@ class Store:
                 )
             self.conn.executemany("UPDATE ledger SET status=? WHERE code=? AND status IN ('new', 'reviewed')",
                                   [(s, c) for c, s in (marks or {}).items()])
+            for code, status in (marks or {}).items():
+                if status in ('reviewed', 'applied'):
+                    self.conn.execute("UPDATE vacancy_deliveries SET status=? WHERE code=? AND status IN ('new','reviewed')",
+                                      (status, code))
 
     def source_stats(self, days: int = 30) -> list[tuple]:
         """Сколько вакансий каждый источник принёс в дайджест за N дней и сколько из них отмечено

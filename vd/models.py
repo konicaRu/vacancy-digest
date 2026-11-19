@@ -25,6 +25,8 @@ class Item:
     via: Optional[str] = None       # пришло из подборки этого источника (для статистики и подписи)
     grade_hint: Optional[str] = None  # грейд из заголовка подборки («Junior:», «Подборка Junior/Стажёр …»)
     remote_format: Optional[bool] = None  # проверенный формат карточки; None — обычный разбор текста
+    employer: Optional[str] = None      # работодатель из структурированных данных карточки
+    original_text: Optional[str] = None # текст каталога до обогащения полной карточкой
 
 
 @dataclass
@@ -45,6 +47,11 @@ class Verdict:
     bucket: str = "drop"                  # main | unknown_format | network | drop
     drop_reason: str = ""
     also_in: list[str] = field(default_factory=list)
+    source_links: list[tuple[str, str]] = field(default_factory=list)
+    possible_duplicate: Optional[dict] = None
+    duplicate_group: str = ""
+    confirmed_identities: list[str] = field(default_factory=list)
+    publication_variant: str = ""  # несколько разных вакансий в одном исходном посте
 
 
 @dataclass

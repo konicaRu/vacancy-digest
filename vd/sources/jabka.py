@@ -7,6 +7,7 @@
 from __future__ import annotations
 
 import re
+import json
 from datetime import date, datetime, timedelta
 from typing import Callable
 from urllib.parse import urljoin
@@ -16,6 +17,55 @@ from bs4 import BeautifulSoup
 from ..models import Item, SourceError, SourceResult
 
 JOB_RE = re.compile(r"/jobs/([a-z0-9\-]+?)-(\d{8})-([a-z0-9]{3,})/?$", re.I)
+
+
+def enrich(items: list[Item], fetch: Callable[[str], str], limit: int = 20) -> list[str]:
+    """Ограниченное чтение полных jabka-карточек; исходная карточка переживает любой сбой."""
+    from ..duplicates import identity
+    warnings = []
+    jobs = [it for it in items if it.source == 'site:jabka']
+    for item in jobs[:max(0, limit)]:
+        try:
+            soup = BeautifulSoup(fetch(item.url), 'html.parser')
+            postings = []
+            for script in soup.find_all('script', type='application/ld+json'):
+                try:
+                    data = json.loads(script.get_text())
+                except (ValueError, TypeError):
+                    continue
+                nodes = data if isinstance(data, list) else [data]
+                for node in nodes:
+                    if not isinstance(node, dict):
+                        continue
+                    for entry in [node, *node.get('@graph', [])]:
+                        if isinstance(entry, dict) and entry.get('@type') == 'JobPosting' and entry not in postings:
+                            postings.append(entry)
+            if len(postings) != 1:
+                raise ValueError('не найдена однозначная JobPosting-карточка')
+            posting = postings[0]
+            description = BeautifulSoup(posting.get('description') or '', 'html.parser')
+            text = description.get_text('\n', strip=True)
+            title = posting.get('title') or item.hint_title
+            employer = posting.get('hiringOrganization') or {}
+            company = employer.get('name') if isinstance(employer, dict) else None
+            if not title or len(text) < 80:
+                raise ValueError('нет полного описания')
+            links = [urljoin(item.url, a['href']) for a in description.select('a[href]')]
+            # Explicit apply links only; do not ingest related vacancies from the page footer.
+            links += [urljoin(item.url, a['href']) for a in soup.select('main a[href]')
+                      if re.search(r'откликнуться|apply now', a.get_text(' ', strip=True), re.I)]
+            links = [u for u in links if identity(u)]
+            if item.original_text is None:
+                item.original_text = item.text
+            item.text = '\n'.join(filter(None, (title, '@ | ' + company if company else '', text)))
+            item.hint_title = title
+            item.employer = company
+            item.links = list(dict.fromkeys([*item.links, *links]))
+        except Exception as exc:
+            warnings.append(f'{item.url}: {type(exc).__name__}: {exc}')
+    if len(jobs) > max(0, limit):
+        warnings.append(f'лимит полных карточек {max(0, limit)}; без обогащения: {len(jobs) - max(0, limit)}')
+    return warnings
 
 
 def parse_page(html: str, base_url: str = "https://jabka.work") -> list[Item]:
