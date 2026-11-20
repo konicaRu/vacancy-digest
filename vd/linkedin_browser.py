@@ -62,10 +62,13 @@ def _permalink(page,card):
         try:
             copy_link.wait_for(state='visible',timeout=800)
         except Exception:
+            # The menu may appear just after the wait timed out. Reset it before
+            # retrying: clicking an already open menu button would close it.
+            page.keyboard.press('Escape')
             card.get_by_role('button',name=re.compile('Открыть меню управления|Open control menu',re.I)).first.click(timeout=5000)
         copy_link.click(timeout=5000)
     except Exception as exc:
-        raise RuntimeError('Нет команды копирования ссылки') from exc
+        raise RuntimeError('Нет команды копирования ссылки: '+str(exc).replace('\n',' ')[:500]) from exc
     until=time.monotonic()+3
     while _clipboard_sequence()==sequence and time.monotonic()<until:page.wait_for_timeout(100)
     if _clipboard_sequence()==sequence:raise RuntimeError('Не удалось скопировать ссылку поста')

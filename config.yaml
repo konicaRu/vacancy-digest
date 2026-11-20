@@ -211,6 +211,8 @@ sources:
     max_scrolls_per_tag: 1
     request_timeout_sec: 125
     total_timeout_sec: 360
+    total_timeout_by_date:
+      "2026-11-23": 1200  # разовый обход всех 14 тегов в понедельник; затем снова 360 с
     hashtags:
       - "#hiring"
       - "#ProductAnalyst"

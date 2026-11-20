@@ -111,7 +111,8 @@ def collect(cfg, root, is_seen, bookmark, *, request=None, now=None, seen_ids=No
         from ..linkedin_bridge import BrowserBridge
         request=BrowserBridge(root,cfg).request
     posts={};successful=0;warnings=[]
-    deadline=time.monotonic()+cfg.get('total_timeout_sec',360)
+    timeout=cfg.get('total_timeout_by_date',{}).get(now.date().isoformat(),cfg.get('total_timeout_sec',360))
+    deadline=time.monotonic()+timeout
     stats={'tags':{},'unique_posts':0}
     for tag in tags:
         counts={'viewed':0,'new':0,'seen':0,'incomplete':0,'errors':0}

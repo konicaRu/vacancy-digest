@@ -33,6 +33,38 @@ def post(key='7529156726835658753',text=BODY,complete=True):
 
 
 class ParsingTests(unittest.TestCase):
+    def test_monday_budget_reaches_all_tags_and_other_days_keep_normal_budget(self):
+        tags=['#tag'+str(i) for i in range(14)]
+        cfg={'hashtags':tags,'total_timeout_sec':360,
+             'total_timeout_by_date':{'2026-11-23':1200}}
+        for day,expected in [(23,14),(22,6),(24,6)]:
+            with self.subTest(day=day):
+                elapsed=[0];visited=[]
+                def request(command):
+                    visited.append(command['hashtag']);elapsed[0]+=70
+                    return {'posts':[],'complete':True,'scanned':0,'errors':[]}
+                with mock.patch.object(lp.time,'monotonic',side_effect=lambda:elapsed[0]):
+                    lp.collect(cfg,Path('.'),lambda *_:False,None,request=request,
+                               now=datetime(2026,11,day,9))
+                self.assertEqual(visited,tags[:expected])
+
+    def test_late_post_menu_is_closed_before_retry_so_retry_does_not_toggle_it_off(self):
+        page=mock.Mock();card=mock.Mock();state={'open':False}
+        def escape(_): state['open']=False
+        def toggle(**_): state['open']=not state['open']
+        def late_menu(**_):
+            state['open']=True
+            raise TimeoutError('Menu appeared just after visibility timeout')
+        def copy(**_):
+            if not state['open']: raise TimeoutError('Menu was toggled closed')
+        page.keyboard.press.side_effect=escape
+        card.get_by_role.return_value.first.click.side_effect=toggle
+        page.get_by_text.return_value.wait_for.side_effect=late_menu
+        page.get_by_text.return_value.click.side_effect=copy
+        with mock.patch.object(browser,'_clipboard_sequence',side_effect=[1,2,2]), \
+             mock.patch.object(browser,'_copied_link',return_value=post()['url']):
+            self.assertEqual(browser._permalink(page,card),(post()['id'],post()['url']))
+
     def test_browser_relative_dates_and_card_body_do_not_include_profile(self):
         self.assertEqual(browser.relative_date('6 ч. • Отредактировано',NOW),NOW-timedelta(hours=6))
         self.assertEqual(browser.relative_date('2 дн.',NOW),NOW-timedelta(days=2))
@@ -197,6 +229,20 @@ class LifetimeTests(unittest.TestCase):
 
 
 class BridgeTests(unittest.TestCase):
+    def test_response_temporarily_locked_during_windows_replace_is_retried(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            bridge=BrowserBridge(Path(tmp),{'autostart':False,'request_timeout_sec':1})
+            def fresh_response(*args,**kwargs):
+                data=json.loads((bridge.base/'command.json').read_bytes())
+                return json.dumps({'id':data['id'],'ok':True,'posts':[]})
+            responses=iter([PermissionError('Windows sharing violation'),None])
+            def read(*args,**kwargs):
+                failure=next(responses)
+                if failure:raise failure
+                return fresh_response()
+            with mock.patch.object(Path,'read_text',side_effect=read):
+                self.assertEqual(bridge.request({'action':'state'})['posts'],[])
+
     def test_live_unresponsive_controller_is_not_started_twice(self):
         with tempfile.TemporaryDirectory() as tmp:
             bridge=BrowserBridge(Path(tmp),{})

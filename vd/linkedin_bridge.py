@@ -48,7 +48,7 @@ class BrowserBridge:
                 if response.get('id')==request['id']:
                     if not response.get('ok'):raise RuntimeError(response.get('error','Ошибка браузера LinkedIn'))
                     return response
-            except (FileNotFoundError,json.JSONDecodeError):pass
+            except (FileNotFoundError,PermissionError,json.JSONDecodeError):pass
             time.sleep(.1)
         raise TimeoutError('Нет свежего ответа браузера LinkedIn; проверьте окно и ручной вход')
 
