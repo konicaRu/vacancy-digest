@@ -65,6 +65,42 @@ class ParsingTests(unittest.TestCase):
              mock.patch.object(browser,'_copied_link',return_value=post()['url']):
             self.assertEqual(browser._permalink(page,card),(post()['id'],post()['url']))
 
+    def test_already_seen_posts_do_not_use_up_the_new_card_limit(self):
+        def make_card(index):
+            card=mock.Mock();card.get_attribute.return_value=None
+            boxes=mock.Mock();boxes.count.return_value=1
+            body=mock.Mock();body.locator.return_value.count.return_value=0
+            body.inner_text.return_value=f'Текст вакансии {index}'
+            boxes.nth.return_value=body
+            boxes.locator.return_value.evaluate_all.return_value=[]
+            authors=mock.Mock();authors.count.return_value=0
+            card.locator.side_effect=lambda selector:boxes if 'expandable-text-box' in selector else authors
+            card.inner_text.return_value=f'Автор\nТекст вакансии {index}'
+            return card
+        keys=['1001','1002','1003','2001','2002','2003','2004']
+        card_list=[make_card(i) for i in range(len(keys))]
+        key_by_card={card:key for card,key in zip(card_list,keys)}
+        cards=mock.Mock();cards.count.return_value=len(card_list)
+        cards.nth.side_effect=lambda index:card_list[index]
+        main_element=mock.Mock()
+        def locate(selector):
+            if 'listitem' in selector:return mock.Mock(filter=mock.Mock(return_value=cards))
+            found=mock.Mock();found.count.return_value=1;return found
+        main_element.locator.side_effect=locate
+        page=mock.Mock()
+        def permalink(_page,card):
+            key=key_by_card[card]
+            return key,f'https://www.linkedin.com/feed/update/urn:li:activity:{key}/'
+        command={'hashtag':'#hiring','max_posts':3,'max_scrolls':0,'days':7,'timeout_sec':75,
+                 'seen_ids':['1001','1002','1003']}
+        with mock.patch.object(browser,'_main',return_value=main_element), \
+             mock.patch.object(browser,'_permalink',side_effect=permalink):
+            result=browser.scan(page,command)
+        self.assertEqual([p['id'] for p in result['posts']],['2001','2002','2003'])
+        self.assertEqual(result['seen'],3)
+        self.assertEqual(result['scanned'],6)
+        self.assertTrue(any('лимит 3' in error for error in result['errors']))
+
     def test_browser_relative_dates_and_card_body_do_not_include_profile(self):
         self.assertEqual(browser.relative_date('6 ч. • Отредактировано',NOW),NOW-timedelta(hours=6))
         self.assertEqual(browser.relative_date('2 дн.',NOW),NOW-timedelta(days=2))

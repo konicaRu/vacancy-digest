@@ -115,13 +115,15 @@ def scan(page,command):
     limit=max(1,min(int(command.get('max_posts',8)),20))
     max_scrolls=max(0,min(int(command.get('max_scrolls',1)),3))
     seen=set(command.get('seen_ids',[]));visited=set();posts=[];errors=[];scanned=0;known=0
+    # The card limit applies to new posts only: already known cards still cost a permalink copy,
+    # but must not hide fresh posts further down the results. Scrolls and the deadline bound the rest.
     for scroll in range(max_scrolls+1):
         cards=main.locator('[role="listitem"]').filter(has=page.locator('[data-testid="expandable-text-box"]'))
         for index in range(cards.count()):
             card=cards.nth(index)
             token=card.get_attribute('componentkey') or str(index)
             if token in visited:continue
-            if scanned>=limit or time.monotonic()>deadline:break
+            if len(posts)>=limit or time.monotonic()>deadline:break
             visited.add(token);scanned+=1
             if card.get_attribute('componentkey'):
                 # Search cards can reorder after a new-tab visit. Never bind text to an nth index.
@@ -162,7 +164,7 @@ def scan(page,command):
             except Exception as exc:
                 errors.append(stage+': '+type(exc).__name__+': '+str(exc).split('\n')[0][:600])
                 page.keyboard.press('Escape')
-        if scanned>=limit or time.monotonic()>deadline:break
+        if len(posts)>=limit or time.monotonic()>deadline:break
         if scroll<max_scrolls:
             cards.last.evaluate("""el=>{
                 for(let node=el.parentElement;node;node=node.parentElement){
@@ -173,8 +175,8 @@ def scan(page,command):
                 document.scrollingElement.scrollTop=document.scrollingElement.scrollHeight;
             }""")
             page.wait_for_timeout(1500)
-    if scanned>=limit:errors.append(f'Достигнут лимит {limit} карточек; выдача просмотрена частично')
+    if len(posts)>=limit:errors.append(f'Достигнут лимит {limit} карточек; выдача просмотрена частично')
     if time.monotonic()>deadline:errors.append('Исчерпан бюджет времени тега')
-    if scanned<limit and time.monotonic()<=deadline:
+    if len(posts)<limit and time.monotonic()<=deadline:
         errors.append('Достигнут лимит прокруток; полнота выдачи не подтверждена')
     return {'posts':posts,'complete':not errors,'scanned':scanned,'seen':known,'errors':errors}
