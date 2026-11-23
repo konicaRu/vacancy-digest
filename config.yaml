@@ -207,10 +207,10 @@ sources:
     start_date: "2026-11-20"
     autostart: true
     lookback_days_first_run: 7
-    max_posts_per_tag: 12
-    max_scrolls_per_tag: 1
+    max_posts_per_tag: 20   # потолок в коде — 20 (vd/linkedin_browser.py)
+    max_scrolls_per_tag: 2
     request_timeout_sec: 125
-    total_timeout_sec: 360
+    total_timeout_sec: 1000
     total_timeout_by_date:
       "2026-11-23": 1200  # разовый обход всех 14 тегов в понедельник; затем снова 360 с
     hashtags:
