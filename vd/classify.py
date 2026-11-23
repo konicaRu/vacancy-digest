@@ -153,12 +153,12 @@ def keyword_classify(item: Item) -> Verdict:
     role = _role_of(title)
     if role == "other":
         role = _role_of(text[:300])
-    company = None
+    company = item.employer
     # jabka: «@Компания» или «@ | Компания» (живая карточка — @ и название разными частями)
     m = re.search(r"@\s*(?:\|\s*)?([^|·\n]{2,40})", text) if item.kind == "site" else None
-    if m:
+    if m and not company:
         company = m.group(1).strip()
-    else:
+    elif not company:
         m = re.search(r"\bв[о]?\s+([A-ZА-ЯЁ][\w.\-]+(?:\s+[A-ZА-ЯЁ][\w.\-]+)?)", title)
         if m:
             company = m.group(1)
@@ -268,6 +268,8 @@ def canonical_url(url: Optional[str]) -> str:
 
 def dedup_key(v: Verdict) -> str:
     identity = canonical_url(v.item.url) or f'{v.item.source}:{v.item.external_id}'
+    if v.publication_variant:
+        identity += '|part:' + v.publication_variant
     return f"{norm(v.company)}|{norm(v.title)}|{identity}"
 
 
@@ -277,10 +279,29 @@ def _similar(t1: str, c1: str, t2: str, c2: str) -> bool:
     return bool(c1 and c2 and c1 == c2 and t1 == t2)
 
 
-def _same_vacancy(v: Verdict, title: str, company: str, url: Optional[str], source: Optional[str]) -> bool:
+def _same_vacancy(v: Verdict, title: str, company: str, url: Optional[str], source: Optional[str], other=None, archived=None) -> bool:
     left, right = canonical_url(v.item.url), canonical_url(url)
+    from .duplicates import identities, identity
+    left_ids = identities(v)
+    right_ids = identities(other) if other else ({identity(url)} if identity(url) else set())
+    if archived and archived.get('identity'):
+        right_ids = {archived['identity']}
+    if archived and archived.get('ambiguous'):
+        return False
+    if len(left_ids) > 1 or len(right_ids) > 1 or (left_ids and right_ids and left_ids != right_ids):
+        return False
     if left and right and left == right:
+        if v.item.source == 'linkedin:posts' and source == 'linkedin:posts':
+            other_id = other.item.external_id if other else (archived or {}).get('external_id')
+            if other_id and v.item.external_id != other_id:
+                return False  # Separate vacancies inside one publication.
         return True
+    right_grade = other.grade if other else (archived or {}).get('grade', 'unknown')
+    if v.grade != 'unknown' and right_grade != 'unknown' and v.grade != right_grade:
+        return False
+    if 'linkedin:posts' in (v.item.source, source):
+        # A generic role/company pair in a new post is only a possible match.
+        return bool(left_ids and left_ids == right_ids)
     # Different cards at one career source are different positions, even with generic titles.
     if left and right and v.item.source == source and v.item.source.startswith('site:'):
         return False
@@ -289,7 +310,7 @@ def _same_vacancy(v: Verdict, title: str, company: str, url: Optional[str], sour
 
 def dedup(verdicts: list[Verdict], recent_ledger: list[dict]) -> None:
     """Помечает дубли (внутри запуска и уже отправленные ранее) корзиной drop."""
-    ledger_norm = [(norm(r.get("title")), norm(r.get("company")), r.get("url"), r.get('source'))
+    ledger_norm = [(norm(r.get("title")), norm(r.get("company")), r.get("url"), r.get('source'), r)
                    for r in recent_ledger]
     # junior/стажёр по разделу подборки одного канала — то же самое и в другом канале, где грейда нет
     juniors = [(norm(x.title), norm(x.company)) for x in verdicts if x.drop_reason.endswith("(подборка)")]
@@ -301,11 +322,15 @@ def dedup(verdicts: list[Verdict], recent_ledger: list[dict]) -> None:
             v.bucket, v.drop_reason = "drop", "грейд: junior (подборка другого канала)"
             continue
         # без компании ключ = одно название («|senior data analyst») — тогда дубль только по той же ссылке
-        if any(_same_vacancy(v, lt, lc, lu, ls) for lt, lc, lu, ls in ledger_norm):
+        if any(_same_vacancy(v, lt, lc, lu, ls, archived=row) for lt, lc, lu, ls, row in ledger_norm):
             v.bucket, v.drop_reason = "drop", "уже присылал раньше"
             continue
-        twin = next((k for k in kept if _same_vacancy(v, norm(k.title), norm(k.company), k.item.url, k.item.source)), None)
+        twin = next((k for k in kept if _same_vacancy(v, norm(k.title), norm(k.company), k.item.url, k.item.source, k)), None)
         if twin:
+            from .duplicates import identities
+            twin.confirmed_identities = sorted(identities(twin) | identities(v))
+            v.duplicate_group = twin.duplicate_group
+            twin.source_links.extend(link for link in v.source_links if link not in twin.source_links)
             if v.item.source not in twin.also_in and v.item.source != twin.item.source:
                 twin.also_in.append(v.item.source)
             v.bucket, v.drop_reason = "drop", "дубль из другого источника"
@@ -333,6 +358,22 @@ def classify_all(items: list[Item], profile: dict, llm) -> tuple[list[Verdict], 
     verdicts: list[Verdict] = []
     info = {"llm_used": llm is not None, "llm_failed": False, "llm_errors": 0}
     for item in items:
+        if item.source == 'linkedin:posts':
+            from .sources.linkedin_posts import filter_reason
+            verdict = keyword_classify(item)
+            reason = filter_reason(item) or prefilter(item)
+            if reason:
+                verdict.bucket, verdict.drop_reason = 'drop', reason
+                if reason in ('нет признаков найма', 'резюме соискателя'):
+                    verdict.is_vacancy = False
+            else:
+                local_profile = dict(profile)
+                local_profile['target_roles'] = list(set(profile.get('target_roles', ['product_analyst','data_analyst'])) | {'bi_analyst'})
+                verdict = decide(verdict,local_profile)
+            if ':' in item.external_id:
+                verdict.publication_variant = item.external_id.split(':', 1)[1]
+            verdicts.append(verdict)
+            continue
         reason = prefilter(item)
         if reason:
             verdicts.append(Verdict(item=item, bucket="drop", drop_reason=reason))

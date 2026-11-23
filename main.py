@@ -23,13 +23,16 @@ from pathlib import Path
 import requests
 
 from vd import digest, mailer, workcal
-from vd.classify import classify_all, dedup, dedup_key
+from vd.classify import classify_all, dedup_key
 from vd.config import ConfigError, load_config
 from vd.expand import expand_bundles
 from vd.marks import fetch_marks, mark_link
 from vd.llm import LMStudioClient
 from vd.sources import alfabank, aviasales, avito, habr, jabka, linkedin_mail, magnit, make_session, megafon, mts, ostrovok, sber, tbank, telegram, tochka, twogis, vk, youngjunior
 from vd.store import Store
+from vd.sources import linkedin_posts
+from vd.models import SourceResult
+from vd.duplicates import analyze as analyze_duplicates, VERSION as DUPLICATE_VERSION
 
 ROOT = Path(__file__).resolve().parent
 log = logging.getLogger("digest")
@@ -119,6 +122,17 @@ def collect_all(cfg: dict, store: Store, fetch, slot: str = "am", dry_run: bool 
             log.warning("Сайт %s пока не поддерживается", site["name"])
             continue
         log.info("%s: новых вакансий %s%s", res.source, len(res.items), f", ОШИБКА: {res.error}" if res.error else "")
+        results.append(res)
+
+    posts_cfg = cfg['sources'].get('linkedin_posts', {})
+    posts_start = posts_cfg.get('start_date', '')
+    if posts_cfg.get('enabled') and (dry_run or not posts_start or _now().date().isoformat() >= str(posts_start)):
+        try:
+            res = linkedin_posts.collect(posts_cfg, ROOT, store.is_seen,
+                store.get_bookmark(linkedin_posts.SOURCE), seen_ids=store.seen_ids_for(linkedin_posts.SOURCE))
+        except Exception as exc:
+            res = SourceResult(linkedin_posts.SOURCE, error=f'{type(exc).__name__}: {exc}')
+        log.info('linkedin:posts: новых вакансий %s%s', len(res.items), f', ОШИБКА: {res.error}' if res.error else '')
         results.append(res)
 
     li = cfg["sources"].get("linkedin_mail", {})
@@ -249,10 +263,17 @@ def _run(args, cfg: dict, store: Store) -> int:
             log.info("Подборки: %s, ссылок %s, новых %s, уже видели %s",
                      bundle_info["bundles"], bundle_info["links"], bundle_info["new"], bundle_info["known"])
 
+    enrichment_warnings = jabka.enrich(to_classify, fetch,
+                                       cfg.get('run', {}).get('dedup_detail_limit', 20))
+    if enrichment_warnings:
+        log.warning('Обогащение jabka: %s', '; '.join(enrichment_warnings))
+        warnings['site:jabka'] = '; '.join(filter(None, (warnings.get('site:jabka'),
+            f'не удалось дополнить карточки: {len(enrichment_warnings)}; исходные карточки сохранены')))
+
     profile = cfg.get("profile", {})
     llm = None
     llm_requested = cfg.get("llm", {}).get("enabled", True) and not args.no_llm
-    if llm_requested and to_classify:
+    if llm_requested and any(it.source != linkedin_posts.SOURCE for it in to_classify):
         client = LMStudioClient(cfg["llm"], profile.get("about", ""))
         if client.ensure_server():
             llm = client
@@ -262,7 +283,6 @@ def _run(args, cfg: dict, store: Store) -> int:
     llm_info["llm_off"] = not llm_requested  # выключена намеренно (конфиг или --no-llm) — без жёлтой плашки
     if not to_classify:
         llm_info["llm_used"] = True  # разбирать было нечего — предупреждение про модель не нужно
-    dedup(verdicts, store.recent_ledger(cfg.get("run", {}).get("dedup_days", 30)))
 
     # отметки «Откликнулся» / «Разобрал группу» из Google Формы: показываем в письме, статус — только после отправки
     marks_cfg = cfg.get("marks", {})
@@ -273,11 +293,31 @@ def _run(args, cfg: dict, store: Store) -> int:
         except Exception as e:
             failed["marks"] = f"{type(e).__name__}: {e}"
             log.warning("Отметки откликов не прочитаны: %s", e)
+    marks = {m['code']: m['status'] for m in marked}
+    publications = analyze_duplicates(verdicts, store.duplicate_history(marks), now,
+                                      cfg.get('run', {}).get('dedup_days', 30),
+                                      permanent_confirmed=cfg.get('run', {}).get('permanent_confirmed_dedup', False))
+    source_info = {r.source: r.stats for r in results if r.stats}
+    for source, info in source_info.items():
+        for hashtag, counts in info.get('tags', {}).items():
+            rows = [v for v in verdicts if v.item.source == source and hashtag in v.item.discovery_tags]
+            counts['vacancies'] = sum(v.is_vacancy for v in rows)
+            counts['passed'] = sum(v.bucket != 'drop' for v in rows)
+            counts['duplicates'] = sum(v.drop_reason.startswith(('дубль', 'уже присылал')) for v in rows)
+    duplicate_stats = {
+        'version': DUPLICATE_VERSION, 'mode': 'suggest-only',
+        'confirmed': sum(v.drop_reason in ('дубль по исходной вакансии', 'уже присылал раньше',
+                                          'дубль из другого источника') for v in verdicts),
+        'possible': sum(bool(v.possible_duplicate) for v in verdicts if v.bucket != 'drop'),
+        'observation': not args.force and not args.dry_run and not failed and not warnings,
+    }
+    duplicate_stats['successful_observations_before'] = store.duplicate_observation_count()
     resend = store.sends_in_slot(now, evening_hour)  # --force в уже отправленный выпуск → свои коды (am2, am3…)
     tag = f"vd-{now:%Y%m%d}-{slot}{resend + 1 if resend else ''}"
     subject, html, text = digest.build(
         verdicts, dict(read_stats), failed, llm_info, run_date=now.date(), issue=ISSUE_RU[slot],
-        bundle_info=bundle_info, tag=tag, marked=marked, warnings=warnings,
+        bundle_info=bundle_info, tag=tag, marked=marked, warnings=warnings, duplicate_info=duplicate_stats,
+        source_info=source_info,
         mark_link=(lambda code, label: mark_link(marks_cfg, code, label)) if marks_cfg.get("enabled") else None)
     out_dir = ROOT / "out"
     out_dir.mkdir(exist_ok=True)
@@ -290,6 +330,8 @@ def _run(args, cfg: dict, store: Store) -> int:
         "by_bucket": dict(Counter(v.bucket for v in verdicts)),
         "bundles": bundle_info,
         "llm": llm_info, "seconds": round(time.time() - started, 1),
+        'duplicates': duplicate_stats,
+        'sources': source_info,
     }
     log.info("Итог: прочитано %s, в письмо %s, не прочитано источников %s, %.0f с",
              len(items), len(picked), len(failed), stats["seconds"])
@@ -310,7 +352,8 @@ def _run(args, cfg: dict, store: Store) -> int:
     marks = {m["code"]: m["status"] for m in marked}
 
     if not picked and not failed and not cfg["mail"].get("send_when_empty", True):
-        store.commit_after_send(bookmarks, seen, ledger_rows, marks, pending_bundles=pending_bundles)
+        store.commit_after_send(bookmarks, seen, ledger_rows, marks, pending_bundles=pending_bundles,
+                                publications=publications)
         store.finish_run(run_id, "empty", stats)
         log.info("Новых нет, письмо не отправляю (send_when_empty: false)")
         return 0
@@ -324,7 +367,8 @@ def _run(args, cfg: dict, store: Store) -> int:
         _alert_send_failure(cfg, subject, now, str(e), out_file)
         return 1
 
-    store.commit_after_send(bookmarks, seen, ledger_rows, marks, pending_bundles=pending_bundles)
+    store.commit_after_send(bookmarks, seen, ledger_rows, marks, pending_bundles=pending_bundles,
+                            publications=publications)
     stats["message_id"] = msg_id
     store.finish_run(run_id, "sent", stats)
     log.info("Письмо отправлено на %s (%s)", cfg["mail"]["to"], subject)

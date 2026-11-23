@@ -31,6 +31,8 @@ def source_name(source: str) -> str:
                 "ostrovok": "Островок"}.get(source[5:], source[5:])
     if source == "linkedin":
         return "LinkedIn"
+    if source == 'linkedin:posts':
+        return 'LinkedIn · Публикации'
     if source == "marks":
         return "Отметки откликов (Google Таблица)"
     if source == "calendar":
@@ -75,6 +77,8 @@ def _failed_summary(failed: dict[str, str], read_stats: dict) -> tuple[str, set[
 def _meta(v: Verdict) -> str:
     parts = [v.company or "", ROLE_RU.get(v.role, ""), GRADE_RU.get(v.grade, ""),
              REMOTE_RU.get(v.remote_from_russia, ""), v.salary or ""]
+    if v.item.source == 'linkedin:posts' and v.item.author:
+        parts.append(f'Автор: {v.item.author}')
     published = v.item.published_at
     if published is not None:
         if published.tzinfo is not None:
@@ -104,16 +108,32 @@ def _card_html(v: Verdict, accent: str, applied_href: str = "") -> str:
                f'✓ Откликнулся</a>' if applied_href else "")
     title = escape(v.title or "Без названия")
     num = f'<span style="color:#888;font-weight:400;">{v.num}.</span> ' if v.num else ""
+    duplicate = _duplicate_note(v)
+    duplicate_html = (f'<div style="font-size:12px;color:#8a6510;margin-top:4px;">'
+                      f'{escape(duplicate[0])} <a href="{escape(duplicate[1])}">{escape(duplicate[2])}</a>'
+                      f' — {escape(duplicate[3])}</div>') if duplicate else ''
+    sources_html = ''.join(f' · <a href="{escape(url)}">{escape(source_name(source))}</a>'
+                           for source, url in v.source_links if url != v.item.url)
     return (
         f'<div style="border-left:3px solid {accent};padding:6px 12px;margin:12px 0;">'
         f'<div style="font-size:15px;font-weight:600;line-height:1.35;">{num}'
         f'<a href="{escape(v.item.url)}" style="color:#1a1a1a;text-decoration:none;">{title}</a></div>'
         f'<div style="font-size:13px;color:#555;margin-top:2px;">{escape(_meta(v))}</div>'
         + (f'<div style="font-size:13px;color:#333;margin-top:4px;">{escape(v.reason)}</div>' if v.reason else "")
-        + f'<div style="font-size:12px;color:#888;margin-top:4px;">{escape(src)}{extra} · '
+        + duplicate_html
+        + f'<div style="font-size:12px;color:#888;margin-top:4px;">{escape(src)}{extra}{sources_html} · '
           f'<a href="{escape(v.item.url)}" style="color:#2b6cb0;">открыть</a>{applied}</div>'
         f'</div>'
     )
+
+
+def _duplicate_note(v):
+    d = v.possible_duplicate
+    if not d:
+        return None
+    label = 'Возможный дубль:' if d['current'] else 'Возможно, уже присылали:'
+    date_label = '' if d['current'] else d['date'][:10] + ' · '
+    return label, d['url'], date_label + d['title'] + ' · ' + source_name(d['source']), d['reason']
 
 
 def _section(title: str, note: str, rows: list[Verdict], accent: str, href=None) -> str:
@@ -166,7 +186,9 @@ def build(verdicts: list[Verdict], read_stats: dict, failed: dict[str, str],
           llm_info: dict, run_date: date | None = None, issue: str = "",
           bundle_info: dict | None = None, tag: str | None = None,
           mark_link=None, marked: list[dict] | None = None,
-          warnings: dict[str, str] | None = None) -> tuple[str, str, str]:
+          warnings: dict[str, str] | None = None,
+          duplicate_info: dict | None = None,
+          source_info: dict | None = None) -> tuple[str, str, str]:
     """Возвращает (тема, html, текст). Вакансиям проставляет сквозные номера (v.num).
     tag — метка выпуска («vd-20261020-am»); код вакансии — f"{tag}-{num}". mark_link(код) → ссылка
     «Откликнулся» под вакансией; marked — вакансии, отмеченные с прошлого письма (подтверждение вверху)."""
@@ -248,12 +270,27 @@ def build(verdicts: list[Verdict], read_stats: dict, failed: dict[str, str],
         'Агент отработал, источники прочитаны — см. статистику ниже.</p>')
 
     top_drops = ", ".join(f"{r} — {n}" for r, n in drop_reasons.most_common(5))
+    duplicates_line = ''
+    if duplicate_info is not None:
+        observations = min(6, duplicate_info.get('successful_observations_before', 0))
+        duplicates_line = (f"Повторы: подтверждённых {duplicate_info.get('confirmed', 0)}, "
+                           f"возможных {duplicate_info.get('possible', 0)}. "
+                           f"Наблюдение до этого запуска: {observations}/6 успешных штатных выпусков. "
+                           'Смысловые совпадения только помечаются.')
     bi = bundle_info or {}
     bundles_line = ""
     if bi.get("bundles"):
         bundles_line = (f'<div style="font-size:11px;color:#999;margin-top:4px;">Подборки: {bi["bundles"]}, '
                         f'ссылок на вакансии {bi["links"]}, из них новых {bi["new"]}, уже видели {bi["known"]}'
                         + (f', не открылось {bi["fetch_failed"]}' if bi.get("fetch_failed") else "") + '</div>')
+    tag_lines = []
+    for src, info in (source_info or {}).items():
+        for hashtag, counts in info.get('tags', {}).items():
+            tag_lines.append(f"{hashtag}: просмотрено {counts.get('viewed', 0)}, новых {counts.get('new', 0)}, "
+                f"вакансий {counts.get('vacancies', 0)}, в письме {counts.get('passed', 0)}, "
+                f"уже встречалось {counts.get('seen', 0)}, повторов {counts.get('duplicates', 0)}, "
+                f"ошибок {counts.get('errors', 0)}, неполных {counts.get('incomplete', 0)}")
+    tags_html = ''.join(f'<div style="font-size:11px;color:#777;">{escape(line)}</div>' for line in tag_lines)
     html = f"""<html><body style="margin:0;padding:0;background:#ffffff;">
 <div style="max-width:640px;margin:0 auto;padding:16px;font-family:-apple-system,Segoe UI,Roboto,Arial,sans-serif;color:#1a1a1a;">
 <div style="font-size:20px;font-weight:700;">Вакансии на {run_date:%d.%m.%Y}{(", " + issue) if issue else ""}</div>
@@ -264,8 +301,10 @@ def build(verdicts: list[Verdict], read_stats: dict, failed: dict[str, str],
 <table style="font-size:12px;color:#555;border-collapse:collapse;">
 <tr><td style="padding:2px 12px 2px 0;color:#888;">источник</td><td style="padding:2px 12px;color:#888;">новых</td><td style="padding:2px 12px;color:#888;">в письме</td></tr>
 {stat_rows}</table>
+{tags_html}
 <div style="font-size:11px;color:#999;margin-top:8px;">Отсеяно: {escape(top_drops) or "—"}</div>
 {bundles_line}
+<div style="font-size:11px;color:#777;margin-top:8px;">{escape(duplicates_line)}</div>
 </div></body></html>"""
 
     # --- текстовая версия ---
@@ -284,6 +323,12 @@ def build(verdicts: list[Verdict], read_stats: dict, failed: dict[str, str],
             if v.reason:
                 lines.append(f"  {v.reason}")
             lines.append(f"  {v.item.url}")
+            duplicate = _duplicate_note(v)
+            if duplicate:
+                lines.append(f'  {duplicate[0]} {duplicate[2]} — {duplicate[1]} — {duplicate[3]}')
+            for source, url in v.source_links:
+                if url != v.item.url:
+                    lines.append(f'  также: {source_name(source)} — {url}')
             if href:
                 lines.append(f"  откликнулся: {href(v)}")
         if ghref:
@@ -291,6 +336,8 @@ def build(verdicts: list[Verdict], read_stats: dict, failed: dict[str, str],
         lines.append("")
     if not (main or unknown or network):
         lines.append("Новых подходящих вакансий нет.")
+    if duplicates_line:
+        lines += ['', duplicates_line]
     lines += ["", "== Источники =="]
     for src in sorted(set(read_stats) | set(failed)):
         if src in failed:
@@ -302,5 +349,6 @@ def build(verdicts: list[Verdict], read_stats: dict, failed: dict[str, str],
         else:
             status = f"новых {read_stats[src]}, подходящих не найдено"
         lines.append(f"{source_name(src)}: {status}")
+    lines += tag_lines
     text = "\n".join(lines)
     return subject, html, text
