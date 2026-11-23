@@ -21,8 +21,12 @@ CLOSED = re.compile(r'(?:ваканси\w*|позици\w*)\s+(?:уже\s+)?за
 def unique_tags(tags):
     result=[]; seen=set()
     for tag in tags:
-        tag=str(tag).strip()
-        if not re.fullmatch(r'#[\w]+',tag): raise ValueError('Неверный хэштег LinkedIn')
+        # A query is 1-6 space-separated words; each word may carry a leading '#'.
+        # Anything else (quotes, '&', tabs, newlines) could alter the search URL, so it is rejected.
+        words=[word for word in str(tag).split(' ') if word]
+        if not 1<=len(words)<=6 or not all(re.fullmatch(r'#?\w+',word) for word in words):
+            raise ValueError('Неверный запрос LinkedIn')
+        tag=' '.join(words)
         if tag.casefold() not in seen:
             result.append(tag);seen.add(tag.casefold())
     return result
