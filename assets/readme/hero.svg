@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 340" role="img" aria-labelledby="hero-title hero-desc">
+  <title id="hero-title">Дайджест вакансий</title>
+  <desc id="hero-desc">Дважды в день письмо с вакансиями продуктового аналитика и аналитика данных, которые можно делать удалённо из России. Справа три карточки вакансий: подходит, уточнить формат, откликнулся.</desc>
+  <rect width="1200" height="340" fill="#10243a"/>
+  <g id="title-block" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif">
+    <text x="64" y="118" font-size="60" font-weight="700" fill="#f4f7fb">Дайджест вакансий</text>
+    <text x="64" y="166" font-size="24" fill="#c3d3e3">Продуктовый аналитик и аналитик данных,</text>
+    <text x="64" y="200" font-size="24" fill="#c3d3e3">удалённо из России, без дублей</text>
+    <rect x="64" y="236" width="6" height="40" fill="#3ecf8e"/>
+    <text x="86" y="264" font-size="22" fill="#f4f7fb">Письмо утром и в 17:00</text>
+  </g>
+  <g id="cards" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif">
+    <g id="card-fit">
+      <rect x="700" y="44" width="436" height="72" fill="#1a3552"/>
+      <rect x="700" y="44" width="8" height="72" fill="#3ecf8e"/>
+      <text x="732" y="74" font-size="22" font-weight="700" fill="#f4f7fb">Product Analyst</text>
+      <text x="732" y="102" font-size="18" fill="#9db3c9">подходит · удалённо из РФ</text>
+    </g>
+    <g id="card-clarify">
+      <rect x="700" y="132" width="436" height="72" fill="#1a3552"/>
+      <rect x="700" y="132" width="8" height="72" fill="#f5a524"/>
+      <text x="732" y="162" font-size="22" font-weight="700" fill="#f4f7fb">Data Analyst</text>
+      <text x="732" y="190" font-size="18" fill="#9db3c9">формат не указан · уточнить</text>
+    </g>
+    <g id="card-applied">
+      <rect x="700" y="220" width="436" height="72" fill="#1a3552"/>
+      <rect x="700" y="220" width="8" height="72" fill="#3ecf8e"/>
+      <text x="732" y="250" font-size="22" font-weight="700" fill="#f4f7fb">BI Analyst</text>
+      <text x="732" y="278" font-size="18" fill="#3ecf8e">✓ откликнулся · больше не придёт</text>
+    </g>
+  </g>
+</svg>

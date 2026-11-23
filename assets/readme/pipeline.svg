@@ -1,0 +1,49 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 300" role="img" aria-labelledby="flow-title flow-desc">
+  <title id="flow-title">Как проходит один выпуск</title>
+  <desc id="flow-desc">Пять шагов: чтение источников, отбор по роли и удалёнке, удаление дублей, письмо с карточками, отметка «Откликнулся», после которой вакансия больше не приходит.</desc>
+  <rect width="1200" height="300" fill="#10243a"/>
+  <g font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif">
+    <text x="64" y="64" font-size="36" font-weight="700" fill="#f4f7fb">Как проходит выпуск</text>
+    <g id="step-sources">
+      <rect x="64" y="100" width="188" height="150" fill="#1a3552"/>
+      <rect x="64" y="100" width="188" height="6" fill="#3ecf8e"/>
+      <text x="82" y="144" font-size="24" font-weight="700" fill="#f4f7fb">Источники</text>
+      <text x="82" y="184" font-size="18" fill="#c3d3e3">Telegram, сайты,</text>
+      <text x="82" y="210" font-size="18" fill="#c3d3e3">LinkedIn Posts</text>
+    </g>
+    <g id="step-filter">
+      <rect x="285" y="100" width="188" height="150" fill="#1a3552"/>
+      <rect x="285" y="100" width="188" height="6" fill="#3ecf8e"/>
+      <text x="303" y="144" font-size="24" font-weight="700" fill="#f4f7fb">Отбор</text>
+      <text x="303" y="184" font-size="18" fill="#c3d3e3">роль, грейд,</text>
+      <text x="303" y="210" font-size="18" fill="#c3d3e3">удалёнка из РФ</text>
+    </g>
+    <g id="step-dedup">
+      <rect x="506" y="100" width="188" height="150" fill="#1a3552"/>
+      <rect x="506" y="100" width="188" height="6" fill="#3ecf8e"/>
+      <text x="524" y="144" font-size="24" font-weight="700" fill="#f4f7fb">Дубли</text>
+      <text x="524" y="184" font-size="18" fill="#c3d3e3">ссылки, ID,</text>
+      <text x="524" y="210" font-size="18" fill="#c3d3e3">названия</text>
+    </g>
+    <g id="step-mail">
+      <rect x="727" y="100" width="188" height="150" fill="#1a3552"/>
+      <rect x="727" y="100" width="188" height="6" fill="#f5a524"/>
+      <text x="745" y="144" font-size="24" font-weight="700" fill="#f4f7fb">Письмо</text>
+      <text x="745" y="184" font-size="18" fill="#c3d3e3">карточки по</text>
+      <text x="745" y="210" font-size="18" fill="#c3d3e3">источникам</text>
+    </g>
+    <g id="step-mark">
+      <rect x="948" y="100" width="188" height="150" fill="#1a3552"/>
+      <rect x="948" y="100" width="188" height="6" fill="#3ecf8e"/>
+      <text x="966" y="144" font-size="24" font-weight="700" fill="#f4f7fb">Отклик</text>
+      <text x="966" y="184" font-size="18" fill="#c3d3e3">«Откликнулся» —</text>
+      <text x="966" y="210" font-size="18" fill="#c3d3e3">больше не придёт</text>
+    </g>
+  </g>
+  <g id="arrows" fill="none" stroke="#9db3c9" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M258 175 H278 M271 168 L278 175 L271 182"/>
+    <path d="M479 175 H499 M492 168 L499 175 L492 182"/>
+    <path d="M700 175 H720 M713 168 L720 175 L713 182"/>
+    <path d="M921 175 H941 M934 168 L941 175 L934 182"/>
+  </g>
+</svg>
