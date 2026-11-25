@@ -65,6 +65,8 @@ sources:
       - {name: myresume_ru,           enabled: true}
       - {name: FreeWorkFeed,          enabled: true}
       - {name: wntdan,                enabled: true}
+      - {name: workayte,              enabled: true}   # добавлен 25.11 по списку пользователя; с Windows ещё не проверен
+      - {name: yuniorapp,             enabled: true}   # добавлен 25.11 по списку пользователя; похоже на junior — отсев по грейду
 
   sites:
     - name: jabka
