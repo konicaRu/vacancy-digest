@@ -54,6 +54,22 @@ class RemoteTests(unittest.TestCase):
             with self.subTest(text=text):
                 self.assertEqual(remote_of(text), expected)
 
+    def test_hybrid_with_required_office_days_is_not_remote(self):
+        # Банки.ру «Аналитик CRM» (25.11): слово «удаленно» есть, но 4 дня в офисе обязательны.
+        cases = {
+            "Возможность работать в гибридном формате: 4 офисных дня и 1 день удаленно.": "no",
+            "Гибрид: 3 дня в офисе, 2 дня удалённо": "no",
+            "Офис 2 дня в неделю, остальное время удалённо": "no",
+            "Удалённо, но два раза в неделю в офисе обязательно": "no",
+            # выбор между удалёнкой и гибридом — это удалёнка (СДЭК, «Старший аналитик данных»)
+            "Полную удаленку или гибрид в одном из трех IT-офисов": "yes",
+            "Удалёнка или гибрид на выбор, 2 дня в офисе для гибрида": "yes",
+            "Работаем удалённо, при желании 1 день в офисе": "yes",
+        }
+        for text, expected in cases.items():
+            with self.subTest(text=text):
+                self.assertEqual(remote_of(text), expected)
+
 
 class PrefilterTests(unittest.TestCase):
     def test_digest_and_ads_are_dropped(self):

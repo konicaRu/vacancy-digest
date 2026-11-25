@@ -222,6 +222,34 @@ sources:
         - "https://geekjob.ru/json/find/vacancy?page=1&qs=аналитик&rm=1"
         - "https://geekjob.ru/json/find/vacancy?page=1&qs=analyst&rm=1"
 
+    # СДЭК: открытый API поиска (q), страницы по 10; удалёнка — метка «Удалённо» в выдаче.
+    - name: cdek
+      enabled: true
+      morning_only: false
+      lookback_days_first_run: 14
+      max_pages: 5
+      urls:
+        - "https://rabota.cdek.ru/api/vacancies?q=аналитик&offset=0&limit=10"
+        - "https://rabota.cdek.ru/api/vacancies?q=analyst&offset=0&limit=10"
+
+    # Домклик: весь каталог через открытый API (~20 вакансий); удалёнка — REMOTE в work_format.
+    - name: domclick
+      enabled: true
+      morning_only: false
+      lookback_days_first_run: 14
+      max_pages: 5
+      urls:
+        - "https://career.domclick.ru/api/v1/vacancy/?offset=0&limit=100"
+
+    # Компании на Huntflow (одна страница со всеми вакансиями); формат работы только текстом.
+    - name: huntflow
+      enabled: true
+      morning_only: false
+      lookback_days_first_run: 14
+      max_pages: 1
+      urls:
+        - "https://banki.huntflow.io/"
+
   linkedin_posts:
     enabled: true   # проверено в Chrome и dry-run на копии SQLite 19.11
     start_date: "2026-11-20"

@@ -28,7 +28,8 @@ def source_name(source: str) -> str:
                 "avito": "Авито", "aviasales": "Aviasales", "vk": "VK", "mts": "МТС",
                 "megafon": "МегаФон", "sber": "Сбер", "twogis": "2ГИС", "magnit": "Магнит Tech",
                 "tbank": "Т-Банк", "alfabank": "Альфа-Банк", "tochka": "Точка Банк",
-                "ostrovok": "Островок", "getmatch": "getmatch", "geekjob": "GeekJob"}.get(source[5:], source[5:])
+                "ostrovok": "Островок", "getmatch": "getmatch", "geekjob": "GeekJob",
+                "cdek": "СДЭК", "domclick": "Домклик", "huntflow": "Huntflow (Банки.ру)"}.get(source[5:], source[5:])
     if source == "linkedin":
         return "LinkedIn"
     if source == 'linkedin:posts':

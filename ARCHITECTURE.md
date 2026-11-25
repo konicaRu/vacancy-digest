@@ -57,6 +57,9 @@ flowchart LR
 | `vd/sources/ostrovok.py` | career.ostrovok.ru/vacancy: `__NEXT_DATA__` (vacancies / vacancy), только approved+actual+OPEN+не hidden; удалёнка — слова «удалёнка/дистанционный» в условиях |
 | `vd/sources/getmatch.py` | Открытый API getmatch: meta total/offset/limit, специализации product_analyst + data_analyst_bi; описание — `/api/offers/<id>`; удалёнка — `location_requirements` (remote для России или `_cu-world`, исключение России → нет) |
 | `vd/sources/geekjob.py` | JSON-поиск GeekJob `/json/find/vacancy` (`rm=1`, 100 на страницу, page/nextpage/pagecount); карточка — `#vacancy-description`, JobPosting (`identifier` сверяется с id, datePosted); удалёнка — флаг jobFormat.remote и «Удаленная работа» в карточке, архивные исключаются |
+| `vd/sources/cdek.py` | Открытый API rabota.cdek.ru/api/vacancies: q, offset/limit, total; удалёнка — тег `remote`; карточка — `main` + JobPosting (identifier сверяется с id) |
+| `vd/sources/domclick.py` | Открытый API career.domclick.ru/api/v1/vacancy/ (offset/limit, total не отдаётся — полная страница = запросить следующую); описание `/api/v1/vacancy/detail/<slug>/`; удалёнка — `REMOTE` в work_format, archived исключаются |
+| `vd/sources/huntflow.py` | Страницы компаний `*.huntflow.io` (сейчас Банки.ру): ссылки `/vacancy/<slug>`, работодатель из заголовка страницы; карточка сверяется по h1; формат только текстом; пустая страница — ошибка |
 | `vd/sources/linkedin_mail.py` | Письма LinkedIn по IMAP: вакансии (`/jobs/view/<id>`) и посты знакомых |
 | `vd/sources/linkedin_posts.py` | Независимые хэштеги и посты выбранных рекрутеров (`profile_page`, список из `recruiters_file`, отдельный бюджет), нормализация полных постов, несколько вакансий с общими/локальными условиями, метрики тегов и рекрутеров |
 | `vd/linkedin_bridge.py`, `vd/linkedin_browser.py` | Локальный IPC с блокировкой и UUID; автозапуск видимого Chrome с отдельным профилем, DOM полного текста и стабильный ID; ручная авторизация |
@@ -149,6 +152,9 @@ HTTP408/429/500/502/503/504. Паузы1/2с; Retry-After до30с учитыв�
 идентифицирующие query-параметры сохраняются. Старые строки/коды отметок не переписываются.
 Межисточниковое сопоставление использует точные нормализованные название+компанию либо URL;
 разные URL одного site-источника сохраняются как отдельные позиции. Fuzzy-порог0.8 убран.
+Гибрид с обязательными офисными днями («4 офисных дня», «3 дня в офисе», «офис 2 дня в неделю») при разборе
+текста — не удалёнка (`classify.HYBRID_DAYS`), кроме выбора «удалёнка или гибрид» и офиса «по желанию»
+(`REMOTE_CHOICE`); структурированный формат источника (`remote_format`) по-прежнему главнее текста.
 Код отсекает отрицания удалёнки и явные ограничения резидентства поверх меток и LLM;
 неизвестная явно ограниченная территория даёт unknown. Островок использует тот же разбор условий.
 У них читается публичная JSON-выдача с пагинацией и только подходящие по названию HTML-описания.
@@ -335,3 +341,4 @@ salary, contact, reason`. Блоки `<think>` вырезаются (Qwen3). Е�
 | 2026-11-25 | — | getmatch и GeekJob: два адаптера через `career.collect` (`getmatch.py` — открытый API и структурированный формат работы; `geekjob.py` — JSON-поиск с фильтром удалёнки и HTML-карточка с JobPosting), утро и вечер; без новых зависимостей и без изменения схемы SQLite. 316 тестов OK |
 | 2026-11-25 | — | LinkedIn: посты 42 выбранных рекрутеров — команда контроллера `scan_profile` («Все действия» человека / «Публикации» компании, дата до копирования ссылки, остановка на старом посте у человека), `relative_date` понимает месяцы и годы, список в локальном `data/linkedin-recruiters.yaml` (`recruiters_file`), бюджет 420 с отдельно от хэштегов, сводная строка в письме и `stats.recruiters`. живая проверка 4 профилей на Windows пройдена; занятый буфер обмена повторяется до 10 раз через 0,1 с (`_open_clipboard`). 330 тестов OK |
 | 2026-11-25 | — | Без изменений кода: `docs/constitution.md` (незыблемые правила, ссылка в CLAUDE.md), карта `architecture-map.json/.html` обновлена до a361540, аудит безопасности ветки без находок; Graphify/Codex-файлы в `.gitignore` |
+| 2026-11-25 | — | СДЭК, Домклик и Huntflow (Банки.ру): три адаптера через `career.collect`, утро и вечер; `classify.remote_of`: гибрид с обязательными офисными днями — не удалёнка (кроме выбора «удалёнка или гибрид»). 344 теста OK |

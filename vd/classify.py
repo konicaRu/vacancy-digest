@@ -65,6 +65,14 @@ FOREIGN_TERRITORY = re.compile(
     r'\b(?:eu|eea|europe|армени\w*|armenia|казахстан\w*|kazakhstan|грузи\w*|georgia|'
     r'беларус\w*|belarus|серби\w*|serbia|кипр\w*|cyprus|ес|евросоюз\w*|европ\w*)\b', re.I)
 OFFICE = re.compile(r"\bофис|гибрид|hybrid|onsite|on-site", re.I)
+# гибрид с обязательными днями в офисе — не удалёнка, даже если рядом «1 день удалённо» (решение 25.11)
+_DAYS = r'(?:\d|один|одного|два|двух|три|трёх|трех|четыре|пять)'
+HYBRID_DAYS = re.compile(
+    rf'{_DAYS}\s*(?:офисн\w*\s+дн\w*|(?:дн\w*|раз\w*)\s+(?:в\s+неделю\s+)?(?:в|из)\s+офис\w*)'
+    rf'|офис\w*\s*[:—-]?\s*{_DAYS}\s*(?:дн\w*|раз\w*)\s+в\s+неделю', re.I)
+# …но выбор «удалёнка или гибрид» и необязательный офис («по желанию») остаются удалёнкой
+REMOTE_CHOICE = re.compile(r'полн\w*\s+удал\w*|удал\w*\s+или\s+(?:гибрид|офис)|(?:гибрид|офис)\w*\s+или\s+удал\w*'
+                           r'|на\s+выбор|по\s+желанию|при\s+желании', re.I)
 # релокация сильнее слова «удалённо» («релокация в Германию, удалённо на старте»), но «без релокации» — не она
 RELOC = re.compile(r"релокац|relocat", re.I)
 NO_RELOC = re.compile(r"без\s+релокац|релокац\w*\s+не\s+(?:требу|нужн)|не\s+(?:требу\w*|нужн\w*)\s+релокац|"
@@ -140,6 +148,8 @@ def remote_of(text: str, remote_format: Optional[bool] = None) -> str:
         return restriction
     if remote_format is not None:
         return "yes" if remote_format else "no"
+    if HYBRID_DAYS.search(text) and not REMOTE_CHOICE.search(text):
+        return "no"
     if REMOTE.search(text):
         return "yes"
     if OFFICE.search(text):
