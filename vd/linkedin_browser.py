@@ -10,10 +10,12 @@ from urllib.parse import urlencode, urlsplit, parse_qs
 
 
 def relative_date(label, now):
-    m=re.search(r'(\d+)\s*(мин\.?|ч\.?|дн\.?|нед\.?|minutes?|hours?|days?|weeks?|[mhdw])(?=\s|[.•]|$)',label,re.I)
+    m=re.search(r'(\d+)\s*(мин\.?|мес\.?|ч\.?|дн\.?|нед\.?|г\.?|minutes?|months?|mo|hours?|days?|weeks?|years?|yrs?|[mhdwy])(?=\s|[.•]|$)',label,re.I)
     if not m:return None
     unit=m.group(2).lower()
-    seconds=60 if unit.startswith(('мин','min')) or unit=='m' else 3600 if unit.startswith(('ч','hour')) or unit=='h' else 604800 if unit.startswith(('нед','week')) or unit=='w' else 86400
+    if unit.startswith(('мес','mo')):seconds=30*86400
+    elif unit.startswith(('г','y')):seconds=365*86400
+    else:seconds=60 if unit.startswith(('мин','min')) or unit=='m' else 3600 if unit.startswith(('ч','hour')) or unit=='h' else 604800 if unit.startswith(('нед','week')) or unit=='w' else 86400
     return now-timedelta(seconds=int(m.group(1))*seconds)
 
 
@@ -30,6 +32,14 @@ def _clipboard_sequence():
     return ctypes.windll.user32.GetClipboardSequenceNumber()
 
 
+def _open_clipboard(user):
+    # Another program (clipboard history, a messenger) may hold the clipboard for a moment.
+    for attempt in range(10):
+        if user.OpenClipboard(None):return
+        if attempt<9:time.sleep(0.1)
+    raise RuntimeError('Буфер занят')
+
+
 def _copied_link():
     # Called only after our copy-post-link UI action changed the clipboard sequence.
     from ctypes import wintypes
@@ -37,7 +47,7 @@ def _copied_link():
     user.GetClipboardData.argtypes=[wintypes.UINT];user.GetClipboardData.restype=wintypes.HANDLE
     kernel.GlobalLock.argtypes=[wintypes.HGLOBAL];kernel.GlobalLock.restype=wintypes.LPVOID
     kernel.GlobalUnlock.argtypes=[wintypes.HGLOBAL]
-    if not user.OpenClipboard(None):raise RuntimeError('Буфер занят')
+    _open_clipboard(user)
     handle=None;pointer=None
     try:
         handle=user.GetClipboardData(13)
@@ -84,9 +94,9 @@ def _permalink(page,card):
         page.bring_to_front()
 
 
-def _main(page):
+def _main(page,path='/search/results/content/'):
     parsed=urlsplit(page.url)
-    if parsed.hostname!='www.linkedin.com' or parsed.path!='/search/results/content/':
+    if parsed.hostname!='www.linkedin.com' or parsed.path!=path:
         raise RuntimeError('LinkedIn требует ручной вход или показал защитную страницу')
     main=page.get_by_role('main')
     main.wait_for(state='visible',timeout=12000)
@@ -100,21 +110,28 @@ def _main(page):
 def scan(page,command):
     deadline=time.monotonic()+int(command.get('timeout_sec',75))
     page.set_default_timeout(5000)
-    tag=command['hashtag']
-    from .sources.linkedin_posts import unique_tags
-    unique_tags([tag])
+    from .sources.linkedin_posts import profile_page, unique_tags
     days=int(command.get('days',7))
-    date_filter='past-24h' if days<=1 else 'past-week' if days<=7 else 'past-month'
-    url='https://www.linkedin.com/search/results/content/?'+urlencode(
-        {'keywords':tag,'datePosted':'"'+date_filter+'"','sortBy':'"date_posted"'})
+    profile='profile' in command
+    if profile:
+        # A recruiter's own page: a person's activity is newest first, a company's posts are sorted
+        # by popularity. The date is read before the (slow) link copy; old posts are never opened.
+        url,stop_on_old=profile_page(command['profile'])
+    else:
+        tag=command['hashtag']
+        unique_tags([tag])
+        date_filter='past-24h' if days<=1 else 'past-week' if days<=7 else 'past-month'
+        url='https://www.linkedin.com/search/results/content/?'+urlencode(
+            {'keywords':tag,'datePosted':'"'+date_filter+'"','sortBy':'"date_posted"'})
     page.goto(url,wait_until='domcontentloaded',timeout=25000)
-    main=_main(page)
+    main=_main(page,urlsplit(url).path)
     if not main.locator('[data-testid="expandable-text-box"]').count() and re.search(
             'Поиск не дал результатов|No results found|No results',main.inner_text()):
         return {'posts':[],'complete':True,'scanned':0,'errors':[]}
     limit=max(1,min(int(command.get('max_posts',8)),20))
     max_scrolls=max(0,min(int(command.get('max_scrolls',1)),3))
     seen=set(command.get('seen_ids',[]));visited=set();posts=[];errors=[];scanned=0;known=0
+    reached_old=False;undated=0
     # The card limit applies to new posts only: already known cards still cost a permalink copy,
     # but must not hide fresh posts further down the results. Scrolls and the deadline bound the rest.
     for scroll in range(max_scrolls+1):
@@ -128,6 +145,15 @@ def scan(page,command):
             if card.get_attribute('componentkey'):
                 # Search cards can reorder after a new-tab visit. Never bind text to an nth index.
                 card=main.locator('[role="listitem"][componentkey='+json.dumps(token)+']')
+            if profile:
+                first=card.locator('[data-testid="expandable-text-box"]').nth(0).inner_text(timeout=5000)
+                posted=relative_date(card.inner_text().split(first[:50],1)[0],datetime.now())
+                if posted is None:
+                    undated+=1;continue
+                if posted<datetime.now()-timedelta(days=days):
+                    if stop_on_old:
+                        reached_old=True;break
+                    continue
             stage='ссылка'
             try:
                 key,permalink=_permalink(page,card)
@@ -164,7 +190,7 @@ def scan(page,command):
             except Exception as exc:
                 errors.append(stage+': '+type(exc).__name__+': '+str(exc).split('\n')[0][:600])
                 page.keyboard.press('Escape')
-        if len(posts)>=limit or time.monotonic()>deadline:break
+        if reached_old or len(posts)>=limit or time.monotonic()>deadline:break
         if scroll<max_scrolls:
             cards.last.evaluate("""el=>{
                 for(let node=el.parentElement;node;node=node.parentElement){
@@ -175,6 +201,12 @@ def scan(page,command):
                 document.scrollingElement.scrollTop=document.scrollingElement.scrollHeight;
             }""")
             page.wait_for_timeout(1500)
+    if profile:
+        # A person's page read up to an old post is complete; a company page is bounded by its limits.
+        if not reached_old and len(posts)>=limit:errors.append(f'Достигнут лимит {limit} карточек профиля')
+        if not reached_old and time.monotonic()>deadline:errors.append('Исчерпан бюджет времени профиля')
+        return {'posts':posts,'complete':not errors,'scanned':scanned,'seen':known,'errors':errors,
+                'undated':undated}
     if len(posts)>=limit:errors.append(f'Достигнут лимит {limit} карточек; выдача просмотрена частично')
     if time.monotonic()>deadline:errors.append('Исчерпан бюджет времени тега')
     if len(posts)<limit and time.monotonic()<=deadline:

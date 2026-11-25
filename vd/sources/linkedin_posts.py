@@ -4,7 +4,10 @@ from __future__ import annotations
 import re
 import time
 from datetime import datetime
+from pathlib import Path
 from urllib.parse import unquote, urlsplit, parse_qs
+
+import yaml
 
 from ..models import Item, SourceResult
 
@@ -21,11 +24,27 @@ CLOSED = re.compile(r'(?:ваканси\w*|позици\w*)\s+(?:уже\s+)?за
 def unique_tags(tags):
     result=[]; seen=set()
     for tag in tags:
-        tag=str(tag).strip()
-        if not re.fullmatch(r'#[\w]+',tag): raise ValueError('Неверный хэштег LinkedIn')
+        # A query is 1-6 space-separated words; each word may carry a leading '#'.
+        # Anything else (quotes, '&', tabs, newlines) could alter the search URL, so it is rejected.
+        words=[word for word in str(tag).split(' ') if word]
+        if not 1<=len(words)<=6 or not all(re.fullmatch(r'#?\w+',word) for word in words):
+            raise ValueError('Неверный запрос LinkedIn')
+        tag=' '.join(words)
         if tag.casefold() not in seen:
             result.append(tag);seen.add(tag.casefold())
     return result
+
+
+PROFILE=re.compile(r'https://www\.linkedin\.com/(in|company)/([A-Za-z0-9%_.~-]+)/?')
+
+
+def profile_page(url):
+    """Страница постов профиля: у человека «Все действия» (по времени), у компании «Публикации»."""
+    match=PROFILE.fullmatch(str(url).strip())
+    if not match: raise ValueError('Неверная ссылка на профиль LinkedIn')
+    kind,slug=match.groups()
+    base=f'https://www.linkedin.com/{kind}/{slug}/'
+    return (base+'recent-activity/all/',True) if kind=='in' else (base+'posts/',False)
 
 
 def post_identity(url):
@@ -106,7 +125,15 @@ def collect(cfg, root, is_seen, bookmark, *, request=None, now=None, seen_ids=No
     now=now or datetime.now()
     result=SourceResult(SOURCE)
     tags=unique_tags(cfg.get('hashtags',[]))
-    if not tags: result.error='Не заданы хэштеги LinkedIn';return result
+    recruiters=list(cfg.get('recruiters') or [])
+    if cfg.get('recruiters_file'):
+        # Names of real people stay in a local file (data/ is not in git), not in the public config.
+        path=Path(root)/cfg['recruiters_file']
+        try:
+            recruiters+=yaml.safe_load(path.read_text(encoding='utf-8')) or []
+        except (OSError,yaml.YAMLError) as exc:
+            result.error=f'Список рекрутеров LinkedIn не прочитан: {path.name}: {type(exc).__name__}';return result
+    if not tags and not recruiters: result.error='Не заданы хэштеги и рекрутеры LinkedIn';return result
     if request is None:
         from ..linkedin_bridge import BrowserBridge
         request=BrowserBridge(root,cfg).request
@@ -114,34 +141,60 @@ def collect(cfg, root, is_seen, bookmark, *, request=None, now=None, seen_ids=No
     timeout=cfg.get('total_timeout_by_date',{}).get(now.date().isoformat(),cfg.get('total_timeout_sec',360))
     deadline=time.monotonic()+timeout
     stats={'tags':{},'unique_posts':0}
-    for tag in tags:
-        counts={'viewed':0,'new':0,'seen':0,'incomplete':0,'errors':0}
-        stats['tags'][tag]=counts
+    days=cfg.get('lookback_days_first_run',7)
+
+    def take(label,command,counts):
+        """One browser request; its new complete posts are merged under `label`."""
+        nonlocal successful
         try:
-            if time.monotonic()>deadline: raise TimeoutError('Исчерпан бюджет LinkedIn')
-            response=request({'action':'scan_posts','hashtag':tag,
-                              'days':cfg.get('lookback_days_first_run',7),
-                              'max_posts':cfg.get('max_posts_per_tag',8),
-                              'max_scrolls':cfg.get('max_scrolls_per_tag',1),
-                              'seen_ids':list(set(seen_ids or []) | set(posts)),
-                              'timeout_sec':min(75, max(1, int(deadline-time.monotonic())))})
+            response=request(dict(command,seen_ids=list(set(seen_ids or []) | set(posts))))
             successful+=1
             counts['viewed']=response.get('scanned',0)
             counts['seen']=response.get('seen',0)
-            if not response.get('complete',False): warnings.append(f'{tag}: частичная выдача')
-            for error in response.get('errors',[]): warnings.append(f'{tag}: {error}');counts['errors']+=1
+            if response.get('undated'): counts['undated']=response['undated']
+            if not response.get('complete',False): warnings.append(f'{label}: частичная выдача')
+            for error in response.get('errors',[]): warnings.append(f'{label}: {error}');counts['errors']+=1
             for row in response.get('posts',[]):
                 try: key,url=post_identity(row['url'])
                 except (ValueError,KeyError): counts['incomplete']+=1;continue
                 if is_seen(SOURCE,key): counts['seen']+=1;continue
                 if not row.get('complete'): counts['incomplete']+=1;continue
                 if key in posts:
-                    posts[key]['tags'].append(tag)
+                    posts[key]['tags'].append(label)
                     continue
-                row=dict(row,url=url,tags=[tag]);posts[key]=row;counts['new']+=1
-            if counts['incomplete']:warnings.append(f'{tag}: неполных постов {counts["incomplete"]}')
+                row=dict(row,url=url,tags=[label]);posts[key]=row;counts['new']+=1
+            if counts['incomplete']:warnings.append(f'{label}: неполных постов {counts["incomplete"]}')
         except Exception as exc:
-            counts['errors']+=1;warnings.append(f'{tag}: {type(exc).__name__}: {str(exc)[:160]}')
+            counts['errors']+=1;warnings.append(f'{label}: {type(exc).__name__}: {str(exc)[:160]}')
+
+    for tag in tags:
+        counts={'viewed':0,'new':0,'seen':0,'incomplete':0,'errors':0}
+        stats['tags'][tag]=counts
+        if time.monotonic()>deadline:
+            counts['errors']+=1;warnings.append(f'{tag}: TimeoutError: Исчерпан бюджет LinkedIn');continue
+        take(tag,{'action':'scan_posts','hashtag':tag,'days':days,
+                  'max_posts':cfg.get('max_posts_per_tag',8),
+                  'max_scrolls':cfg.get('max_scrolls_per_tag',1),
+                  'timeout_sec':min(75, max(1, int(deadline-time.monotonic())))},counts)
+
+    # Recruiters have their own budget, so hashtag searches cannot starve them (and vice versa).
+    if recruiters: stats['recruiters']={}
+    recruiters_deadline=time.monotonic()+cfg.get('recruiters_timeout_sec',420)
+    for entry in recruiters:
+        url=entry.get('url','') if isinstance(entry,dict) else str(entry)
+        name=(entry.get('name') if isinstance(entry,dict) else None) or url
+        counts={'viewed':0,'new':0,'seen':0,'incomplete':0,'errors':0}
+        stats['recruiters'][name]=counts
+        label=f'рекрутер: {name}'
+        try:
+            profile_page(url)
+            if time.monotonic()>recruiters_deadline: raise TimeoutError('Исчерпан бюджет рекрутеров LinkedIn')
+        except (ValueError,TimeoutError) as exc:
+            counts['errors']+=1;warnings.append(f'{label}: {type(exc).__name__}: {exc}');continue
+        take(label,{'action':'scan_profile','profile':url,'days':days,
+                    'max_posts':cfg.get('max_posts_per_recruiter',5),'max_scrolls':0,
+                    'timeout_sec':min(cfg.get('recruiter_timeout_sec',25),
+                                      max(1,int(recruiters_deadline-time.monotonic())))},counts)
     for key,row in posts.items():
         try:
             items=normalize_post(row)

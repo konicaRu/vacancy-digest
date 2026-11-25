@@ -84,7 +84,7 @@ def run():
                             elif action == 'close':
                                 write_json('response.json', {'id': request_id, 'ok': True, 'closed': True})
                                 break
-                            elif action == 'scan_posts':
+                            elif action in ('scan_posts', 'scan_profile'):
                                 import importlib
                                 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
                                 from vd import linkedin_browser

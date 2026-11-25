@@ -202,6 +202,26 @@ sources:
       urls:
         - "https://career.ostrovok.ru/vacancy"
 
+    # getmatch: открытый API, специализации Product Analytics и Data Analytics & BI;
+    # удалёнка — структурированный формат remote для России или «весь мир».
+    - name: getmatch
+      enabled: true
+      morning_only: false
+      lookback_days_first_run: 14
+      max_pages: 10
+      urls:
+        - "https://getmatch.ru/api/offers?sp=product_analyst&sp=data_analyst_bi&pa=all&offset=0&limit=50"
+
+    # GeekJob: JSON-поиск сайта с фильтром «удалённо» (rm=1), 100 карточек на страницу.
+    - name: geekjob
+      enabled: true
+      morning_only: false
+      lookback_days_first_run: 14
+      max_pages: 5
+      urls:
+        - "https://geekjob.ru/json/find/vacancy?page=1&qs=аналитик&rm=1"
+        - "https://geekjob.ru/json/find/vacancy?page=1&qs=analyst&rm=1"
+
   linkedin_posts:
     enabled: true   # проверено в Chrome и dry-run на копии SQLite 19.11
     start_date: "2026-11-20"
@@ -209,6 +229,12 @@ sources:
     lookback_days_first_run: 7
     max_posts_per_tag: 20   # потолок в коде — 20 (vd/linkedin_browser.py)
     max_scrolls_per_tag: 2
+    # Посты выбранных рекрутеров: у человека «Все действия», у компании «Публикации».
+    # Список с именами — локальный файл (data/ не в git); бюджет отдельный от хэштегов.
+    recruiters_file: "data/linkedin-recruiters.yaml"
+    max_posts_per_recruiter: 5
+    recruiter_timeout_sec: 25
+    recruiters_timeout_sec: 420
     request_timeout_sec: 125
     total_timeout_sec: 1000
     total_timeout_by_date:

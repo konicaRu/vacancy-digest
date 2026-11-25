@@ -28,7 +28,7 @@ from vd.config import ConfigError, load_config
 from vd.expand import expand_bundles
 from vd.marks import fetch_marks, mark_link
 from vd.llm import LMStudioClient
-from vd.sources import alfabank, aviasales, avito, habr, jabka, linkedin_mail, magnit, make_session, megafon, mts, ostrovok, sber, tbank, telegram, tochka, twogis, vk, youngjunior
+from vd.sources import alfabank, aviasales, avito, geekjob, getmatch, habr, jabka, linkedin_mail, magnit, make_session, megafon, mts, ostrovok, sber, tbank, telegram, tochka, twogis, vk, youngjunior
 from vd.store import Store
 from vd.sources import linkedin_posts
 from vd.models import SourceResult
@@ -106,7 +106,8 @@ def collect_all(cfg: dict, store: Store, fetch, slot: str = "am", dry_run: bool 
                          "vk": vk.collect, "mts": mts.collect, "megafon": megafon.collect,
                          "sber": sber.collect, "twogis": twogis.collect, "magnit": magnit.collect,
                          "tbank": tbank.collect, "alfabank": alfabank.collect,
-                         "tochka": tochka.collect, "ostrovok": ostrovok.collect}
+                         "tochka": tochka.collect, "ostrovok": ostrovok.collect,
+                         "getmatch": getmatch.collect, "geekjob": geekjob.collect}
     for site in cfg["sources"].get("sites", []):
         if not site.get("enabled", True):
             continue
@@ -299,7 +300,9 @@ def _run(args, cfg: dict, store: Store) -> int:
                                       permanent_confirmed=cfg.get('run', {}).get('permanent_confirmed_dedup', False))
     source_info = {r.source: r.stats for r in results if r.stats}
     for source, info in source_info.items():
-        for hashtag, counts in info.get('tags', {}).items():
+        labelled = [(tag, counts) for tag, counts in info.get('tags', {}).items()]
+        labelled += [(f'рекрутер: {name}', counts) for name, counts in info.get('recruiters', {}).items()]
+        for hashtag, counts in labelled:
             rows = [v for v in verdicts if v.item.source == source and hashtag in v.item.discovery_tags]
             counts['vacancies'] = sum(v.is_vacancy for v in rows)
             counts['passed'] = sum(v.bucket != 'drop' for v in rows)

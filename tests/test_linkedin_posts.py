@@ -121,6 +121,13 @@ class ParsingTests(unittest.TestCase):
         self.assertEqual(lp.unique_tags(['#hiring','#ProductAnalyst','#productanalyst','#AnalyticsJobs','#HIRING']),
                          ['#hiring','#ProductAnalyst','#AnalyticsJobs'])
 
+    def test_search_phrases_are_allowed_and_unsafe_queries_are_rejected(self):
+        self.assertEqual(lp.unique_tags(['#hiring аналитик','ищем  аналитик данных','Ищем аналитик данных','#вакансия']),
+                         ['#hiring аналитик','ищем аналитик данных','#вакансия'])
+        for value in ['','   ','#','a"b','аналитик&sortBy=x','аналитик\nданных','#hi#ring','один два три четыре пять шесть семь']:
+            with self.subTest(value=value):
+                with self.assertRaises(ValueError): lp.unique_tags([value])
+
     def test_same_post_under_two_tags_read_once_and_emits_author(self):
         calls=[]
         def request(command):

@@ -28,7 +28,7 @@ def source_name(source: str) -> str:
                 "avito": "Авито", "aviasales": "Aviasales", "vk": "VK", "mts": "МТС",
                 "megafon": "МегаФон", "sber": "Сбер", "twogis": "2ГИС", "magnit": "Магнит Tech",
                 "tbank": "Т-Банк", "alfabank": "Альфа-Банк", "tochka": "Точка Банк",
-                "ostrovok": "Островок"}.get(source[5:], source[5:])
+                "ostrovok": "Островок", "getmatch": "getmatch", "geekjob": "GeekJob"}.get(source[5:], source[5:])
     if source == "linkedin":
         return "LinkedIn"
     if source == 'linkedin:posts':
@@ -290,6 +290,16 @@ def build(verdicts: list[Verdict], read_stats: dict, failed: dict[str, str],
                 f"вакансий {counts.get('vacancies', 0)}, в письме {counts.get('passed', 0)}, "
                 f"уже встречалось {counts.get('seen', 0)}, повторов {counts.get('duplicates', 0)}, "
                 f"ошибок {counts.get('errors', 0)}, неполных {counts.get('incomplete', 0)}")
+        recruiters = info.get('recruiters', {})
+        if recruiters:
+            # One line instead of a line per profile; the per-profile figures stay in runs.stats_json.
+            productive = [name for name, c in recruiters.items() if c.get('passed', 0)]
+            tag_lines.append(
+                f"Рекрутеры LinkedIn: профилей {len(recruiters)}, "
+                f"прочитано {sum(not c.get('errors', 0) for c in recruiters.values())}, "
+                f"новых постов {sum(c.get('new', 0) for c in recruiters.values())}, "
+                f"в письме {sum(c.get('passed', 0) for c in recruiters.values())}"
+                + (f"; дали вакансии: {', '.join(productive)}" if productive else ''))
     tags_html = ''.join(f'<div style="font-size:11px;color:#777;">{escape(line)}</div>' for line in tag_lines)
     html = f"""<html><body style="margin:0;padding:0;background:#ffffff;">
 <div style="max-width:640px;margin:0 auto;padding:16px;font-family:-apple-system,Segoe UI,Roboto,Arial,sans-serif;color:#1a1a1a;">
