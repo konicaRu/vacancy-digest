@@ -300,7 +300,9 @@ def _run(args, cfg: dict, store: Store) -> int:
                                       permanent_confirmed=cfg.get('run', {}).get('permanent_confirmed_dedup', False))
     source_info = {r.source: r.stats for r in results if r.stats}
     for source, info in source_info.items():
-        for hashtag, counts in info.get('tags', {}).items():
+        labelled = [(tag, counts) for tag, counts in info.get('tags', {}).items()]
+        labelled += [(f'рекрутер: {name}', counts) for name, counts in info.get('recruiters', {}).items()]
+        for hashtag, counts in labelled:
             rows = [v for v in verdicts if v.item.source == source and hashtag in v.item.discovery_tags]
             counts['vacancies'] = sum(v.is_vacancy for v in rows)
             counts['passed'] = sum(v.bucket != 'drop' for v in rows)

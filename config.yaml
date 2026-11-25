@@ -229,6 +229,12 @@ sources:
     lookback_days_first_run: 7
     max_posts_per_tag: 20   # потолок в коде — 20 (vd/linkedin_browser.py)
     max_scrolls_per_tag: 2
+    # Посты выбранных рекрутеров: у человека «Все действия», у компании «Публикации».
+    # Список с именами — локальный файл (data/ не в git); бюджет отдельный от хэштегов.
+    recruiters_file: "data/linkedin-recruiters.yaml"
+    max_posts_per_recruiter: 5
+    recruiter_timeout_sec: 25
+    recruiters_timeout_sec: 420
     request_timeout_sec: 125
     total_timeout_sec: 1000
     total_timeout_by_date:
