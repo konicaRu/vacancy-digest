@@ -283,10 +283,26 @@ def dedup_key(v: Verdict) -> str:
     return f"{norm(v.company)}|{norm(v.title)}|{identity}"
 
 
+def _title_words(title: str, company: str) -> set[str]:
+    return set(re.sub(rf'\b{re.escape(company)}\b', ' ', title).split()) if company else set(title.split())
+
+
 def _similar(t1: str, c1: str, t2: str, c2: str) -> bool:
-    if not t1 or not t2:
+    """Одна вакансия: одна известная компания и одинаковые слова должности без названия компании
+    («Data Analyst / Product Analyst в Grand Mobile» = «Data / Product Analyst Grand Mobile»).
+    Если компания известна только у одной публикации, она должна быть названа в должности другой."""
+    if not t1 or not t2 or (c1 and c2 and c1 != c2):
         return False
-    return bool(c1 and c2 and c1 == c2 and t1 == t2)
+    company = c1 or c2
+    if not company or (not c1 and company not in t1) or (not c2 and company not in t2):
+        return False
+    words = _title_words(t1, company)
+    return bool(words) and words == _title_words(t2, company)
+
+
+def _same_site_ids(left: set[str], right: set[str]) -> bool:
+    """Номера вакансий сравнимы только внутри одного сайта (identity = «хост:путь»)."""
+    return bool({i.split(':', 1)[0] for i in left} & {i.split(':', 1)[0] for i in right})
 
 
 def _same_vacancy(v: Verdict, title: str, company: str, url: Optional[str], source: Optional[str], other=None, archived=None) -> bool:
@@ -298,7 +314,8 @@ def _same_vacancy(v: Verdict, title: str, company: str, url: Optional[str], sour
         right_ids = {archived['identity']}
     if archived and archived.get('ambiguous'):
         return False
-    if len(left_ids) > 1 or len(right_ids) > 1 or (left_ids and right_ids and left_ids != right_ids):
+    if len(left_ids) > 1 or len(right_ids) > 1 or (
+            left_ids and right_ids and left_ids != right_ids and _same_site_ids(left_ids, right_ids)):
         return False
     if left and right and left == right:
         if v.item.source == 'linkedin:posts' and source == 'linkedin:posts':
