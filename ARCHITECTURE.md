@@ -55,6 +55,8 @@ flowchart LR
 | `vd/sources/alfabank.py` | GET API job.alfabank.ru: skip/take/total, полное описание, jobTypes=1003 «Дистанционная работа»; исключение скрытых, внутренних и истёкших |
 | `vd/sources/tochka.py` | Каталог hr.tochka.com/vacancies/it/remote-work/: состояние Next.js `initialVacancies` (total/page/pageSize, без «Показать ещё»); карточка — JobPosting с `jobLocationType=TELECOMMUTE` и datePosted |
 | `vd/sources/ostrovok.py` | career.ostrovok.ru/vacancy: `__NEXT_DATA__` (vacancies / vacancy), только approved+actual+OPEN+не hidden; удалёнка — слова «удалёнка/дистанционный» в условиях |
+| `vd/sources/getmatch.py` | Открытый API getmatch: meta total/offset/limit, специализации product_analyst + data_analyst_bi; описание — `/api/offers/<id>`; удалёнка — `location_requirements` (remote для России или `_cu-world`, исключение России → нет) |
+| `vd/sources/geekjob.py` | JSON-поиск GeekJob `/json/find/vacancy` (`rm=1`, 100 на страницу, page/nextpage/pagecount); карточка — `#vacancy-description`, JobPosting (`identifier` сверяется с id, datePosted); удалёнка — флаг jobFormat.remote и «Удаленная работа» в карточке, архивные исключаются |
 | `vd/sources/linkedin_mail.py` | Письма LinkedIn по IMAP: вакансии (`/jobs/view/<id>`) и посты знакомых |
 | `vd/sources/linkedin_posts.py` | Независимые хэштеги, нормализация полных постов, несколько вакансий с общими/локальными условиями, метрики тегов |
 | `vd/linkedin_bridge.py`, `vd/linkedin_browser.py` | Локальный IPC с блокировкой и UUID; автозапуск видимого Chrome с отдельным профилем, DOM полного текста и стабильный ID; ручная авторизация |
@@ -161,7 +163,7 @@ HTTP408/429/500/502/503/504. Паузы1/2с; Retry-After до30с учитыв�
 |---|---|---|
 | Telegram | id последнего прочитанного поста | посты с id > закладки; первый запуск — за `lookback_days_first_run` |
 | jabka.work | время последнего чтения (маркер «уже читали») | таблица `seen`; первый запуск — карточки за N дней |
-| Хабр Карьера, Авито, Aviasales, VK, МТС, МегаФон, Сбер, 2ГИС | время последнего чтения (маркер «уже читали») | `seen`; первый запуск — lookback_days_first_run (5 / 14 дней) при известной дате, иначе активные вакансии; старые исключённые id тоже запоминаются |
+| Хабр Карьера, Авито, Aviasales, VK, МТС, МегаФон, Сбер, 2ГИС, getmatch, GeekJob | время последнего чтения (маркер «уже читали») | `seen`; первый запуск — lookback_days_first_run (5 / 14 дней) при известной дате, иначе активные вакансии; старые исключённые id тоже запоминаются |
 | LinkedIn | UID последнего письма в IMAP | письма с UID > закладки |
 | Подборки | — | ссылка на пост пропускается, если пост есть в `seen` или в текущем запуске |
 
@@ -330,3 +332,4 @@ salary, contact, reason`. Блоки `<think>` вырезаются (Qwen3). Е�
 | 2026-11-20 | — | LinkedIn: Escape перед повторным открытием меню устраняет гонку toggle; причина ошибки копирования сохраняется. IPC повторяет чтение при временном PermissionError Windows в пределах прежнего deadline. Две регрессии, 293 теста OK; бюджет и лимиты не менялись |
 | 2026-11-20 | — | LinkedIn: total_timeout_by_date задаёт бюджет на конкретную дату, иначе total_timeout_sec. На 23.11 — 1200 с для 14 тегов, остальные даты — прежние 360 с; регрессия до/в/после даты, 294 теста OK |
 | 2026-11-23 | — | LinkedIn: лимиты на тег подняты до 20 карточек и 2 прокруток (потолок кода — 20 и 3), общий бюджет total_timeout_sec 360→1000 с. Жёлтая плашка «частичная выдача» появляется при каждом упоре в лимит, это штатное поведение. Изменён только config.yaml, 294 теста OK, живой прогон не выполнялся |
+| 2026-11-25 | — | getmatch и GeekJob: два адаптера через `career.collect` (`getmatch.py` — открытый API и структурированный формат работы; `geekjob.py` — JSON-поиск с фильтром удалёнки и HTML-карточка с JobPosting), утро и вечер; без новых зависимостей и без изменения схемы SQLite. 316 тестов OK |

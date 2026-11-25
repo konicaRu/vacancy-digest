@@ -147,6 +147,8 @@ SQLite хранит тексты публикаций, связи одной в�
 | Альфа-Банк | утром и в 17:00: API job.alfabank.ru, поиск «аналитик» / «analyst» и полные описания; только «Дистанционная работа», без скрытых, внутренних и истёкших карточек | `sources.sites`, `morning_only: false` |
 | Точка Банк | утром и в 17:00: каталог hr.tochka.com «IT / Удалённо», карточки с JobPosting; только TELECOMMUTE, дата публикации из карточки | `sources.sites`, `morning_only: false` |
 | Островок | утром и в 17:00: каталог career.ostrovok.ru, полные описания; только активные карточки, где в условиях указана удалёнка | `sources.sites`, `morning_only: false` |
+| getmatch | утром и в 17:00: открытый API, специализации Product Analytics и Data Analytics & BI, полные описания; удалёнка только по полю формата: remote для России или «весь мир», без исключения России | `sources.sites`, `morning_only: false` |
+| GeekJob | утром и в 17:00: JSON-поиск сайта «аналитик» / «analyst» с фильтром «удалённо», описание и дата JobPosting из карточки; архивные исключаются | `sources.sites`, `morning_only: false` |
 | LinkedIn Posts | видимый Chrome/Playwright с отдельным профилем и ручным входом; независимые хэштеги, полный русский текст, отбор Python без LLM | `sources.linkedin_posts` |
 | LinkedIn Mail | письма-уведомления в почте (подписки на вакансии, посты знакомых) | `sources.linkedin_mail` (выключен) |
 
