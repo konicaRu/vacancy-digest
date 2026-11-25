@@ -182,11 +182,10 @@
 
 ## Следующие шаги (по порядку)
 
-**Отложено 25.11 «на конец» — напомнить пользователю в конце сессии:** по project-starter выбран
-набор «карта + аудит + конституция»: обновить `architecture-map.json/.html` (не менялись с 26.10),
-security-аудит (Cloudflare Security Audit) перед слиянием `feat/cross-source-dedup` в main,
-`docs/constitution.md` из уже принятых правил. Также решить судьбу Graphify vs CodeGraph (вне git:
-`graphify-out/`, `AGENTS.md`, `.codex/`).
+**Сделано 25.11 (был отложенный набор по project-starter):** карта архитектуры обновлена, аудит безопасности
+ветки — без находок, `docs/constitution.md` написан; `graphify-out/`, `.codex/`, `AGENTS.md` — в `.gitignore`,
+`project-starter.md` — в git как бэкап. Осталось: схема `architecture-flow.html` (Archify) устарела;
+выбрать один индекс кода (Graphify для Codex или CodeGraph для Claude Code).
 
 **Актуально на 20.11:** продолжать по `docs/handoff-2026-11-20-linkedin-fixes.md`.
 Проверить следующий штатный LinkedIn после исправлений меню/IPC; 23.11 проверить все 14 тегов
@@ -832,3 +831,14 @@ Plus — 399 ₽ разовым платежом. В Free — сохранённ
   страница-агрегатор — 3 поста, 2 прочитаны (не аналитики, отсеяны), у одного «Буфер занят» (OpenClipboard занят
   другой программой). По решению пользователя добавлен vd/linkedin_browser._open_clipboard: до 10 попыток
   через 0,1 с. 2 теста RED→GREEN, полный набор 330 OK. Пользователь разрешил коммит и push.
+  Коммит a361540 запушен; автор git задан локально для репозитория (user.name Dim), т.к. в среде агента его не было.
+
+- **2026-11-25, карта + аудит + конституция** — По выбору пользователя из project-starter (§12, §16, §19.3):
+  docs/constitution.md — 21 пункт из уже принятых решений (цель и отбор, надёжность, безопасность и данные,
+  процесс), ссылка в CLAUDE.md. architecture-map.json/.html обновлены до a361540 (модули сайтов/агрегаторов/
+  LinkedIn, 5 новых таблиц, стек, roadmap, +10 гочей, снят устаревший «повтора запроса нет»); tools/build_map.py —
+  подписи шагов потока. architecture-flow.html (Archify) не пересобран — Archify в среде нет.
+  Аудит безопасности ветки относительно main (встроенный security-review, отдельный агент, только чтение):
+  находок HIGH/MEDIUM нет — scraped URL/ID проходят строгие шаблоны, браузер ходит только на www.linkedin.com,
+  yaml.safe_load, HTML письма экранируется, TLS не ослаблен. Cloudflare Security Audit не ставился.
+  Файлы вне git (решение пользователя): graphify-out/, .codex/, AGENTS.md → .gitignore; project-starter.md → в git.

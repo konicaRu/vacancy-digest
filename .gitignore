@@ -25,3 +25,8 @@ desktop.ini
 
 # локальный индекс CodeGraph
 .codegraph/
+
+# локальный граф Graphify и его настройка для Codex (решение 25.11)
+graphify-out/
+.codex/
+AGENTS.md
