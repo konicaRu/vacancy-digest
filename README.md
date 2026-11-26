@@ -160,6 +160,9 @@ SQLite хранит тексты публикаций, связи одной в�
 | СДЭК | утром и в 17:00: открытый API поиска «аналитик» / «analyst», страницы по 10, описание из карточки (JobPosting); удалёнка — метка «Удалённо» в выдаче | `sources.sites`, `morning_only: false` |
 | Домклик | утром и в 17:00: весь каталог через открытый API, описания подходящих по названию; удалёнка — только `REMOTE` в поле формата, архивные исключаются | `sources.sites`, `morning_only: false` |
 | Huntflow (Банки.ру) | утром и в 17:00: страница компании на `*.huntflow.io` и карточки вакансий; формат работы только текстом (общий разбор) | `sources.sites`, `morning_only: false` |
+| Контур | утром и в 17:00: каталог направления «Аналитика» kontur.ru/career; удалёнка — JobPosting `TELECOMMUTE`, дата публикации из карточки | `sources.sites`, `morning_only: false` |
+| Яндекс | утром и в 17:00: открытый API yandex.ru/jobs (поиск «аналитик» / «analyst», курсорные страницы), полное описание и дата; удалёнка — `work_modes` «remote» | `sources.sites`, `morning_only: false` |
+| Selectel | утром и в 17:00: серверный каталог всех вакансий selectel.ru/careers; формат работы только текстом (общий разбор) | `sources.sites`, `morning_only: false` |
 | X5 | утром и в 17:00: открытый API rabota.x5.ru по всей группе (X5 Tech, Digital, Пятёрочка, Перекрёсток…), поиск «аналитик» / «analyst», полное описание; удалёнка — только `work_format=remote` | `sources.sites`, `morning_only: false` |
 | LinkedIn Posts | видимый Chrome/Playwright с отдельным профилем и ручным входом; четыре русских поисковых запроса и посты 42 выбранных рекрутеров, полный русский текст, отбор Python без LLM | `sources.linkedin_posts` |
 | LinkedIn Mail | письма-уведомления в почте (подписки на вакансии, посты знакомых) | `sources.linkedin_mail` (выключен) |

@@ -146,7 +146,7 @@ class HuntflowTests(unittest.TestCase):
 
 
 class RegistrationTests(unittest.TestCase):
-    NAMES = ('cdek', 'domclick', 'huntflow', 'x5')
+    NAMES = ('cdek', 'domclick', 'huntflow', 'x5', 'kontur', 'yandex', 'selectel')
 
     def test_collected_in_both_slots_and_enabled_in_config(self):
         import tempfile
@@ -175,7 +175,7 @@ class RegistrationTests(unittest.TestCase):
     def test_readable_names_in_digest(self):
         from vd import digest
         _, html, text = digest.build([], {f'site:{n}': 0 for n in self.NAMES}, {}, {'llm_off': True})
-        for label in ('СДЭК', 'Домклик', 'Huntflow', 'X5'):
+        for label in ('СДЭК', 'Домклик', 'Huntflow', 'X5', 'Контур', 'Яндекс', 'Selectel'):
             self.assertIn(label, html)
             self.assertIn(label, text)
 

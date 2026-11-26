@@ -262,6 +262,35 @@ sources:
         - "https://rabota.x5.ru/vacancy/api/v1/public/vacancies?search=аналитик&page=1&page_size=50"
         - "https://rabota.x5.ru/vacancy/api/v1/public/vacancies?search=analyst&page=1&page_size=50"
 
+    # Подключены 26.11 «в засаду»: ждём появления удалённых аналитиков, даже если сейчас их нет.
+    # Контур: каталог направления «Аналитика»; удалёнка — JobPosting jobLocationType=TELECOMMUTE.
+    - name: kontur
+      enabled: true
+      morning_only: false
+      lookback_days_first_run: 14
+      max_pages: 1
+      urls:
+        - "https://kontur.ru/career/vacancies?direction=analytics"
+
+    # Яндекс: открытый API публикаций (курсорные страницы); удалёнка — work_modes «remote».
+    - name: yandex
+      enabled: true
+      morning_only: false
+      lookback_days_first_run: 14
+      max_pages: 10
+      urls:
+        - "https://yandex.ru/jobs/api/publications/?text=аналитик&page_size=20"
+        - "https://yandex.ru/jobs/api/publications/?text=analyst&page_size=20"
+
+    # Selectel: серверный каталог всех вакансий; формат работы — только текстом (общий разбор).
+    - name: selectel
+      enabled: true
+      morning_only: false
+      lookback_days_first_run: 14
+      max_pages: 1
+      urls:
+        - "https://selectel.ru/careers/all/"
+
   linkedin_posts:
     enabled: true   # проверено в Chrome и dry-run на копии SQLite 19.11
     start_date: "2026-11-20"
