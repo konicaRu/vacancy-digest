@@ -94,16 +94,22 @@ def _permalink(page,card):
         page.bring_to_front()
 
 
-def _main(page,path='/search/results/content/'):
+def _main(page,path='/search/results/content/',allow_empty=False):
     parsed=urlsplit(page.url)
     if parsed.hostname!='www.linkedin.com' or parsed.path!=path:
         raise RuntimeError('LinkedIn требует ручной вход или показал защитную страницу')
     main=page.get_by_role('main')
     main.wait_for(state='visible',timeout=12000)
-    page.wait_for_function("""() => {
-        const m=document.querySelector('main');
-        return m && (m.querySelector('[data-testid="expandable-text-box"]') || /Поиск не дал результатов|No results found|No results/.test(m.innerText));
-    }""",timeout=15000)
+    try:
+        page.wait_for_function("""() => {
+            const m=document.querySelector('main');
+            return m && (m.querySelector('[data-testid="expandable-text-box"]') || /Поиск не дал результатов|No results found|No results/.test(m.innerText));
+        }""",timeout=15000)
+    except Exception as exc:
+        # A recruiter's own page (URL already checked above) without post cards: no or hidden posts.
+        if allow_empty and 'Timeout' in type(exc).__name__:
+            return None
+        raise
     return main
 
 
@@ -124,7 +130,9 @@ def scan(page,command):
         url='https://www.linkedin.com/search/results/content/?'+urlencode(
             {'keywords':tag,'datePosted':'"'+date_filter+'"','sortBy':'"date_posted"'})
     page.goto(url,wait_until='domcontentloaded',timeout=25000)
-    main=_main(page,urlsplit(url).path)
+    main=_main(page,urlsplit(url).path,allow_empty=profile)
+    if main is None:
+        return {'posts':[],'complete':True,'scanned':0,'seen':0,'errors':[],'undated':0,'empty':True}
     if not main.locator('[data-testid="expandable-text-box"]').count() and re.search(
             'Поиск не дал результатов|No results found|No results',main.inner_text()):
         return {'posts':[],'complete':True,'scanned':0,'errors':[]}

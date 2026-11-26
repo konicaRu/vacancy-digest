@@ -137,6 +137,33 @@ class ScanProfileTests(unittest.TestCase):
         self.assertEqual(opened, [1])
         self.assertEqual(result['undated'], 1)
 
+    def test_profile_without_posts_is_empty_not_an_error(self):
+        # Elina, Мария, Елена, Дарья (26.11): страница профиля открылась, но карточек постов нет —
+        # раньше 15 с ожидания заканчивались ошибкой в каждом выпуске.
+        page = mock.Mock()
+        page.url = PERSON + 'recent-activity/all/'
+        page.wait_for_function.side_effect = TimeoutError('Timeout 15000ms exceeded.')
+        result = browser.scan(page, {'action': 'scan_profile', 'profile': PERSON, 'max_posts': 5,
+                                     'max_scrolls': 0, 'days': 7, 'timeout_sec': 25})
+        self.assertEqual(result['posts'], [])
+        self.assertEqual(result['errors'], [])
+        self.assertTrue(result['complete'])
+        self.assertTrue(result['empty'])
+
+    def test_search_page_without_cards_is_still_an_error(self):
+        page = mock.Mock()
+        page.url = 'https://www.linkedin.com/search/results/content/?keywords=x'
+        page.wait_for_function.side_effect = TimeoutError('Timeout 15000ms exceeded.')
+        with self.assertRaises(TimeoutError):
+            browser.scan(page, {'hashtag': '#hiring', 'max_posts': 1, 'max_scrolls': 0})
+
+    def test_login_wall_on_profile_is_still_an_error(self):
+        page = mock.Mock()
+        page.url = 'https://www.linkedin.com/authwall?sessionRedirect=x'
+        with self.assertRaisesRegex(RuntimeError, 'ручной вход'):
+            browser.scan(page, {'action': 'scan_profile', 'profile': PERSON, 'max_posts': 5,
+                                'max_scrolls': 0, 'days': 7, 'timeout_sec': 25})
+
     def test_hashtag_scan_still_requires_search_page(self):
         _, main_element = page_with_cards([])
         page = mock.Mock()
