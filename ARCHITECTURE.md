@@ -43,7 +43,7 @@ flowchart LR
 | `vd/sources/jabka.py` | Парсинг выдачи jabka.work (ссылки `/jobs/<slug>-YYYYMMDD-<код>`) |
 | `vd/sources/career.py` | Общий обход карьерных сайтов: seen, даты первого чтения, фильтр названия перед открытием описания, лимиты страниц и ошибки |
 | `vd/sources/habr.py` | Карточки Хабр Карьеры, пагинация по SSR-метаданным, описание без меню |
-| `vd/sources/avito.py` | Полный раздел аналитики данных Авито, формат и описание конкретной вакансии, дата из JobPosting |
+| `vd/sources/avito.py` | Полный раздел аналитики данных Авито: карточки `/publications/<раздел>/<uuid>/` (с 25.11); описание — открытый API `careers.avito.ru/service-ats-public-api/aviwork/v1/publications/<uuid>` (разделы, формат, статус; даты нет). Уже виденные до смены адресов узнаются по прежнему номеру `vacancies[0].id`; ответ API кешируется на запуск |
 | `vd/sources/aviasales.py` | Активные карточки Aviasales и все разделы описания |
 | `vd/sources/vk.py` | Публичный API VK с проверкой count/next/offset, HTTPS-пагинация, описание и метатег datePosted |
 | `vd/sources/mts.py` | Публичный API каталога МТС: пагинация total/page/offset, ISO publishedAt, бренд и формат; полное HTML-описание |
@@ -59,6 +59,7 @@ flowchart LR
 | `vd/sources/geekjob.py` | JSON-поиск GeekJob `/json/find/vacancy` (`rm=1`, 100 на страницу, page/nextpage/pagecount); карточка — `#vacancy-description`, JobPosting (`identifier` сверяется с id, datePosted); удалёнка — флаг jobFormat.remote и «Удаленная работа» в карточке, архивные исключаются |
 | `vd/sources/cdek.py` | Открытый API rabota.cdek.ru/api/vacancies: q, offset/limit, total; удалёнка — тег `remote`; карточка — `main` + JobPosting (identifier сверяется с id) |
 | `vd/sources/domclick.py` | Открытый API career.domclick.ru/api/v1/vacancy/ (offset/limit, total не отдаётся — полная страница = запросить следующую); описание `/api/v1/vacancy/detail/<slug>/`; удалёнка — `REMOTE` в work_format, archived исключаются |
+| `vd/sources/x5.py` | Открытый API rabota.x5.ru/vacancy/api/v1/public/vacancies (items/page/page_size/total/pages, published_at); описание `…/vacancies/<uuid>` (текстовые поля content); работодатель — бизнес-юнит (X5 Tech, Пятёрочка…); удалёнка — `work_format=remote` |
 | `vd/sources/huntflow.py` | Страницы компаний `*.huntflow.io` (сейчас Банки.ру): ссылки `/vacancy/<slug>`, работодатель из заголовка страницы; карточка сверяется по h1; формат только текстом; пустая страница — ошибка |
 | `vd/sources/linkedin_mail.py` | Письма LinkedIn по IMAP: вакансии (`/jobs/view/<id>`) и посты знакомых |
 | `vd/sources/linkedin_posts.py` | Независимые хэштеги и посты выбранных рекрутеров (`profile_page`, список из `recruiters_file`, отдельный бюджет), нормализация полных постов, несколько вакансий с общими/локальными условиями, метрики тегов и рекрутеров |
@@ -346,3 +347,4 @@ salary, contact, reason`. Блоки `<think>` вырезаются (Qwen3). Е�
 | 2026-11-25 | — | Без изменений кода: `docs/constitution.md` (незыблемые правила, ссылка в CLAUDE.md), карта `architecture-map.json/.html` обновлена до a361540, аудит безопасности ветки без находок; Graphify/Codex-файлы в `.gitignore` |
 | 2026-11-25 | — | СДЭК, Домклик и Huntflow (Банки.ру): три адаптера через `career.collect`, утро и вечер; `classify.remote_of`: гибрид с обязательными офисными днями — не удалёнка (кроме выбора «удалёнка или гибрид»). 344 теста OK |
 | 2026-11-25 | — | Дедуп между источниками усилен: `_similar` сравнивает набор слов должности без названия компании и допускает компанию только у одной публикации, если она названа в должности другой; `_same_site_ids` — разные ID блокируют склейку только внутри одного сайта. На истории с 01.11 — 6 настоящих пропущенных дублей, ложных склеек нет. 349 тестов OK |
+| 2026-11-26 | — | Авито: переход на `/publications/…` и API публикаций careers.avito.ru, распознавание уже виденных по прежнему номеру; X5: новый адаптер `x5.py` (открытый API, `work_format`). Positive Technologies не подключён (9 вакансий, 0 удалённых). 356 тестов OK |

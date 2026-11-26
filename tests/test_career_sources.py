@@ -62,11 +62,15 @@ class CareerParsingTests(unittest.TestCase):
             habr.parse_page(habr_page().replace('vacancy-card__title-link', 'changed'),
                             'https://career.habr.com/vacancies')
 
-    def test_avito_uses_url_id_and_full_analytics_category(self):
-        items, next_url = avito.parse_page(sample('avito', 'list'), 'https://career.avito.com/vacancies/analitika-dannykh/')
-        self.assertEqual(len(items), 15)
-        self.assertEqual(items[0].external_id, '20953')
-        self.assertEqual(items[0].hint_title, 'Аналитик данных в команду маркетинга')
+    def test_avito_uses_publication_id_and_full_analytics_category(self):
+        # 25.11 Авито перешёл с /vacancies/<раздел>/<номер>/ на /publications/<раздел>/<uuid>/
+        html = (Path(__file__).parent / 'fixtures/avito/list_2026-11-26.html').read_text(encoding='utf-8')
+        items, next_url = avito.parse_page(html, 'https://career.avito.com/vacancies/analitika-dannykh/')
+        self.assertEqual(len(items), 16)
+        self.assertEqual(items[0].external_id, 'fd62d28f-c515-493a-8fc1-9446c8a5b28e')
+        self.assertEqual(items[0].url, 'https://career.avito.com/publications/analitika-dannykh/'
+                                       'fd62d28f-c515-493a-8fc1-9446c8a5b28e/')
+        self.assertEqual(items[0].hint_title, 'Аналитик данных в команду ценообразования Авито Доставки')
         self.assertIn('@Авито', items[0].text)
         self.assertIsNone(next_url)
 
@@ -93,17 +97,51 @@ class CareerParsingTests(unittest.TestCase):
         self.assertIn('Пхукете', result.text)
         self.assertNotIn('Откликнуться', result.text)
 
-    def test_avito_detail_has_own_location_not_similar_jobs(self):
-        item = Item('site:avito', 'site', '20953', 'https://career.avito.com/vacancies/analitika-dannykh/20953/',
-                    'Аналитик данных | @Авито', hint_title='Аналитик данных')
-        result = avito.parse_detail(sample('avito', 'detail'), item)
-        self.assertIn('гибрид', result.text.lower())
-        self.assertIn('Seller Marketing', result.text)
-        self.assertIn('компенсация питания', result.text)
-        self.assertIn('возможность работать удалённо', result.text)
-        self.assertNotIn('Похожие вакансии', result.text)
-        self.assertNotIn('Спецтехники', result.text)
-        self.assertEqual(result.published_at.date().isoformat(), '2026-11-11')
+    AVITO_PUB = 'fd62d28f-c515-493a-8fc1-9446c8a5b28e'
+
+    def avito_item(self):
+        return Item('site:avito', 'site', self.AVITO_PUB,
+                    f'https://career.avito.com/publications/analitika-dannykh/{self.AVITO_PUB}/',
+                    'Аналитик данных в команду ценообразования Авито Доставки | @Авито',
+                    hint_title='Аналитик данных в команду ценообразования Авито Доставки')
+
+    def avito_publication(self):
+        return (Path(__file__).parent / 'fixtures/avito/publication_fd62d28f.json').read_text(encoding='utf-8')
+
+    def test_avito_detail_reads_all_sections_from_publication_api(self):
+        result = avito.parse_detail(self.avito_publication(), self.avito_item())
+        self.assertIn('комиссии за сделки с Авито Доставкой', result.text)   # о команде
+        self.assertIn('Формат работы: Гибрид', result.text)
+        self.assertIn('Москва', result.text)
+        self.assertIsNone(result.published_at)  # дата публикации в API не отдаётся — не выдумываем
+
+    def test_avito_detail_of_other_or_closed_publication(self):
+        data = json.loads(self.avito_publication())
+        other = dict(data, publicationId='00000000-0000-0000-0000-000000000000')
+        with self.assertRaises(SourceError):
+            avito.parse_detail(json.dumps(other), self.avito_item())
+        closed = dict(data, status='archived')
+        self.assertFalse(avito.parse_detail(json.dumps(closed), self.avito_item()).remote_format)
+
+    def test_avito_vacancy_seen_under_old_number_is_not_sent_again(self):
+        html = (Path(__file__).parent / 'fixtures/avito/list_2026-11-26.html').read_text(encoding='utf-8')
+        calls = []
+
+        def fetch(url):
+            calls.append(url)
+            if url.startswith('https://career.avito.com/vacancies/'):
+                return html
+            pub = url.rstrip('/').rsplit('/', 1)[1]
+            data = json.loads(self.avito_publication())
+            data['publicationId'] = pub
+            data['vacancies'] = [{'id': 21029 if pub == self.AVITO_PUB else 1}]
+            return json.dumps(data)
+        res = avito.collect(['https://career.avito.com/vacancies/analitika-dannykh/'], fetch,
+                            lambda source, ext: ext == '21029', False, profile=PROFILE)
+        self.assertIsNone(res.error, res.error)
+        self.assertNotIn(self.AVITO_PUB, [i.external_id for i in res.items])
+        api = [u for u in calls if 'service-ats-public-api' in u]
+        self.assertEqual(len(api), len(set(api)))  # каждая публикация читается из API один раз
 
     def test_habr_detail_excludes_menu_and_collects_hh_links(self):
         item = Item('site:habr', 'site', '1', 'https://career.habr.com/vacancies/1',

@@ -252,6 +252,16 @@ sources:
       urls:
         - "https://banki.huntflow.io/"
 
+    # X5 (вся группа: X5 Tech, Digital, Пятёрочка, Перекрёсток…): открытый API; удалёнка — work_format=remote.
+    - name: x5
+      enabled: true
+      morning_only: false
+      lookback_days_first_run: 14
+      max_pages: 10
+      urls:
+        - "https://rabota.x5.ru/vacancy/api/v1/public/vacancies?search=аналитик&page=1&page_size=50"
+        - "https://rabota.x5.ru/vacancy/api/v1/public/vacancies?search=analyst&page=1&page_size=50"
+
   linkedin_posts:
     enabled: true   # проверено в Chrome и dry-run на копии SQLite 19.11
     start_date: "2026-11-20"
