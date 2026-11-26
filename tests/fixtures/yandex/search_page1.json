@@ -1,0 +1,483 @@
+{
+ "count": 38,
+ "next": "/jobs/api/jobs/publications/?page_size=10&text=%D0%B0%D0%BD%D0%B0%D0%BB%D0%B8%D1%82%D0%B8%D0%BA&cursor=cD0wJnQ9MjAyNi0xMC0yNyZpPTQ5MzE4JnI9MCZrPTAuNjgyMjI5NA",
+ "results": [
+  {
+   "id": 49312,
+   "publication_slug_url": "analitik_razrabotchik-v-komandu-analitiki-operatsiy-robota-dostavki-49312",
+   "status": "published",
+   "vacancy": {
+    "id": 1021542,
+    "cities": [
+     {
+      "id": 1,
+      "slug": "moscow",
+      "name": "Москва"
+     }
+    ],
+    "skills": [],
+    "work_modes": [
+     {
+      "id": 2,
+      "slug": "office",
+      "name": "Офис"
+     }
+    ]
+   },
+   "public_service": {
+    "id": 40,
+    "icon": "https://jobs.s3.yandex.net/public_services/sdg.svg_c7921f5c9d6e4a9297ca1b4486d6e92a",
+    "slug": "selfdriving",
+    "is_active": true,
+    "name": "Автономный транспорт",
+    "description": "Let us do the driving",
+    "group": {
+     "id": 34,
+     "name": "Yandex B2B Tech",
+     "slug": "b2btech"
+    }
+   },
+   "is_chief": false,
+   "fast_track": null,
+   "redirect_url": null,
+   "version": 2,
+   "lang": "ru",
+   "title": "Аналитик‑разработчик в команду аналитики операций робота доставки",
+   "short_summary": "Направление работы с роботами переходит от R&amp;D‑стартапа к масштабному бизнесу. Нам нужен специалист, который поможет расти не просто количественно, а эффективно. Вы будете закладывать логику P&amp;L и unit‑экономики в код, выдвигать идеи оптимизации экономики и визуализировать финансовые модели.",
+   "modified": "2026-11-24T14:01:41.857018Z"
+  },
+  {
+   "id": 49537,
+   "publication_slug_url": "finansoviy-analitik-v-plyus-fanteh-49537",
+   "status": "published",
+   "vacancy": {
+    "id": 1037573,
+    "cities": [
+     {
+      "id": 1,
+      "slug": "moscow",
+      "name": "Москва"
+     }
+    ],
+    "skills": [],
+    "work_modes": [
+     {
+      "id": 2,
+      "slug": "office",
+      "name": "Офис"
+     },
+     {
+      "id": 3,
+      "slug": "mixed",
+      "name": "Гибридный"
+     }
+    ]
+   },
+   "public_service": {
+    "id": 349,
+    "icon": "https://jobs.s3.yandex.net/public_services/logo-plus.svg_70a6f80c3b5447828d449f0c8d55c432",
+    "slug": "plusfuntech",
+    "is_active": true,
+    "name": "Плюс Фантех",
+    "description": "Плюс Фантех объединяет Музыку, Кинопоиск, Яндекс Афишу, Букмейт и Плюс",
+    "group": null
+   },
+   "is_chief": false,
+   "fast_track": null,
+   "redirect_url": null,
+   "version": 1,
+   "lang": "ru",
+   "title": "Финансовый аналитик в Плюс Фантех",
+   "short_summary": "Плюс Фантех — это Кинопоиск, Яндекс Афиша, Музыка, Книги и подписка Яндекс Плюс. Мы ищем финансового аналитика в команду учёта видеоконтента. Ждём, что вы работали в сфере финансового контроллинга или финансовой аналитики, понимаете принципы РСБУ и МСФО/GAAP, готовы структурировать большие объёмы информации.",
+   "modified": "2026-11-03T14:44:56.500107Z"
+  },
+  {
+   "id": 1000017,
+   "publication_slug_url": "rukovoditel-gruppi-analitiki-seyvov-1000017",
+   "status": "published",
+   "vacancy": {
+    "id": 1062750,
+    "cities": [
+     {
+      "id": 1,
+      "slug": "moscow",
+      "name": "Москва"
+     }
+    ],
+    "skills": [],
+    "work_modes": [
+     {
+      "id": 2,
+      "slug": "office",
+      "name": "Офис"
+     },
+     {
+      "id": 3,
+      "slug": "mixed",
+      "name": "Гибридный"
+     }
+    ]
+   },
+   "public_service": {
+    "id": 100,
+    "icon": "https://jobs.s3.yandex.net/public_services/fintech.svg_865fedc29a6d4afe9c4fbb491009e7d7",
+    "slug": "finances",
+    "is_active": true,
+    "name": "Яндекс Финтех",
+    "description": "Финтех",
+    "group": null
+   },
+   "is_chief": false,
+   "fast_track": null,
+   "redirect_url": null,
+   "version": 1,
+   "lang": "ru",
+   "title": "Руководитель группы аналитики Сейвов",
+   "short_summary": "Сейвы — это банковские накопительные продукты от Яндекса, такие как вклады и накопительные счета. Мы ищем опытных аналитиков, которые помогут обеспечить растущий Яндекс Банк финансовыми средствами вкладчиков, кратно вырастить портфель и создать накопительные продукты под инвестиционные цели.",
+   "modified": "2026-11-26T08:42:49.106450Z"
+  },
+  {
+   "id": 49063,
+   "publication_slug_url": "starshiy-produktoviy-analitik-v-praktikum-49063",
+   "status": "published",
+   "vacancy": {
+    "id": 1042777,
+    "cities": [
+     {
+      "id": 1,
+      "slug": "moscow",
+      "name": "Москва"
+     },
+     {
+      "id": 2,
+      "slug": "saint-petersburg",
+      "name": "Санкт-Петербург"
+     }
+    ],
+    "skills": [
+     {
+      "id": 34,
+      "name": "Python"
+     },
+     {
+      "id": 378,
+      "name": "SQL"
+     }
+    ],
+    "work_modes": [
+     {
+      "id": 2,
+      "slug": "office",
+      "name": "Офис"
+     },
+     {
+      "id": 3,
+      "slug": "mixed",
+      "name": "Гибридный"
+     }
+    ]
+   },
+   "public_service": {
+    "id": 74,
+    "icon": "https://jobs.s3.yandex.net/public_services/practicum.svg_ef2a059f5afb4e6ca320d2726c9ef74d",
+    "slug": "practicum",
+    "is_active": true,
+    "name": "Практикум",
+    "description": "Сервис онлайн-образования от Яндекса",
+    "group": {
+     "id": 8,
+     "name": "Образование",
+     "slug": "education"
+    }
+   },
+   "is_chief": false,
+   "fast_track": null,
+   "redirect_url": null,
+   "version": 2,
+   "lang": "ru",
+   "title": "Старший продуктовый аналитик в Практикум",
+   "short_summary": "Яндекс Практикум помогает людям развивать карьеру: осваивать новые профессии, изучать английский язык и пользоваться ИИ-инструментами. Ищем старшего продуктового аналитика, который будет улучшать пользовательский путь — от знакомства с продуктом до покупки курса.",
+   "modified": "2026-11-16T13:00:03.120917Z"
+  },
+  {
+   "id": 49401,
+   "publication_slug_url": "analitik-kachestva-ai-v-finteh-49401",
+   "status": "published",
+   "vacancy": {
+    "id": 1049185,
+    "cities": [
+     {
+      "id": 1,
+      "slug": "moscow",
+      "name": "Москва"
+     }
+    ],
+    "skills": [
+     {
+      "id": 34,
+      "name": "Python"
+     },
+     {
+      "id": 378,
+      "name": "SQL"
+     }
+    ],
+    "work_modes": [
+     {
+      "id": 2,
+      "slug": "office",
+      "name": "Офис"
+     },
+     {
+      "id": 3,
+      "slug": "mixed",
+      "name": "Гибридный"
+     }
+    ]
+   },
+   "public_service": {
+    "id": 100,
+    "icon": "https://jobs.s3.yandex.net/public_services/fintech.svg_865fedc29a6d4afe9c4fbb491009e7d7",
+    "slug": "finances",
+    "is_active": true,
+    "name": "Яндекс Финтех",
+    "description": "Финтех",
+    "group": null
+   },
+   "is_chief": false,
+   "fast_track": null,
+   "redirect_url": null,
+   "version": 5,
+   "lang": "ru",
+   "title": "Аналитик качества AI в Финтех",
+   "short_summary": "Мы ищем аналитика, который будет вместе с нами повышать качество AI-сервисов и LLM-агентов в Яндекс Финтехе: определять критерии оценки, исследовать ошибки и проверять, становятся ли решения полезнее для пользователей. Приходите, если используете Python для анализа данных и пишете запросы на SQL.",
+   "modified": "2026-11-23T07:56:14.908991Z"
+  },
+  {
+   "id": 1000020,
+   "publication_slug_url": "starshiy-finansoviy-analitik-1000020",
+   "status": "published",
+   "vacancy": {
+    "id": 979419,
+    "cities": [],
+    "skills": [],
+    "work_modes": []
+   },
+   "public_service": {
+    "id": 390,
+    "icon": "https://jobs.s3.yandex.net/public_services/shapeyandex_app_serviceкорпоративныи_центр_hq.svg_85e755fa68b34ef49bb67ac5b52fdfd5",
+    "slug": "hq",
+    "is_active": true,
+    "name": "Корпоративный центр (HQ)",
+    "description": "Команда HQ Яндекса —  это эксперты в области финансов и ИТ, юриспруденции и PR, GR и стратегии, образования и ESG, недвижимости и управления персоналом",
+    "group": {
+     "id": 9,
+     "name": "Общие сервисы Яндекса",
+     "slug": "$$COMMON"
+    }
+   },
+   "is_chief": false,
+   "fast_track": null,
+   "redirect_url": null,
+   "version": 1,
+   "lang": "ru",
+   "title": "Старший финансовый аналитик",
+   "short_summary": "Команда финансов Corp IT ищет опытного финансового аналитика. Вам предстоит перевыставлять расходы на бизнес‑юниты, развивать финансовые модели, методологию и автоматизацию. Ждём, что вы самостоятельно вели финансовые процессы или проекты от постановки задачи до устойчивого результата.",
+   "modified": "2026-11-26T13:28:53.953354Z"
+  },
+  {
+   "id": 49705,
+   "publication_slug_url": "dataanalitik-49705",
+   "status": "published",
+   "vacancy": {
+    "id": 1033865,
+    "cities": [
+     {
+      "id": 1,
+      "slug": "moscow",
+      "name": "Москва"
+     }
+    ],
+    "skills": [],
+    "work_modes": [
+     {
+      "id": 2,
+      "slug": "office",
+      "name": "Офис"
+     },
+     {
+      "id": 3,
+      "slug": "mixed",
+      "name": "Гибридный"
+     }
+    ]
+   },
+   "public_service": {
+    "id": 98,
+    "icon": "https://jobs.s3.yandex.net/public_services/ya.svg_bc201ebdf8654e4082e1e2b446684d0c",
+    "slug": "yandex",
+    "is_active": true,
+    "name": "Общие сервисы Яндекса",
+    "description": "Здесь размещаются все вакансии Яндекса без категоризации",
+    "group": null
+   },
+   "is_chief": false,
+   "fast_track": null,
+   "redirect_url": null,
+   "version": 6,
+   "lang": "ru",
+   "title": "Дата-аналитик",
+   "short_summary": "AI-продукту нужны точные критерии качества: насколько полезен ответ, справляется ли агент с задачей, что меняется для пользователя. Ищем аналитиков, которые превращают такие вопросы в исследования и выводы. Ждём, что вы имеете опыт в ML, понимаете устройство моделей и метрики их качества.",
+   "modified": "2026-11-24T10:32:03.067249Z"
+  },
+  {
+   "id": 49741,
+   "publication_slug_url": "produktoviy-analitik-49741",
+   "status": "published",
+   "vacancy": {
+    "id": 1033864,
+    "cities": [],
+    "skills": [],
+    "work_modes": [
+     {
+      "id": 2,
+      "slug": "office",
+      "name": "Офис"
+     },
+     {
+      "id": 3,
+      "slug": "mixed",
+      "name": "Гибридный"
+     }
+    ]
+   },
+   "public_service": {
+    "id": 98,
+    "icon": "https://jobs.s3.yandex.net/public_services/ya.svg_bc201ebdf8654e4082e1e2b446684d0c",
+    "slug": "yandex",
+    "is_active": true,
+    "name": "Общие сервисы Яндекса",
+    "description": "Здесь размещаются все вакансии Яндекса без категоризации",
+    "group": null
+   },
+   "is_chief": false,
+   "fast_track": null,
+   "redirect_url": null,
+   "version": 0,
+   "lang": "ru",
+   "title": "Продуктовый аналитик",
+   "short_summary": "Ищем опытного продуктового аналитика, который поможет превращать наблюдения за действиями пользователей в сервисах Яндекса в решения о развитии продукта. Вам предстоит анализировать ключевые показатели Поиска и нейропродуктов, чат и подписки в Алисе AI и умных устройствах, а также еком-сценарии.",
+   "modified": "2026-11-23T10:11:29.732800Z"
+  },
+  {
+   "id": 49699,
+   "publication_slug_url": "finansoviy-analitik-v-komandu-superappa-yandeks-go-49699",
+   "status": "published",
+   "vacancy": {
+    "id": 1042557,
+    "cities": [
+     {
+      "id": 1,
+      "slug": "moscow",
+      "name": "Москва"
+     }
+    ],
+    "skills": [],
+    "work_modes": [
+     {
+      "id": 2,
+      "slug": "office",
+      "name": "Офис"
+     }
+    ]
+   },
+   "public_service": {
+    "id": 82,
+    "icon": "https://jobs.s3.yandex.net/public_services/go.svg_1ad35609ca614b238868a0b611d08154",
+    "slug": "yandexgo",
+    "is_active": true,
+    "name": "Яндекс Go",
+    "description": "Свободные водители поблизости",
+    "group": {
+     "id": 4,
+     "name": "Городские сервисы",
+     "slug": "ecomm+ridetech"
+    }
+   },
+   "is_chief": false,
+   "fast_track": null,
+   "redirect_url": null,
+   "version": 1,
+   "lang": "ru",
+   "title": "Финансовый аналитик в команду супераппа Яндекс Go",
+   "short_summary": "Яндекс Go — это мультисервисная платформа для транспорта и доставки. Она адаптирована под разные страны, учитывает разные валюты, регуляторные требования и модели партнёрства. Ищем финансового аналитика в команду. Приходите, если вам интересны задачи на стыке данных, финансов и продуктовой логики.",
+   "modified": "2026-11-23T08:52:09.033009Z"
+  },
+  {
+   "id": 49318,
+   "publication_slug_url": "analitik-v-napravlenie-defoltnosti-poiska-49318",
+   "status": "published",
+   "vacancy": {
+    "id": 1047932,
+    "cities": [
+     {
+      "id": 1,
+      "slug": "moscow",
+      "name": "Москва"
+     },
+     {
+      "id": 2,
+      "slug": "saint-petersburg",
+      "name": "Санкт-Петербург"
+     }
+    ],
+    "skills": [
+     {
+      "id": 34,
+      "name": "Python"
+     },
+     {
+      "id": 378,
+      "name": "SQL"
+     }
+    ],
+    "work_modes": [
+     {
+      "id": 2,
+      "slug": "office",
+      "name": "Офис"
+     },
+     {
+      "id": 3,
+      "slug": "mixed",
+      "name": "Гибридный"
+     }
+    ]
+   },
+   "public_service": {
+    "id": 34,
+    "icon": "https://jobs.s3.yandex.net/public_services/поиск_с_алисои_ai_yandex_app.svg_c514d1541b39438e9b7a22c54100fbdf",
+    "slug": "search",
+    "is_active": true,
+    "name": "Поиск с Алисой AI",
+    "description": "Сервис, в основе которого лежат технологии на стыке поиска и генеративного ИИ",
+    "group": {
+     "id": 2,
+     "name": "Поисковые сервисы и ИИ",
+     "slug": "search"
+    }
+   },
+   "is_chief": false,
+   "fast_track": null,
+   "redirect_url": null,
+   "version": 2,
+   "lang": "ru",
+   "title": "Аналитик в направление дефолтности поиска",
+   "short_summary": "Наша команда помогает развивать использование Поиска Яндекса по умолчанию. Ищем сильного аналитика, который будет улучшать систему измерения дефолтности, находить возможности для роста и помогать продуктовым и маркетинговым командам принимать решения.",
+   "modified": "2026-11-20T13:46:31.338368Z"
+  }
+ ],
+ "spellcheck": {
+  "is_corrected": false
+ }
+}
