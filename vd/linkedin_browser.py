@@ -139,11 +139,14 @@ def scan(page,command):
     limit=max(1,min(int(command.get('max_posts',8)),20))
     max_scrolls=max(0,min(int(command.get('max_scrolls',1)),3))
     seen=set(command.get('seen_ids',[]));visited=set();posts=[];errors=[];scanned=0;known=0
-    reached_old=False;undated=0
+    reached_old=False;undated=0;exhausted=False;shown=None
     # The card limit applies to new posts only: already known cards still cost a permalink copy,
     # but must not hide fresh posts further down the results. Scrolls and the deadline bound the rest.
     for scroll in range(max_scrolls+1):
         cards=main.locator('[role="listitem"]').filter(has=page.locator('[data-testid="expandable-text-box"]'))
+        if shown is not None and cards.count()<=shown:
+            exhausted=True;break  # the scroll added no cards: every result has been read
+        shown=cards.count()
         for index in range(cards.count()):
             card=cards.nth(index)
             token=card.get_attribute('componentkey') or str(index)
@@ -217,6 +220,6 @@ def scan(page,command):
                 'undated':undated}
     if len(posts)>=limit:errors.append(f'Достигнут лимит {limit} карточек; выдача просмотрена частично')
     if time.monotonic()>deadline:errors.append('Исчерпан бюджет времени тега')
-    if len(posts)<limit and time.monotonic()<=deadline:
+    if len(posts)<limit and time.monotonic()<=deadline and not exhausted:
         errors.append('Достигнут лимит прокруток; полнота выдачи не подтверждена')
     return {'posts':posts,'complete':not errors,'scanned':scanned,'seen':known,'errors':errors}

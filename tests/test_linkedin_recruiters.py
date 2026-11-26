@@ -173,6 +173,37 @@ class ScanProfileTests(unittest.TestCase):
         self.assertEqual(main_check.call_args[0][1], '/search/results/content/')
 
 
+class SearchExhaustedTests(unittest.TestCase):
+    """26.11: у русских запросов 1–3 поста — выдача кончилась, это не «лимит прокруток»."""
+
+    def scan(self, visible, added_per_scroll):
+        card_list, main_element = page_with_cards(['1 ч. •'] * (visible + 2 * added_per_scroll))
+        state = {'n': visible}
+        cards = main_element.locator('[role="listitem"]').filter()
+        cards.count.side_effect = lambda: state['n']
+        page = mock.Mock()
+        page.wait_for_timeout.side_effect = lambda _ms: state.update(n=state['n'] + added_per_scroll)
+        keys = iter(range(7100000000000000000, 7100000000000000100))
+
+        def permalink(_page, _card):
+            key = str(next(keys))
+            return key, f'https://www.linkedin.com/feed/update/urn:li:activity:{key}/'
+        with mock.patch.object(browser, '_main', return_value=main_element), \
+             mock.patch.object(browser, '_permalink', side_effect=permalink):
+            return browser.scan(page, {'hashtag': '#vacancy аналитик', 'max_posts': 20, 'max_scrolls': 2,
+                                       'days': 7, 'timeout_sec': 75})
+
+    def test_no_new_cards_after_scroll_means_results_are_complete(self):
+        result = self.scan(3, 0)
+        self.assertEqual(len(result['posts']), 3)
+        self.assertEqual(result['errors'], [])
+        self.assertTrue(result['complete'])
+
+    def test_scroll_limit_with_growing_results_is_still_reported(self):
+        result = self.scan(3, 3)  # каждая прокрутка добавляет карточки, а прокрутки кончились
+        self.assertTrue(any('лимит прокруток' in e for e in result['errors']), result['errors'])
+
+
 class CollectRecruitersTests(unittest.TestCase):
     cfg = {'hashtags': ['#hiring'], 'recruiters': [{'name': 'Recruiter Example', 'url': PERSON},
                                                    {'name': 'Jobs Example', 'url': COMPANY}]}
