@@ -65,6 +65,14 @@ FOREIGN_TERRITORY = re.compile(
     r'\b(?:eu|eea|europe|армени\w*|armenia|казахстан\w*|kazakhstan|грузи\w*|georgia|'
     r'беларус\w*|belarus|серби\w*|serbia|кипр\w*|cyprus|ес|евросоюз\w*|европ\w*)\b', re.I)
 OFFICE = re.compile(r"\bофис|гибрид|hybrid|onsite|on-site", re.I)
+# гибрид с обязательными днями в офисе — не удалёнка, даже если рядом «1 день удалённо» (решение 25.11)
+_DAYS = r'(?:\d|один|одного|два|двух|три|трёх|трех|четыре|пять)'
+HYBRID_DAYS = re.compile(
+    rf'{_DAYS}\s*(?:офисн\w*\s+дн\w*|(?:дн\w*|раз\w*)\s+(?:в\s+неделю\s+)?(?:в|из)\s+офис\w*)'
+    rf'|офис\w*\s*[:—-]?\s*{_DAYS}\s*(?:дн\w*|раз\w*)\s+в\s+неделю', re.I)
+# …но выбор «удалёнка или гибрид» и необязательный офис («по желанию») остаются удалёнкой
+REMOTE_CHOICE = re.compile(r'полн\w*\s+удал\w*|удал\w*\s+или\s+(?:гибрид|офис)|(?:гибрид|офис)\w*\s+или\s+удал\w*'
+                           r'|на\s+выбор|по\s+желанию|при\s+желании', re.I)
 # релокация сильнее слова «удалённо» («релокация в Германию, удалённо на старте»), но «без релокации» — не она
 RELOC = re.compile(r"релокац|relocat", re.I)
 NO_RELOC = re.compile(r"без\s+релокац|релокац\w*\s+не\s+(?:требу|нужн)|не\s+(?:требу\w*|нужн\w*)\s+релокац|"
@@ -140,6 +148,8 @@ def remote_of(text: str, remote_format: Optional[bool] = None) -> str:
         return restriction
     if remote_format is not None:
         return "yes" if remote_format else "no"
+    if HYBRID_DAYS.search(text) and not REMOTE_CHOICE.search(text):
+        return "no"
     if REMOTE.search(text):
         return "yes"
     if OFFICE.search(text):
@@ -273,10 +283,26 @@ def dedup_key(v: Verdict) -> str:
     return f"{norm(v.company)}|{norm(v.title)}|{identity}"
 
 
+def _title_words(title: str, company: str) -> set[str]:
+    return set(re.sub(rf'\b{re.escape(company)}\b', ' ', title).split()) if company else set(title.split())
+
+
 def _similar(t1: str, c1: str, t2: str, c2: str) -> bool:
-    if not t1 or not t2:
+    """Одна вакансия: одна известная компания и одинаковые слова должности без названия компании
+    («Data Analyst / Product Analyst в Grand Mobile» = «Data / Product Analyst Grand Mobile»).
+    Если компания известна только у одной публикации, она должна быть названа в должности другой."""
+    if not t1 or not t2 or (c1 and c2 and c1 != c2):
         return False
-    return bool(c1 and c2 and c1 == c2 and t1 == t2)
+    company = c1 or c2
+    if not company or (not c1 and company not in t1) or (not c2 and company not in t2):
+        return False
+    words = _title_words(t1, company)
+    return bool(words) and words == _title_words(t2, company)
+
+
+def _same_site_ids(left: set[str], right: set[str]) -> bool:
+    """Номера вакансий сравнимы только внутри одного сайта (identity = «хост:путь»)."""
+    return bool({i.split(':', 1)[0] for i in left} & {i.split(':', 1)[0] for i in right})
 
 
 def _same_vacancy(v: Verdict, title: str, company: str, url: Optional[str], source: Optional[str], other=None, archived=None) -> bool:
@@ -288,7 +314,8 @@ def _same_vacancy(v: Verdict, title: str, company: str, url: Optional[str], sour
         right_ids = {archived['identity']}
     if archived and archived.get('ambiguous'):
         return False
-    if len(left_ids) > 1 or len(right_ids) > 1 or (left_ids and right_ids and left_ids != right_ids):
+    if len(left_ids) > 1 or len(right_ids) > 1 or (
+            left_ids and right_ids and left_ids != right_ids and _same_site_ids(left_ids, right_ids)):
         return False
     if left and right and left == right:
         if v.item.source == 'linkedin:posts' and source == 'linkedin:posts':

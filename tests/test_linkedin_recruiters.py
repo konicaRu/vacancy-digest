@@ -137,6 +137,33 @@ class ScanProfileTests(unittest.TestCase):
         self.assertEqual(opened, [1])
         self.assertEqual(result['undated'], 1)
 
+    def test_profile_without_posts_is_empty_not_an_error(self):
+        # Elina, Мария, Елена, Дарья (26.11): страница профиля открылась, но карточек постов нет —
+        # раньше 15 с ожидания заканчивались ошибкой в каждом выпуске.
+        page = mock.Mock()
+        page.url = PERSON + 'recent-activity/all/'
+        page.wait_for_function.side_effect = TimeoutError('Timeout 15000ms exceeded.')
+        result = browser.scan(page, {'action': 'scan_profile', 'profile': PERSON, 'max_posts': 5,
+                                     'max_scrolls': 0, 'days': 7, 'timeout_sec': 25})
+        self.assertEqual(result['posts'], [])
+        self.assertEqual(result['errors'], [])
+        self.assertTrue(result['complete'])
+        self.assertTrue(result['empty'])
+
+    def test_search_page_without_cards_is_still_an_error(self):
+        page = mock.Mock()
+        page.url = 'https://www.linkedin.com/search/results/content/?keywords=x'
+        page.wait_for_function.side_effect = TimeoutError('Timeout 15000ms exceeded.')
+        with self.assertRaises(TimeoutError):
+            browser.scan(page, {'hashtag': '#hiring', 'max_posts': 1, 'max_scrolls': 0})
+
+    def test_login_wall_on_profile_is_still_an_error(self):
+        page = mock.Mock()
+        page.url = 'https://www.linkedin.com/authwall?sessionRedirect=x'
+        with self.assertRaisesRegex(RuntimeError, 'ручной вход'):
+            browser.scan(page, {'action': 'scan_profile', 'profile': PERSON, 'max_posts': 5,
+                                'max_scrolls': 0, 'days': 7, 'timeout_sec': 25})
+
     def test_hashtag_scan_still_requires_search_page(self):
         _, main_element = page_with_cards([])
         page = mock.Mock()
@@ -144,6 +171,37 @@ class ScanProfileTests(unittest.TestCase):
             browser.scan(page, {'hashtag': '#hiring', 'max_posts': 1, 'max_scrolls': 0})
         self.assertIn('/search/results/content/', page.goto.call_args[0][0])
         self.assertEqual(main_check.call_args[0][1], '/search/results/content/')
+
+
+class SearchExhaustedTests(unittest.TestCase):
+    """26.11: у русских запросов 1–3 поста — выдача кончилась, это не «лимит прокруток»."""
+
+    def scan(self, visible, added_per_scroll):
+        card_list, main_element = page_with_cards(['1 ч. •'] * (visible + 2 * added_per_scroll))
+        state = {'n': visible}
+        cards = main_element.locator('[role="listitem"]').filter()
+        cards.count.side_effect = lambda: state['n']
+        page = mock.Mock()
+        page.wait_for_timeout.side_effect = lambda _ms: state.update(n=state['n'] + added_per_scroll)
+        keys = iter(range(7100000000000000000, 7100000000000000100))
+
+        def permalink(_page, _card):
+            key = str(next(keys))
+            return key, f'https://www.linkedin.com/feed/update/urn:li:activity:{key}/'
+        with mock.patch.object(browser, '_main', return_value=main_element), \
+             mock.patch.object(browser, '_permalink', side_effect=permalink):
+            return browser.scan(page, {'hashtag': '#vacancy аналитик', 'max_posts': 20, 'max_scrolls': 2,
+                                       'days': 7, 'timeout_sec': 75})
+
+    def test_no_new_cards_after_scroll_means_results_are_complete(self):
+        result = self.scan(3, 0)
+        self.assertEqual(len(result['posts']), 3)
+        self.assertEqual(result['errors'], [])
+        self.assertTrue(result['complete'])
+
+    def test_scroll_limit_with_growing_results_is_still_reported(self):
+        result = self.scan(3, 3)  # каждая прокрутка добавляет карточки, а прокрутки кончились
+        self.assertTrue(any('лимит прокруток' in e for e in result['errors']), result['errors'])
 
 
 class CollectRecruitersTests(unittest.TestCase):

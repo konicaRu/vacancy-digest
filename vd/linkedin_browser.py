@@ -94,16 +94,22 @@ def _permalink(page,card):
         page.bring_to_front()
 
 
-def _main(page,path='/search/results/content/'):
+def _main(page,path='/search/results/content/',allow_empty=False):
     parsed=urlsplit(page.url)
     if parsed.hostname!='www.linkedin.com' or parsed.path!=path:
         raise RuntimeError('LinkedIn требует ручной вход или показал защитную страницу')
     main=page.get_by_role('main')
     main.wait_for(state='visible',timeout=12000)
-    page.wait_for_function("""() => {
-        const m=document.querySelector('main');
-        return m && (m.querySelector('[data-testid="expandable-text-box"]') || /Поиск не дал результатов|No results found|No results/.test(m.innerText));
-    }""",timeout=15000)
+    try:
+        page.wait_for_function("""() => {
+            const m=document.querySelector('main');
+            return m && (m.querySelector('[data-testid="expandable-text-box"]') || /Поиск не дал результатов|No results found|No results/.test(m.innerText));
+        }""",timeout=15000)
+    except Exception as exc:
+        # A recruiter's own page (URL already checked above) without post cards: no or hidden posts.
+        if allow_empty and 'Timeout' in type(exc).__name__:
+            return None
+        raise
     return main
 
 
@@ -124,18 +130,23 @@ def scan(page,command):
         url='https://www.linkedin.com/search/results/content/?'+urlencode(
             {'keywords':tag,'datePosted':'"'+date_filter+'"','sortBy':'"date_posted"'})
     page.goto(url,wait_until='domcontentloaded',timeout=25000)
-    main=_main(page,urlsplit(url).path)
+    main=_main(page,urlsplit(url).path,allow_empty=profile)
+    if main is None:
+        return {'posts':[],'complete':True,'scanned':0,'seen':0,'errors':[],'undated':0,'empty':True}
     if not main.locator('[data-testid="expandable-text-box"]').count() and re.search(
             'Поиск не дал результатов|No results found|No results',main.inner_text()):
         return {'posts':[],'complete':True,'scanned':0,'errors':[]}
     limit=max(1,min(int(command.get('max_posts',8)),20))
     max_scrolls=max(0,min(int(command.get('max_scrolls',1)),3))
     seen=set(command.get('seen_ids',[]));visited=set();posts=[];errors=[];scanned=0;known=0
-    reached_old=False;undated=0
+    reached_old=False;undated=0;exhausted=False;shown=None
     # The card limit applies to new posts only: already known cards still cost a permalink copy,
     # but must not hide fresh posts further down the results. Scrolls and the deadline bound the rest.
     for scroll in range(max_scrolls+1):
         cards=main.locator('[role="listitem"]').filter(has=page.locator('[data-testid="expandable-text-box"]'))
+        if shown is not None and cards.count()<=shown:
+            exhausted=True;break  # the scroll added no cards: every result has been read
+        shown=cards.count()
         for index in range(cards.count()):
             card=cards.nth(index)
             token=card.get_attribute('componentkey') or str(index)
@@ -209,6 +220,6 @@ def scan(page,command):
                 'undated':undated}
     if len(posts)>=limit:errors.append(f'Достигнут лимит {limit} карточек; выдача просмотрена частично')
     if time.monotonic()>deadline:errors.append('Исчерпан бюджет времени тега')
-    if len(posts)<limit and time.monotonic()<=deadline:
+    if len(posts)<limit and time.monotonic()<=deadline and not exhausted:
         errors.append('Достигнут лимит прокруток; полнота выдачи не подтверждена')
     return {'posts':posts,'complete':not errors,'scanned':scanned,'seen':known,'errors':errors}

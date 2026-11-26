@@ -28,7 +28,7 @@ from vd.config import ConfigError, load_config
 from vd.expand import expand_bundles
 from vd.marks import fetch_marks, mark_link
 from vd.llm import LMStudioClient
-from vd.sources import alfabank, aviasales, avito, geekjob, getmatch, habr, jabka, linkedin_mail, magnit, make_session, megafon, mts, ostrovok, sber, tbank, telegram, tochka, twogis, vk, youngjunior
+from vd.sources import alfabank, aviasales, avito, cdek, domclick, geekjob, getmatch, habr, huntflow, jabka, linkedin_mail, magnit, make_session, megafon, mts, ostrovok, sber, tbank, telegram, tochka, twogis, vk, x5, youngjunior
 from vd.store import Store
 from vd.sources import linkedin_posts
 from vd.models import SourceResult
@@ -107,7 +107,9 @@ def collect_all(cfg: dict, store: Store, fetch, slot: str = "am", dry_run: bool 
                          "sber": sber.collect, "twogis": twogis.collect, "magnit": magnit.collect,
                          "tbank": tbank.collect, "alfabank": alfabank.collect,
                          "tochka": tochka.collect, "ostrovok": ostrovok.collect,
-                         "getmatch": getmatch.collect, "geekjob": geekjob.collect}
+                         "getmatch": getmatch.collect, "geekjob": geekjob.collect,
+                         "cdek": cdek.collect, "domclick": domclick.collect, "huntflow": huntflow.collect,
+                         "x5": x5.collect}
     for site in cfg["sources"].get("sites", []):
         if not site.get("enabled", True):
             continue

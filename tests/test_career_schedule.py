@@ -1,4 +1,5 @@
 import argparse
+import json
 import tempfile
 import unittest
 from datetime import datetime
@@ -25,6 +26,12 @@ class CareerScheduleTests(unittest.TestCase):
                     'profile': {'title_queries': [{'include': ['unmatched'], 'exclude': []}]}}
 
     def fetch(self, url):
+        fixtures = Path(__file__).parent / 'fixtures' / 'avito'
+        if url == self.urls['avito']:
+            return (fixtures / 'list_2026-11-26.html').read_text(encoding='utf-8')
+        if url.startswith('https://careers.avito.ru/service-ats-public-api/'):
+            data = json.loads((fixtures / 'publication_fd62d28f.json').read_text(encoding='utf-8'))
+            return json.dumps(dict(data, publicationId=url.rsplit('/', 1)[1], vacancies=[{'id': 1}]))
         for name, expected in self.urls.items():
             if url == expected: return sample(name, 'list')
         raise AssertionError('unexpected request: ' + url)
