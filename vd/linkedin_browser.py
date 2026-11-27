@@ -126,9 +126,12 @@ def scan(page,command):
     else:
         tag=command['hashtag']
         unique_tags([tag])
-        date_filter='past-24h' if days<=1 else 'past-week' if days<=7 else 'past-month'
+        # No datePosted filter: with it LinkedIn returned nothing for Russian phrase queries (27.11).
+        # Results are newest first, so the date is read before the link copy and the scan stops at the
+        # first post older than `days`.
         url='https://www.linkedin.com/search/results/content/?'+urlencode(
-            {'keywords':tag,'datePosted':'"'+date_filter+'"','sortBy':'"date_posted"'})
+            {'keywords':tag,'sortBy':'"date_posted"'})
+        stop_on_old=True
     page.goto(url,wait_until='domcontentloaded',timeout=25000)
     main=_main(page,urlsplit(url).path,allow_empty=profile)
     if main is None:
@@ -156,15 +159,14 @@ def scan(page,command):
             if card.get_attribute('componentkey'):
                 # Search cards can reorder after a new-tab visit. Never bind text to an nth index.
                 card=main.locator('[role="listitem"][componentkey='+json.dumps(token)+']')
-            if profile:
-                first=card.locator('[data-testid="expandable-text-box"]').nth(0).inner_text(timeout=5000)
-                posted=relative_date(card.inner_text().split(first[:50],1)[0],datetime.now())
-                if posted is None:
-                    undated+=1;continue
-                if posted<datetime.now()-timedelta(days=days):
-                    if stop_on_old:
-                        reached_old=True;break
-                    continue
+            first=card.locator('[data-testid="expandable-text-box"]').nth(0).inner_text(timeout=5000)
+            posted=relative_date(card.inner_text().split(first[:50],1)[0],datetime.now())
+            if posted is None and profile:
+                undated+=1;continue  # on a profile page an undated card is not a post (search keeps it)
+            if posted is not None and posted<datetime.now()-timedelta(days=days):
+                if stop_on_old:
+                    reached_old=True;break
+                continue
             stage='ссылка'
             try:
                 key,permalink=_permalink(page,card)
@@ -218,8 +220,9 @@ def scan(page,command):
         if not reached_old and time.monotonic()>deadline:errors.append('Исчерпан бюджет времени профиля')
         return {'posts':posts,'complete':not errors,'scanned':scanned,'seen':known,'errors':errors,
                 'undated':undated}
-    if len(posts)>=limit:errors.append(f'Достигнут лимит {limit} карточек; выдача просмотрена частично')
-    if time.monotonic()>deadline:errors.append('Исчерпан бюджет времени тега')
-    if len(posts)<limit and time.monotonic()<=deadline and not exhausted:
+    # Newest-first results read down to a post older than the window are complete.
+    if len(posts)>=limit and not reached_old:errors.append(f'Достигнут лимит {limit} карточек; выдача просмотрена частично')
+    if time.monotonic()>deadline and not reached_old:errors.append('Исчерпан бюджет времени тега')
+    if len(posts)<limit and time.monotonic()<=deadline and not exhausted and not reached_old:
         errors.append('Достигнут лимит прокруток; полнота выдачи не подтверждена')
     return {'posts':posts,'complete':not errors,'scanned':scanned,'seen':known,'errors':errors}
