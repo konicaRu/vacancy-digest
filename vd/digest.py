@@ -30,7 +30,10 @@ def source_name(source: str) -> str:
                 "tbank": "Т-Банк", "alfabank": "Альфа-Банк", "tochka": "Точка Банк",
                 "ostrovok": "Островок", "getmatch": "getmatch", "geekjob": "GeekJob",
                 "cdek": "СДЭК", "domclick": "Домклик", "huntflow": "Huntflow (Банки.ру)",
-                "x5": "X5", "kontur": "Контур", "yandex": "Яндекс", "selectel": "Selectel"}.get(source[5:], source[5:])
+                "x5": "X5", "kontur": "Контур", "yandex": "Яндекс", "selectel": "Selectel",
+                "arenadata": "Arenadata", "netology": "Нетология", "cft": "ЦФТ", "nspk": "НСПК",
+                "nexign": "Nexign", "leveltravel": "Level.Travel",
+                "raiffeisen": "Райффайзен"}.get(source[5:], source[5:])
     if source == "linkedin":
         return "LinkedIn"
     if source == 'linkedin:posts':

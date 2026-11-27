@@ -290,6 +290,61 @@ sources:
       max_pages: 1
       urls:
         - "https://selectel.ru/careers/all/"
+    # с 27.11: «засада» по пробе docs/company-sites-probe-2026-11-27.md; аналитиков сейчас почти нет
+    - name: arenadata
+      enabled: true
+      morning_only: false
+      lookback_days_first_run: 14
+      max_pages: 1
+      urls:
+        - "https://arenadata.tech/ru/career"
+
+    - name: netology
+      enabled: true
+      morning_only: false
+      lookback_days_first_run: 14
+      max_pages: 1
+      urls:
+        - "https://netology.ru/job"
+
+    - name: cft
+      enabled: true
+      morning_only: false
+      lookback_days_first_run: 14
+      max_pages: 1
+      urls:
+        - "https://job.cft.ru/"
+
+    - name: nspk
+      enabled: true
+      morning_only: false
+      lookback_days_first_run: 14
+      max_pages: 1
+      urls:
+        - "https://www.nspk.ru/vacancies"
+
+    - name: nexign
+      enabled: true
+      morning_only: false
+      lookback_days_first_run: 14
+      max_pages: 5
+      urls:
+        - "https://job.nexign.com/jobs"
+
+    - name: leveltravel
+      enabled: true
+      morning_only: false
+      lookback_days_first_run: 14
+      max_pages: 1
+      urls:
+        - "https://career.level.travel/"
+
+    # с 27.11: сторож, не сбор — списка вакансий на сайте нет; предупредит в письме, когда появится
+    - name: raiffeisen
+      enabled: true
+      morning_only: true
+      urls:
+        - "https://career.raiffeisen.ru/vacancies"
 
   linkedin_posts:
     enabled: true   # проверено в Chrome и dry-run на копии SQLite 19.11

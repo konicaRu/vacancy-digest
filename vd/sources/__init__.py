@@ -34,4 +34,5 @@ def make_session() -> requests.Session:
     s.mount('https://www.tbank.ru/', bank_adapter)
     s.mount('https://job.alfabank.ru/', bank_adapter)
     s.mount('https://hr.tochka.com/', bank_adapter)
+    s.mount('https://www.nspk.ru/', bank_adapter)
     return s

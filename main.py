@@ -28,7 +28,7 @@ from vd.config import ConfigError, load_config
 from vd.expand import expand_bundles
 from vd.marks import fetch_marks, mark_link
 from vd.llm import LMStudioClient
-from vd.sources import alfabank, aviasales, avito, cdek, domclick, geekjob, getmatch, habr, huntflow, jabka, kontur, selectel, yandex, linkedin_mail, magnit, make_session, megafon, mts, ostrovok, sber, tbank, telegram, tochka, twogis, vk, x5, youngjunior
+from vd.sources import alfabank, arenadata, aviasales, avito, cdek, cft, domclick, geekjob, getmatch, habr, huntflow, jabka, kontur, leveltravel, netology, nexign, nspk, raiffeisen, selectel, yandex, linkedin_mail, magnit, make_session, megafon, mts, ostrovok, sber, tbank, telegram, tochka, twogis, vk, x5, youngjunior
 from vd.store import Store
 from vd.sources import linkedin_posts
 from vd.models import SourceResult
@@ -110,7 +110,10 @@ def collect_all(cfg: dict, store: Store, fetch, slot: str = "am", dry_run: bool 
                          "getmatch": getmatch.collect, "geekjob": geekjob.collect,
                          "cdek": cdek.collect, "domclick": domclick.collect, "huntflow": huntflow.collect,
                          "x5": x5.collect, "kontur": kontur.collect, "yandex": yandex.collect,
-                         "selectel": selectel.collect}
+                         "selectel": selectel.collect, "arenadata": arenadata.collect,
+                         "netology": netology.collect, "cft": cft.collect, "nspk": nspk.collect,
+                         "nexign": nexign.collect, "leveltravel": leveltravel.collect,
+                         "raiffeisen": raiffeisen.collect}
     for site in cfg["sources"].get("sites", []):
         if not site.get("enabled", True):
             continue

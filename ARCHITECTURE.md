@@ -62,6 +62,13 @@ flowchart LR
 | `vd/sources/x5.py` | Открытый API rabota.x5.ru/vacancy/api/v1/public/vacancies (items/page/page_size/total/pages, published_at); описание `…/vacancies/<uuid>` (текстовые поля content); работодатель — бизнес-юнит (X5 Tech, Пятёрочка…); удалёнка — `work_format=remote` |
 | `vd/sources/kontur.py` | Каталог kontur.ru/career/vacancies?direction=analytics (`a.vacancy`: заголовок, города, формат текстом); карточка — JobPosting (сверка title, `jobLocationType=TELECOMMUTE` → удалёнка, datePosted), текст `.col-md-8 .text` |
 | `vd/sources/yandex.py` | Открытый API yandex.ru/jobs/api/publications/ (count/next с курсором, work_modes, public_service); описание `…/publications/<id>/` (разделы, status, published_at) |
+| `vd/sources/arenadata.py` | arenadata.tech/ru/career: весь каталог из потока Next.js (`self.__next_f`: slug/position/positionGrade/product/department), карточка — сверка h1, `#vacancy-description` |
+| `vd/sources/netology.py` | netology.ru/job: серверный список `a[href^="/job/"]`, метка «Можно удаленно» → `remote_format=True`; карточка — h1, `[class^=vacancy_root]` |
+| `vd/sources/cft.py` | job.cft.ru: все вакансии в блоке `ComponentBlocksVacanciesContent` из `__NEXT_DATA__` (направление, город, грейд); карточка /<id>/ — h1 и ближайший контейнер описания |
+| `vd/sources/nspk.py` | www.nspk.ru/vacancies (Nuxt): ссылки /vacancies/<uuid> с направлением; карточка `.pages-vacancies-vacancy-slug`; origin с Russian Trusted Root CA |
+| `vd/sources/nexign.py` | job.nexign.com/jobs: карточки `.vacancy-card`, пагинация `.pager-next`; карточка — `.vacancy-details__content` без FAQ; FAQ «из любой точки России» → удалёнка, если текст вакансии не «офис/гибрид» |
+| `vd/sources/leveltravel.py` | career.level.travel: вакансии — аккордеон Tilda (`.t668__wrapper`, id из `field="li_title__<id>"`), без отдельных карточек; описание из того же блока |
+| `vd/sources/raiffeisen.py` | Сторож, не сбор: career.raiffeisen.ru/vacancies (сейчас переадресует на главную); ссылки `/vacancy(ies)/<…>` (кроме `/vacancies/embed`) или JobPosting → `warning` «появились вакансии» |
 | `vd/sources/selectel.py` | Серверный каталог selectel.ru/careers/all/ (`.vacancies__cards .card`: направление, заголовок h4, город); карточка — сверка h1, текст `.vacancy__info`; формат только текстом |
 | `vd/sources/huntflow.py` | Страницы компаний `*.huntflow.io` (сейчас Банки.ру): ссылки `/vacancy/<slug>`, работодатель из заголовка страницы; карточка сверяется по h1; формат только текстом; пустая страница — ошибка |
 | `vd/sources/linkedin_mail.py` | Письма LinkedIn по IMAP: вакансии (`/jobs/view/<id>`) и посты знакомых |
@@ -134,7 +141,7 @@ Magnit Tech также проверяется утром и в 17:00. `collect` 
 полной карточки, свободный текст его не заменяет. Ограничения РФ/релокации проверяются классификатором.
 `main.make_fetcher(url, *, json=None)` сохраняет GET по умолчанию и поддерживает читающие POST
 Т-Банка; таймаут, пауза, проверка HTTP-статуса и TLS общие для обоих методов.
-В `make_session` для трёх точных HTTPS-origin (`www.tbank.ru`, `job.alfabank.ru`, `hr.tochka.com`) добавлен
+В `make_session` для точных HTTPS-origin (`www.tbank.ru`, `job.alfabank.ru`, `hr.tochka.com`, `www.nspk.ru`) добавлен
 официальный Russian Trusted Root CA из `vd/certs/`. Только эти соединения используют SSLContext
 с обычными корнями Requests плюс дополнительным CA. Проверка имени хоста и цепочки обязательна;
 системное хранилище Windows и certifi не меняются. Для остальных сайтов адаптер стандартный.
@@ -355,3 +362,5 @@ salary, contact, reason`. Блоки `<think>` вырезаются (Qwen3). Е�
 | 2026-11-26 | — | LinkedIn: вместо хэштегов 4 русских запроса (`hashtags` принимает фразы); `scan` считает выдачу полной, если прокрутка не добавила карточек (`exhausted`) — «лимит прокруток» только при реальном упоре. 361 тест OK |
 | 2026-11-26 | — | Контур, Яндекс, Selectel — три адаптера «в засаду» (подключены без оглядки на текущие вакансии). Не подключены по технической причине: ВТБ и Газпромбанк — витрины hh.ru (отсев по правилу), Совкомбанк/ПСБ/Ozon/Купер/Самокат/Wildberries — закрыты из-за рубежа (обрыв TLS, 403, капча, антибот), GlowByte — покрыт Хабр Карьерой. 373 теста OK |
 | 2026-11-27 | — | LinkedIn-поиск без `datePosted` (с ним русские запросы давали 0 постов два выпуска подряд): сортировка по дате, дата карточки до копирования ссылки, стоп на первом посте старше `search_days` (30) — отдельное окно от рекрутеров (`lookback_days_first_run`, 7). Выдача, дочитанная до старого поста, — полная, без предупреждений. 377 тестов OK |
+| 2026-11-27 | — | Шесть сайтов «в засаду» по пробе 22 компаний (`docs/company-sites-probe-2026-11-27.md`): Arenadata, Нетология, ЦФТ, НСПК (+ origin с Russian CA), Nexign (удалёнка по FAQ компании — решение пользователя), Level.Travel. Отсев пробы: hh-витрины (Учи.ру, Skillbox, iSpring, Мосбиржа, Tele2), ЮMoney — через Хабр, без каталога (Райффайзен, Сравни, GetCourse, Timeweb, Skyeng), закрыты (Золотое яблоко, Redmadrobot, Билайн, QIWI, Visiology). 398 тестов OK |
+| 2026-11-27 | — | Сторож Райффайзена (`raiffeisen.py`, утром): на сайте нет списка вакансий — сборщик ничего не собирает и предупреждает в письме, когда появятся ссылки на вакансии или JobPosting. 403 теста OK |
