@@ -172,7 +172,7 @@ def collect(cfg, root, is_seen, bookmark, *, request=None, now=None, seen_ids=No
         stats['tags'][tag]=counts
         if time.monotonic()>deadline:
             counts['errors']+=1;warnings.append(f'{tag}: TimeoutError: Исчерпан бюджет LinkedIn');continue
-        take(tag,{'action':'scan_posts','hashtag':tag,'days':days,
+        take(tag,{'action':'scan_posts','hashtag':tag,'days':cfg.get('search_days',days),
                   'max_posts':cfg.get('max_posts_per_tag',8),
                   'max_scrolls':cfg.get('max_scrolls_per_tag',1),
                   'timeout_sec':min(75, max(1, int(deadline-time.monotonic())))},counts)

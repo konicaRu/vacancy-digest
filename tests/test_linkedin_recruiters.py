@@ -204,6 +204,42 @@ class SearchExhaustedTests(unittest.TestCase):
         self.assertTrue(any('лимит прокруток' in e for e in result['errors']), result['errors'])
 
 
+class SearchWithoutDateFilterTests(unittest.TestCase):
+    """27.11: с фильтром LinkedIn «за неделю» русские запросы давали 0 постов. Ищем без фильтра,
+    сортировка по дате, дата проверяется до копирования ссылки, на первом старом посте — стоп."""
+
+    def run_search(self, headers, days=30):
+        card_list, main_element = page_with_cards(headers)
+        opened = []
+
+        def permalink(_page, card):
+            opened.append(card_list.index(card))
+            key = str(7200000000000000000 + card_list.index(card))
+            return key, f'https://www.linkedin.com/feed/update/urn:li:activity:{key}/'
+        page = mock.Mock()
+        with mock.patch.object(browser, '_main', return_value=main_element), \
+             mock.patch.object(browser, '_permalink', side_effect=permalink):
+            result = browser.scan(page, {'hashtag': '#vacancy аналитик', 'max_posts': 20, 'max_scrolls': 2,
+                                         'days': days, 'timeout_sec': 75})
+        return result, opened, page
+
+    def test_search_url_has_no_date_filter_but_sorts_by_date(self):
+        _, _, page = self.run_search(['1 ч. •'])
+        url = page.goto.call_args[0][0]
+        self.assertNotIn('datePosted', url)
+        self.assertIn('sortBy=%22date_posted%22', url)
+
+    def test_stops_at_first_post_older_than_window_before_copying_its_link(self):
+        result, opened, _ = self.run_search(['2 дн. •', '3 нед. •', '2 мес. •', '1 ч. •'])
+        self.assertEqual(opened, [0, 1])
+        self.assertEqual(len(result['posts']), 2)
+        self.assertEqual(result['errors'], [])  # выдача прочитана до старых постов — она полная
+
+    def test_undated_search_card_is_still_read(self):
+        result, opened, _ = self.run_search(['Продвигается', '1 ч. •'])
+        self.assertEqual(opened, [0, 1])
+
+
 class CollectRecruitersTests(unittest.TestCase):
     cfg = {'hashtags': ['#hiring'], 'recruiters': [{'name': 'Recruiter Example', 'url': PERSON},
                                                    {'name': 'Jobs Example', 'url': COMPANY}]}
@@ -228,6 +264,18 @@ class CollectRecruitersTests(unittest.TestCase):
         self.assertEqual(len(result.items), 1)
         self.assertEqual(result.items[0].discovery_tags, ['рекрутер: Recruiter Example'])
         self.assertEqual(result.stats['recruiters']['Recruiter Example']['new'], 1)
+
+    def test_search_window_is_separate_from_recruiter_window(self):
+        commands = []
+
+        def request(command):
+            commands.append(command)
+            return {'posts': [], 'complete': True, 'scanned': 0, 'errors': []}
+        cfg = {'hashtags': ['#vacancy аналитик'], 'recruiters': [{'name': 'Olga', 'url': PERSON}],
+               'lookback_days_first_run': 7, 'search_days': 30}
+        lp.collect(cfg, Path('.'), lambda *_: False, None, request=request, now=NOW)
+        days = {c['action']: c['days'] for c in commands}
+        self.assertEqual(days, {'scan_posts': 30, 'scan_profile': 7})
 
     def test_recruiters_alone_are_enough_and_bad_address_is_a_warning(self):
         cfg = {'recruiters': [{'name': 'Bad', 'url': 'https://evil.test/in/x/'}, {'name': 'Olga', 'url': PERSON}]}
